@@ -15,6 +15,7 @@ requires = [
     'anyblok_pyramid',
     'anyblok_pyramid_beaker',
     'lxml',
+    'pyramid_mako',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

@@ -9,7 +9,7 @@
 from anyblok.blok import Blok, BlokManager
 from anyblok_furetui.release import version
 from anyblok_furetui.template import Template
-from .pyramid import json_data_adapter
+from .pyramid import json_data_adapter, add_mako_and_static
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -21,10 +21,20 @@ class FuretUIBlok(Blok):
         'anyblok-core',
     ]
 
+    # if connected
     css = [
     ]
     js = [
+        '#BLOK/static/furetui.js',
     ]
+
+    # if not connected
+    global_css = [
+    ]
+    global_js = [
+        '#BLOK/static/furetui.js',
+    ]
+
     views = [
     ]
 
@@ -56,6 +66,7 @@ class FuretUIBlok(Blok):
     @classmethod
     def pyramid_load_config(cls, config):
         json_data_adapter(config)
+        add_mako_and_static(config)
         config.add_route('furetui_main', '/')
         config.add_route('furetui_required_data',
                          '/furetui/init/required/data')
