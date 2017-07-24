@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+    <record external_id="setting_space_low_level">
+        <field name="label">Low level</field>
+        <field name="icon">fa-wrench</field>
+        <field name="description">Configure all the low level data</field>
+        <field name="category" external_id="setting_space_category" />
+    </record>
+</records>

@@ -61,6 +61,7 @@ setup(
     entry_points={
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
+            'low_level=anyblok_furetui.low_level:LowLevelBlok',
             'blok_manager=anyblok_furetui.blok_manager:BlokManager',
         ],
     },

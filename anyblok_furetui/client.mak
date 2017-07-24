@@ -9,9 +9,12 @@
         % endfor
     </head>
     <body>
-        <div id="furet-ui-app"></div>
+        <div id="anyblok-furetui-app"></div>
         % for x in js:
             <script type="text/javascript" src="${x}" ></script>
         % endfor
+        <script type="text/javascript">
+            createFuretUIClient('#anyblok-furetui-app');
+        </script>
     </body>
 </html>
