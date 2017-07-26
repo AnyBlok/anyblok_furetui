@@ -1,0 +1,67 @@
+<templates>
+    <template id="AnyBlokSystemBlokButton">
+        <button data-function="rpc_call"
+                data-method="install_blok"
+                visible-only-if="fields.state == 'uninstalled'"
+                class="button expanded success">Install this blok</button>
+        <div visible-only-if="fields.state != 'uninstalled'">
+            <button data-function="rpc_call"
+                    data-method="uninstall_blok"
+                    class="button expanded alert">Uninstall this blok</button>
+            <button data-function="rpc_call"
+                    data-method="upgrade_blok"
+                    visible-only-if="fields.version != fields.installed_version"
+                    class="button expanded">Upgrade this blok</button>
+        </div>
+    </template>
+    <template id="AnyBlokSystemBlokState">
+        <label for="state"/>
+        <field name="state"/>
+        <div visible-only-if="fields.version != fields.installed_version">
+            <label for="version"/>
+            <field name="version"/>
+        </div>
+        <div visible-only-if="fields.state != 'uninstalled'">
+            <label for="installed_version"/>
+            <field name="installed_version"/>
+        </div>
+    </template>
+    <template id="AnyBlokSystemBlokForm">
+        <div class="row">
+            <div class="columns">
+                <h1><field name="name"/></h1>
+            </div>
+            <div class="columns large-4 medium-6">
+                <field name="logo" type="Picture" file_name_field="name"/>
+                <call template="AnyBlokSystemBlokButton"/>
+                <call template="AnyBlokSystemBlokState"/>
+            </div>
+            <div class="columns large-8 medium-6">
+                <label for="short_description"/>
+                <field name="short_description" type="Html"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="columns">
+                <label for="long_description"/>
+                <field name="long_description" type="Html"/>
+            </div>
+        </div>
+    </template>
+    <template id="AnyBlokSystemBlokThumbnails">
+        <div class="row">
+            <div class="columns">
+                <h4><field name="name" class="primary"/></h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="columns large-7 medium-6">
+                <field name="logo" type="Picture" file_name_field="name"></field>
+                <call template="AnyBlokSystemBlokButton"/>
+            </div>
+            <div class="columns large-5 medium-6">
+                <call template="AnyBlokSystemBlokState"/>
+            </div>
+        </div>
+    </template>
+</templates>

@@ -14651,7 +14651,8 @@ var ListMixin = exports.ListMixin = {
     template: '\n        <div>\n            <span v-if="isInvisible" />\n            <span v-else>{{value}}</span>\n        </div>',
     computed: {
         value: function value() {
-            return this.row[this.header.name] || '';
+            if (this.row[this.header.name] != undefined) return this.row[this.header.name];
+            return '';
         },
         isInvisible: function isInvisible() {
             return safe_eval(this.header.invisible, this.row || {});
@@ -29192,8 +29193,11 @@ _vue2.default.use(_buefy2.default, { defaultIconPack: 'fa' }); /**
 
 (0, _vuexRouterSync.sync)(_store.store, _routes2.default); // use vue-router with vuex
 
-_plugin2.default.set([], { initData: function initData(router, store) {
-        (0, _serverCall.json_post)('/init/required/data', {}, {
+_plugin2.default.set([], { initData: function initData(route, router, store) {
+        (0, _serverCall.json_post)('/init/required/data', {
+            route_name: route.name,
+            route_params: route.params
+        }, {
             onSuccess: function onSuccess(result) {
                 (0, _store.dispatchAll)(result);
             },
@@ -29222,7 +29226,7 @@ var createFuretUIClient = function createFuretUIClient(el) {
         i18n: _i18n.i18n,
         created: function created() {
             var initData = _plugin2.default.get(['initData']);
-            if (initData) initData(_routes2.default, _store.store);
+            if (initData) initData(this.$route, _routes2.default, _store.store);
         }
     });
     window.FuretUI = FuretUI;
@@ -29303,7 +29307,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var FieldListBoolean = exports.FieldListBoolean = _vue2.default.component('furet-ui-list-field-boolean', {
     mixins: [_common.ListMixin],
-    template: '\n        <span v-if="isInvisible" />\n        <b-checkbox \n            v-else\n            v-bind:checked="checked" \n            disabled\n        />',
+    template: '\n        <div>\n            <span v-if="isInvisible" />\n            <b-checkbox \n                v-else\n                v-model="checked"\n                disabled\n            />\n        </div>',
     computed: {
         checked: function checked() {
             return eval(this.value) ? true : false;

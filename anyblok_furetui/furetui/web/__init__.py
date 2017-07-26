@@ -43,7 +43,11 @@ class Web:
 
 from . import space  # noqa
 reload_module_if_blok_is_reloading(space)
-# from . import login  # noqa
-# reload_module_if_blok_is_reloading(login)
-# from . import user  # noqa
-# reload_module_if_blok_is_reloading(user)
+from . import action  # noqa
+reload_module_if_blok_is_reloading(action)
+from . import menu  # noqa
+reload_module_if_blok_is_reloading(menu)
+from . import view  # noqa
+reload_module_if_blok_is_reloading(view)
+from . import button  # noqa
+reload_module_if_blok_is_reloading(button)

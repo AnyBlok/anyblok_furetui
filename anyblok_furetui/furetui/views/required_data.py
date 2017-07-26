@@ -66,47 +66,8 @@ class ConnectedInitialisation(InitialisationMixin):
         self.registry = request.anyblok.registry
 
     def getLeftMenu(self):
-        values = []
-        value = {
-            'label': '',
-            'image': {'type': 'font-icon', 'value': ''},
-        }
-        space = None
-        Category = self.registry.Web.Space.Category
-        Space = self.registry.Web.Space
-        for c in Category.query().order_by(Category.order).all():
-            query = Space.query().filter(Space.category == c)
-            query = query.order_by(Space.order)
-            if query.count():
-                categ = {
-                    'id': str(c.id),
-                    'label': c.label,
-                    'image': {'type': 'font-icon', 'value': c.icon},
-                    'values': [],
-                }
-                values.append(categ)
-                for s in query.all():
-                    categ['values'].append({
-                        'id': str(s.id),
-                        'label': s.label,
-                        'description': s.description,
-                        'type': s.type,
-                        'image': {'type': 'font-icon', 'value': s.icon},
-                    })
-
-        if (values):
-            value['label'] = values[0]['values'][0]['label']
-            value['image'] = values[0]['values'][0]['image']
-            space = int(values[0]['values'][0]['id'])
-
-        return space, {
-            'type': 'UPDATE_LEFT_MENU',
-            'value': value,
-            'values': values,
-        }
-
-    def getSpacePath(self, space):
-        return {}
+        params = self.request.json_body
+        return self.registry.Web.Space.getSpaces(params)
 
     def getRightMenu(self):
         return {
@@ -139,11 +100,9 @@ class ConnectedInitialisation(InitialisationMixin):
     def required_data(self):
         state = self.request.session.get('state')
         if state == 'connected':
-            space, left = self.getLeftMenu()
             res = [
                 self.getRightMenu(),
-                left,
-                # self.getSpacePath(space),
+                self.getLeftMenu(),
             ]
             return res
 

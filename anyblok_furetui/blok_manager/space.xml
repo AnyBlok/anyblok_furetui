@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+    <record external_id="setting_space_blok">
+        <field name="label">Bloks</field>
+        <field name="icon">fa-database</field>
+        <field name="description">Install, uninstall, manage bloks</field>
+        <field name="category" external_id="setting_space_category" />
+        <field name="default_action" external_id="action_setting_blok">
+            <field name="model">Model.System.Blok</field>
+            <field name="label">Bloks</field>
+            <field name="add_delete">0</field>
+            <field name="add_new">0</field>
+            <field name="add_edit">0</field>
+            <field name="views">
+                <record external_id="view_blok_thumbnails">
+                    <field name="selectable">1</field>
+                    <field name="mode">Model.Web.View.Thumbnail</field>
+                    <field name="template">AnyBlokSystemBlokThumbnails</field>
+                </record>
+                <record external_id="view_blok_form">
+                    <field name="mode">Model.Web.View.Form</field>
+                    <field name="template">AnyBlokSystemBlokForm</field>
+                </record>
+            </field>
+            <field name="buttons">
+                <record external_id="buttons_blok_manager_reload_all_bloks">
+                    <field name="label">Reload all bloks</field>
+                    <field name="method">reload_blokmanager</field>
+                </record>
+            </field>
+        </field>
+    </record>
+</records>

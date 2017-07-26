@@ -5,5 +5,66 @@
         <field name="icon">fa-wrench</field>
         <field name="description">Configure all the low level data</field>
         <field name="category" external_id="setting_space_category" />
+        <field name="menus">
+            <record external_id="menu_low_level_db">
+                <field name="label">Database structure</field>
+                <field name="position">left</field>
+                <field name="children">
+                    <record external_id="menu_low_level_db_model">
+                        <field name="label">Models</field>
+                        <field name="action" external_id="action_db_model"/>
+                    </record>
+                    <record external_id="menu_low_level_db_field">
+                        <field name="label">Fields</field>
+                        <field name="action" external_id="action_db_field"/>
+                    </record>
+                    <record external_id="menu_low_level_db_column">
+                        <field name="label">Columns</field>
+                        <field name="action" external_id="action_db_column"/>
+                    </record>
+                    <record external_id="menu_low_level_db_relationship">
+                        <field name="label">Relation Ships</field>
+                        <field name="action" external_id="action_db_rs"/>
+                    </record>
+                </field>
+            </record>
+            <record external_id="menu_low_level_ui">
+                <field name="label">Interface</field>
+                <field name="position">left</field>
+                <field name="children">
+                    <record external_id="menu_low_level_ui_menu">
+                        <field name="label">Menus</field>
+                        <field name="action" external_id="action_ui_menu"/>
+                    </record>
+                    <record external_id="menu_low_level_ui_action">
+                        <field name="label">Actions</field>
+                        <field name="action" external_id="action_ui_action"/>
+                    </record>
+                    <record external_id="menu_low_level_ui_view">
+                        <field name="label">Views</field>
+                        <field name="action" external_id="action_ui_view"/>
+                    </record>
+                </field>
+            </record>
+            <record external_id="menu_low_level_io">
+                <field name="label">In / Out</field>
+                <field name="position">left</field>
+                <field name="children">
+                    <record external_id="menu_low_level_io_mapper">
+                        <field name="label">Mappings</field>
+                        <field name="action" external_id="action_io_mapping"/>
+                    </record>
+                    <record external_id="menu_low_level_io_importer">
+                        <field name="label">Importers</field>
+                        <field name="action" external_id="action_io_importer"/>
+                    </record>
+                    <record external_id="menu_low_level_io_exporter">
+                        <field name="label">Exporters</field>
+                        <field name="action" external_id="action_io_exporter"/>
+                    </record>
+                </field>
+            </record>
+        </field>
+        <field name="default_menu" external_id="menu_low_level_db_model" />
     </record>
 </records>

@@ -21,4 +21,5 @@ class LowLevelBlok(Blok):
 
     def update(self, latest_version):
         """ Update the database """
+        self.import_file('xml', 'Model.Web.Action', 'action.xml')
         self.import_file('xml', 'Model.Web.Space', 'space.xml')

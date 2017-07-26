@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+    <record external_id="action_db_model">
+        <field name="label">Models</field>
+        <field name="model">Model.System.Model</field>
+    </record>
+    <record external_id="action_db_field">
+        <field name="label">Fields</field>
+        <field name="model">Model.System.Field</field>
+    </record>
+    <record external_id="action_db_column">
+        <field name="label">Columns</field>
+        <field name="model">Model.System.Column</field>
+    </record>
+    <record external_id="action_db_rs">
+        <field name="label">Relation Ships</field>
+        <field name="model">Model.System.RelationShip</field>
+    </record>
+    <record external_id="action_ui_menu">
+        <field name="label">Menus</field>
+        <field name="model">Model.Web.Menu</field>
+    </record>
+    <record external_id="action_ui_action">
+        <field name="label">Actions</field>
+        <field name="model">Model.Web.Action</field>
+    </record>
+    <record external_id="action_ui_view">
+        <field name="label">Views</field>
+        <field name="model">Model.Web.View</field>
+    </record>
+    <record external_id="action_io_mapping">
+        <field name="label">Mappings</field>
+        <field name="model">Model.IO.Mapping</field>
+    </record>
+    <record external_id="action_io_importer">
+        <field name="label">Importers</field>
+        <field name="model">Model.IO.Importer</field>
+    </record>
+    <record external_id="action_io_exporter">
+        <field name="label">Exporters</field>
+        <field name="model">Model.IO.Exporter</field>
+    </record>
+</records>
