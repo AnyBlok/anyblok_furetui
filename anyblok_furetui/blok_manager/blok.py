@@ -4,7 +4,7 @@ from anyblok.blok import BlokManager
 from anyblok.registry import RegistryManager
 from docutils.core import publish_programmatically
 from docutils import io
-from rst2html5 import HTML5Writer
+# from rst2html5 import HTML5Writer
 from os.path import join, isfile
 from lxml import html
 
@@ -42,40 +42,40 @@ class Blok:
         else:
             return _get_logo('blok_manager', 'static/image/none.png')
 
-    def convert_rst2html(self, rst):
-        """Convert a rst to html
+    # def convert_rst2html(self, rst):
+    #     """Convert a rst to html
 
-        :param rst: rst source
-        :rtype: html souce
-        """
-        output, _ = publish_programmatically(
-            source_class=io.StringInput, source=rst, source_path=None,
-            destination_class=io.StringOutput, destination=None,
-            destination_path=None, reader=None, reader_name='standalone',
-            parser=None, parser_name='restructuredtext',
-            writer=HTML5Writer(), writer_name='null',
-            settings=None, settings_spec=None, settings_overrides={},
-            config_section=None, enable_exit_status=None)
-        return html.tostring(html.fromstring(output).find('body'))
+    #     :param rst: rst source
+    #     :rtype: html souce
+    #     """
+    #     output, _ = publish_programmatically(
+    #         source_class=io.StringInput, source=rst, source_path=None,
+    #         destination_class=io.StringOutput, destination=None,
+    #         destination_path=None, reader=None, reader_name='standalone',
+    #         parser=None, parser_name='restructuredtext',
+    #         writer=HTML5Writer(), writer_name='null',
+    #         settings=None, settings_spec=None, settings_overrides={},
+    #         config_section=None, enable_exit_status=None)
+    #     return html.tostring(html.fromstring(output).find('body'))
 
-    def get_short_description(self):
-        """Overwrite the description to return a html"""
-        res = super(Blok, self).get_short_description()
-        return self.convert_rst2html(res)
+    # def get_short_description(self):
+    #     """Overwrite the description to return a html"""
+    #     res = super(Blok, self).get_short_description()
+    #     return self.convert_rst2html(res)
 
-    def convert_path(self, res):
-        """Change the path of static image"""
-        if self.name == 'erpblok-blok-manager':
-            res = res.replace('../erpblok/bloks/blok_manager',
-                              join('..', self.name))
+    # def convert_path(self, res):
+    #     """Change the path of static image"""
+    #     if self.name == 'erpblok-blok-manager':
+    #         res = res.replace('../erpblok/bloks/blok_manager',
+    #                           join('..', self.name))
 
-        return res
+    #     return res
 
-    def get_long_description(self):
-        """Overwrite the description to return a html"""
-        res = super(Blok, self).get_long_description()
-        res = self.convert_path(res)
-        return self.convert_rst2html(res)
+    # def get_long_description(self):
+    #     """Overwrite the description to return a html"""
+    #     res = super(Blok, self).get_long_description()
+    #     res = self.convert_path(res)
+    #     return self.convert_rst2html(res)
 
 #    # FIXME install, upgrade and uninstall must relod if they are view
 #    def install_blok(self):

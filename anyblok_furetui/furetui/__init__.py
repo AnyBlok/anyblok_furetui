@@ -22,6 +22,8 @@ class FuretUIBlok(Blok):
         'anyblok-io-xml',
     ]
 
+    logo = 'static/images/logo.png'
+
     # if connected
     css = [
     ]
