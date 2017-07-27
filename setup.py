@@ -16,6 +16,8 @@ requires = [
     'anyblok_pyramid_beaker',
     'lxml',
     'pyramid_mako',
+    'rst2html5',
+    'python-magic',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

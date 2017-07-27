@@ -51,3 +51,5 @@ from . import view  # noqa
 reload_module_if_blok_is_reloading(view)
 from . import button  # noqa
 reload_module_if_blok_is_reloading(button)
+from . import image  # noqa
+reload_module_if_blok_is_reloading(image)
