@@ -335,6 +335,8 @@ class Template:
                     parent.insert(index, deepcopy(child))
                     index += 1
 
+                parent.remove(el_call)
+
         return elements
 
     def compile_template(self, name):

@@ -10,6 +10,7 @@ from pyramid.view import view_defaults, view_config
 from anyblok_pyramid import current_blok
 from sqlalchemy import or_
 from logging import getLogger
+from json import loads, dumps
 
 logger = getLogger(__name__)
 
@@ -64,8 +65,8 @@ class ConnectedInitialisation():
         fd = Model.fields_description()
 
         for pks in pks_list:
-            if str(pks) not in data[model]:
-                data[model][str(pks)] = {}
+            if dumps(pks) not in data[model]:
+                data[model][dumps(pks)] = {}
 
             entry = Model.from_primary_keys(**pks)
             for field in fields:
@@ -74,22 +75,23 @@ class ConnectedInitialisation():
                     _Model = getattr(Model, field).property.mapper.class_
                     if fd[field]['type'] in ('Many2One', 'One2One'):
                         _pks = getattr(entry, field).to_primary_keys()
-                        data[model][str(pks)][field] = str(_pks)
+                        data[model][dumps(pks)][field] = dumps(_pks)
                         self.getDataFor(data, _Model, [_pks], subfield)
                     else:
                         _pks = [x.to_primary_keys()
                                 for x in getattr(entry, field)]
-                        data[model][str(pks)][field] = [str(x) for x in _pks]
+                        data[model][dumps(pks)][field] = [dumps(x)
+                                                          for x in _pks]
                         self.getDataFor(data, _Model, _pks, subfield)
 
                 else:
                     value = getattr(entry, field)
                     if fd[field]['type'] in ('Many2One', 'One2One'):
-                        value = str(value.to_primary_keys())
+                        value = dumps(value.to_primary_keys())
                     elif fd[field]['type'] in ('Many2Many', 'One2Many'):
-                        value = [str(x.to_primary_keys()) for x in value]
+                        value = [dumps(x.to_primary_keys()) for x in value]
 
-                    data[model][str(pks)][field] = value
+                    data[model][dumps(pks)][field] = value
 
     @view_config(route_name="furetui_crud_reads")
     def furetui_crud_reads(self):
@@ -107,7 +109,27 @@ class ConnectedInitialisation():
         res.append({
             'type': 'UPDATE_VIEW',
             'viewId': params['viewId'],
-            'dataIds': [str(x) for x in pks],
+            'dataIds': [dumps(x) for x in pks],
+        })
+        return res
+
+    @view_config(route_name="furetui_crud_read")
+    def furetui_crud_read(self):
+        params = self.request.json_body
+        pks = self.request.matchdict['dataId']
+        fields = params.get('fields')
+        if fields is None:
+            return []
+
+        Model = self.registry.get(params['model'])
+        data = {}
+        self.getDataFor(data, Model, [loads(pks)], fields)
+        res = [{'type': 'UPDATE_DATA', 'model': m, 'data': d}
+               for m, d in data.items()]
+        res.append({
+            'type': 'UPDATE_VIEW',
+            'viewId': params['viewId'],
+            'dataIds': [pks],
         })
         return res
 

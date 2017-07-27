@@ -16,6 +16,11 @@
                     <field name="selectable">1</field>
                     <field name="mode">Model.Web.View.Thumbnail</field>
                     <field name="template">AnyBlokSystemBlokThumbnails</field>
+                    <field name="border_fieldcolor">
+                        (fields.state == 'uninstalled' &amp;&amp; 'red') 
+                        || (fields.version != fields.installed_version &amp;&amp; 'blue')
+                        || 'green'
+                    </field>
                 </record>
                 <record external_id="view_blok_form">
                     <field name="mode">Model.Web.View.Form</field>

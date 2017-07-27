@@ -10,8 +10,8 @@ Model = Declarations.Model
 class Button:
 
     id = Integer(primary_key=True)
-    action = Many2One(model=Model.Web.Action, one2many='buttons',
-                      nullable=False)
+    action = Many2One(model=Model.Web.Action, one2many='buttons')
+    view = Many2One(model=Model.Web.View, one2many='buttons')
     method = String(nullable=False)
     label = String(nullable=False)
     mode = Selection(selections=[('action', 'Action'), ('more', 'More')],

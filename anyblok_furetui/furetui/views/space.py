@@ -15,7 +15,7 @@ from anyblok_pyramid import current_blok
     request_method="POST",
     renderer="json"
 )
-class ConnectedInitialisation():
+class Space():
     def __init__(self, request):
         self.request = request
         self.registry = request.anyblok.registry

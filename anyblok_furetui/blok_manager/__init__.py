@@ -23,6 +23,15 @@ class BlokManager(Blok):
         'blok.tmpl',
     ]
 
+    @classmethod
+    def import_declaration_module(cls):
+        from . import blok  # noqa
+
+    @classmethod
+    def reload_declaration_module(cls, reload):
+        from . import blok
+        reload(blok)
+
     def update(self, latest_version):
         """ Update the database """
         self.import_file('xml', 'Model.Web.Space', 'space.xml')

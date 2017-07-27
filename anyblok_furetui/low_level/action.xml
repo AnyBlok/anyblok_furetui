@@ -3,6 +3,9 @@
     <record external_id="action_db_model">
         <field name="label">Models</field>
         <field name="model">Model.System.Model</field>
+        <field name="add_new">False</field>
+        <field name="add_edit">False</field>
+        <field name="add_delete">False</field>
     </record>
     <record external_id="action_db_field">
         <field name="label">Fields</field>

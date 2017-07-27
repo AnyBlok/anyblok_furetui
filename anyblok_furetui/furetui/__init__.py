@@ -92,7 +92,7 @@ class FuretUIBlok(Blok):
         # config.add_route('furetui_x2m_view', '/furetui/list/x2m/get/views')
         # config.add_route('furetui_crud_create', '/furetui/data/create')
         config.add_route('furetui_crud_reads', '/furetui/data/read')
-        # config.add_route('furetui_crud_read', '/furetui/data/read/<dataId>')
+        config.add_route('furetui_crud_read', '/furetui/data/read/{dataId}')
         # config.add_route('furetui_crud_update', '/furetui/data/update')
         # config.add_route('furetui_crud_delete', '/furetui/data/delete')
         config.add_route('furetui_crud_search', '/furetui/data/search')
