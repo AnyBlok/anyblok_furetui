@@ -21,7 +21,7 @@ class Space:
     default_action = Many2One(model='Model.Web.Action')
 
     @classmethod
-    def getSpaces(cls, params):
+    def getSpaces(cls, res, params):
         values = []
         value = {
             'label': '',
@@ -54,12 +54,16 @@ class Space:
         else:
             value['label'] = values[0]['values'][0]['label']
             value['image'] = values[0]['values'][0]['image']
+            res.append({
+                'type': 'UPDATE_ROUTE',
+                'path': 'space/' + values[0]['values'][0]['id'],
+            })
 
-        return {
+        res.append({
             'type': 'UPDATE_LEFT_MENU',
             'value': value,
             'values': values,
-        }
+        })
 
     def getLeftMenus(self):
         Menu = self.registry.Web.Menu

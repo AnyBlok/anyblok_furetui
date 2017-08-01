@@ -13,7 +13,6 @@
             <field name="add_edit">0</field>
             <field name="views">
                 <record external_id="view_blok_thumbnails">
-                    <field name="selectable">1</field>
                     <field name="mode">Model.Web.View.Thumbnail</field>
                     <field name="template">AnyBlokSystemBlokThumbnails</field>
                     <field name="border_fieldcolor">

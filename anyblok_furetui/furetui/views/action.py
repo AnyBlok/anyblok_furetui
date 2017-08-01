@@ -27,7 +27,7 @@ class Action():
         render = action.render()
         res = [render]
         if not params.get('viewId'):
-            params['viewId'] = render['views'][0]['viewId']
+            params['viewId'] = render['selected_view']
 
         if params.get('menuId'):
             if params.get('dataId'):

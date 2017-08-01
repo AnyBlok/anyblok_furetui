@@ -65,12 +65,12 @@ class ConnectedInitialisation(InitialisationMixin):
         self.request = request
         self.registry = request.anyblok.registry
 
-    def getLeftMenu(self):
+    def getLeftMenu(self, res):
         params = self.request.json_body
-        return self.registry.Web.Space.getSpaces(params)
+        return self.registry.Web.Space.getSpaces(res, params)
 
-    def getRightMenu(self):
-        return {
+    def getRightMenu(self, res):
+        res.append({
             'type': 'UPDATE_RIGHT_MENU',
             'value': {
                 'label': 'Connected',
@@ -94,16 +94,15 @@ class ConnectedInitialisation(InitialisationMixin):
                     ],
                 },
             ],
-        }
+        })
 
     @view_config(route_name="furetui_required_data")
     def required_data(self):
         state = self.request.session.get('state')
         if state == 'connected':
-            res = [
-                self.getRightMenu(),
-                self.getLeftMenu(),
-            ]
+            res = []
+            self.getRightMenu(res),
+            self.getLeftMenu(res),
             return res
 
         return self.getDisconnectedInitialisation()

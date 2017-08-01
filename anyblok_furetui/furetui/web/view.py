@@ -32,13 +32,15 @@ class View(Mixin.ViewType):
 
     id = Integer(primary_key=True)
     order = Integer(sequence='web__view_order_seq', nullable=False)
-    selectable = Boolean(default=False)
     action = Many2One(model=Model.Web.Action, one2many='views', nullable=False)
     template = String(nullable=False)
     add_delete = Boolean(default=True)
     add_new = Boolean(default=True)
     add_edit = Boolean(default=True)
     on_change = Many2One(model='Model.Web.View')
+    # list view
+    selectable = Boolean(default=False)
+    # thumbnail view
     border_fieldcolor = String(size=256)
     background_fieldcolor = String(size=256)
 
@@ -195,8 +197,21 @@ class Template:
             html.tostring(template).decode('utf-8'))
 
 
+@register(Mixin.View)  # noqa
+class Multi:
+
+    def get_form_view(self, view):
+        views = [v.id
+                 for v in view.action.views
+                 if v.id != view.id and v.mode == 'Model.Web.View.Form']
+        if views:
+            return views[0]
+
+        return None
+
+
 @register(Model.Web.View)
-class List(Mixin.View):
+class List(Mixin.View, Mixin.View.Multi):
     "List View"
 
     mode_name = 'List'
@@ -286,7 +301,7 @@ class List(Mixin.View):
 
 
 @register(Model.Web.View)
-class Thumbnail(Mixin.View, Mixin.View.Template):
+class Thumbnail(Mixin.View, Mixin.View.Multi, Mixin.View.Template):
     "Thumbnail View"
 
     mode_name = 'Thumbnail'
@@ -303,14 +318,13 @@ class Thumbnail(Mixin.View, Mixin.View.Template):
         fields = [el.attrib.get('name') for el in template.findall('.//field')]
         search = []
         res.update({
-            'onSelect': view.on_change and view.on_change.id,
+            'onSelect': self.get_form_view(view),
             'template': self.encode_to_furetui(template, Model, fields),
             'border_fieldcolor': view.border_fieldcolor,
             'background_fieldcolor': view.background_fieldcolor,
             'search': search,
             'fields': fields,
         })
-        print(res)
         return res
 
 

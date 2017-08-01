@@ -11,10 +11,19 @@ class Action:
     id = Integer(primary_key=True)
     model = String(foreign_key=Model.System.Model.use('name'), nullable=False)
     label = String(nullable=False)
-    selected = Integer()
     add_delete = Boolean(default=True)
     add_new = Boolean(default=True)
     add_edit = Boolean(default=True)
+
+    def get_selected_view_modes(self):
+        return ['Model.Web.View.List', 'Model.Web.View.Thumbnail']
+
+    def get_selected_view(self):
+        View = self.registry.Web.View
+        query = View.query().filter(View.id.in_([v.id for v in self.views]))
+        query = query.filter(View.mode.in_(self.get_selected_view_modes()))
+        query = query.order_by(View.order)
+        return query.first().id
 
     def render(self):
         views = [
@@ -37,10 +46,14 @@ class Action:
                     'unclickable': True,
                 },
             ]
+            selected_view = 'List-%d' % self.id
+        else:
+            selected_view = self.get_selected_view()
 
         return {
             'type': 'UPDATE_ACTION',
             'actionId': str(self.id),
             'label': self.label,
             'views': views,
+            'selected_view': selected_view,
         }
