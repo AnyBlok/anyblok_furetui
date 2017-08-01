@@ -19,12 +19,12 @@
     <template id="AnyBlokSystemBlokForm">
         <h1><field name="name" label=""/></h1>
         <div class="columns">
-            <div class="column is-4 is-6-tablet">
-                <field name="logo" type="File" filename="name"/>
+            <div class="column is-2-desktop is-4-tablet">
+                <field name="logo" type="File" filename="name" label=""/>
                 <call template="AnyBlokSystemBlokButton"/>
-                <call template="AnyBlokSystemBlokState"/>
             </div>
-            <div class="column is-8 is-6-tablet">
+            <div class="column is-10-desktop is-8-tablet">
+                <call template="AnyBlokSystemBlokState"/>
                 <field name="short_description" type="RichText"/>
             </div>
         </div>
@@ -37,7 +37,7 @@
     <template id="AnyBlokSystemBlokThumbnails">
         <h2><field name="name" label=""></h2>
         <div class="columns">
-            <div class="column is-6 is-6-tablet">
+            <div class="column is-6-desktop is-6-tablet">
                 <field name="logo" type="File" filename="name" label=""></field>
                 <call template="AnyBlokSystemBlokButton"/>
             </div>

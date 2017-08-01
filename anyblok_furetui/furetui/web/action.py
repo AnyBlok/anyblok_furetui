@@ -30,7 +30,7 @@ class Action:
             {
                 'viewId': str(v.id),
                 'type': v.mode.split('.')[-1],
-                'unclickable': not v.selectable,
+                'unclickable': v.mode not in self.get_selected_view_modes(),
             }
             for v in self.views
         ]

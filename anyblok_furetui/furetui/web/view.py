@@ -337,6 +337,19 @@ class Form(Mixin.View, Mixin.View.Template):
     def add_template_bind(self, field):
         field.attrib['{%s}config' % field.nsmap['v-bind']] = "config"
 
+    def render(self, view):
+        res = super(Form, self).render(view)
+        Model = self.registry.get(view.action.model)
+        template = self.registry.furetui_views.get_template(
+            view.template, tostring=False)
+        template.tag = 'div'
+        fields = [el.attrib.get('name') for el in template.findall('.//field')]
+        res.update({
+            'template': self.encode_to_furetui(template, Model, fields),
+            'fields': fields,
+        })
+        return res
+
     def bulk_render(self, action, viewType):
         res = super(Form, self).bulk_render(action, viewType)
         Model = self.registry.get(action.model)
