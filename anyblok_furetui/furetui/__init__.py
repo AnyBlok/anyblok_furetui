@@ -8,7 +8,7 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.blok import Blok, BlokManager
 from anyblok_furetui.release import version
-from anyblok_furetui.template import Template
+from .template import Template
 from .pyramid import json_data_adapter, add_mako_and_static
 from logging import getLogger
 logger = getLogger(__name__)

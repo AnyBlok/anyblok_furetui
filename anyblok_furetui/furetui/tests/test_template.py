@@ -1,5 +1,5 @@
 from unittest import TestCase
-from anyblok_furetui.template import Template, TemplateException
+from ..template import Template, TemplateException
 from io import StringIO
 from lxml import html
 
