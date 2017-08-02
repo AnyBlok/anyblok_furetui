@@ -10,6 +10,15 @@ from pyramid.view import view_config
 
 
 @view_config(
+    route_name='furetui_custom_view_logout',
+    request_method="POST",
+    renderer="json"
+)
+def furetui_custom_view_logout(request):
+    return []
+
+
+@view_config(
     route_name='furetui_logout',
     request_method="POST",
     renderer="json"

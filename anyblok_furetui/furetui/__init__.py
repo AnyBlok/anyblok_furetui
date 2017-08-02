@@ -86,6 +86,8 @@ class FuretUIBlok(Blok):
         # config.add_route('furetui_button', '/furetui/button/<buttonId>')
         config.add_route('furetui_custom_view_login',
                          '/furetui/custom/view/Login')
+        config.add_route('furetui_custom_view_logout',
+                         '/furetui/custom/view/Logout')
         config.add_route('furetui_view', '/furetui/view/{viewId}')
         config.add_route('furetui_space', '/furetui/space/{spaceId}')
         config.add_route('furetui_action', '/furetui/action/{actionId}')
