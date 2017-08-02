@@ -152,12 +152,10 @@ class TestViewSpace(PyramidBlokTestCase):
         )
         self.assertEqual(
             resp.json[1],
-            [
-                {
-                    'type': 'UPDATE_ROUTE',
-                    'path': '/space/%d/menu/test1/action/test2' % space_id,
-                },
-            ]
+            {
+                'type': 'UPDATE_ROUTE',
+                'path': '/space/%d/menu/test1/action/test2' % space_id,
+            }
         )
 
     def test_space_with_route_menu(self):
