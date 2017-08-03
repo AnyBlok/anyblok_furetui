@@ -23,7 +23,8 @@ class Action():
     @view_config(route_name="furetui_action")
     def furetui_action(self):
         params = self.request.json_body
-        action = self.registry.Web.Action.query().get(int(params['actionId']))
+        actionId = int(self.request.matchdict['actionId'])
+        action = self.registry.Web.Action.query().get(actionId)
         render = action.render()
         res = [render]
         if not params.get('viewId'):

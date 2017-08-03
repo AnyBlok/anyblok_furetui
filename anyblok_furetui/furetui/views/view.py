@@ -22,13 +22,15 @@ class View():
 
     @view_config(route_name="furetui_view")
     def furetui_action(self):
+        viewId = self.request.matchdict['viewId']
         params = self.request.json_body
         View = self.registry.Web.View
         res = []
         try:
-            view = View.query().get(int(params['viewId']))
-            res.append(view.render())
+            view = View.query().get(int(viewId))
         except ValueError:
             res.append(View.bulk_render(**params))
+        else:
+            res.append(view.render())
 
         return res
