@@ -103,7 +103,9 @@ class Template:
     def get_field_for_(self, field, _type, description):
         field.tag = 'furet-ui-%s-field-%s' % (
             self.mode_name.lower(), _type.lower())
-        for attrib in description:
+        attribs = list(description.keys())
+        attribs.sort()
+        for attrib in attribs:
             if attrib in ('id', 'model', 'type', 'primary_key'):
                 continue
 
