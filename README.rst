@@ -7,11 +7,11 @@
 .. obtain one at http://mozilla.org/MPL/2.0/.
 
 .. image:: https://travis-ci.org/AnyBlok/anyblok_furetui.svg?branch=master
-    :target: https://travis-ci.org/AnyBlok/AnyBlok
+    :target: https://travis-ci.org/AnyBlok/anyblok_furetui
     :alt: Build status
 
 .. image:: https://coveralls.io/repos/github/AnyBlok/anyblok_furetui/badge.svg?branch=master
-    :target: https://coveralls.io/github/AnyBlok/AnyBlok?branch=master
+    :target: https://coveralls.io/github/AnyBlok/anyblok_furetui?branch=master
     :alt: Coverage
 
 .. image:: https://img.shields.io/pypi/v/anyblok_furetui.svg
