@@ -24,10 +24,6 @@ class View:
     # # list view
     # on_change = Many2One(model='Model.Web.View')
     # selectable = Boolean(default=False)
-    # # thumbnail view
-    # on_change = Many2One(model='Model.Web.View')
-    # border_fieldcolor = String(size=256)
-    # background_fieldcolor = String(size=256)
 
     @classmethod
     def get_mode_choices(cls):
@@ -318,6 +314,22 @@ class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
 
     mode_name = 'Thumbnail'
 
+    id = Integer(
+        primary_key=True,
+        foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
+    )
+    # on_change = Many2One(model='Model.Web.View')
+    border_fieldcolor = String(size=256)
+    background_fieldcolor = String(size=256)
+
+    @classmethod
+    def define_mapper_args(cls):
+        mapper_args = super(Thumbnail, cls).define_mapper_args()
+        mapper_args.update({
+            'polymorphic_identity': 'Model.Web.View.Thumbnail',
+        })
+        return mapper_args
+
     def add_template_bind(self, field):
         field.attrib['{%s}data' % field.nsmap['v-bind']] = "card"
 
@@ -345,6 +357,19 @@ class Form(Model.Web.View, Mixin.Template):
     "Form View"
 
     mode_name = 'Form'
+
+    id = Integer(
+        primary_key=True,
+        foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
+    )
+
+    @classmethod
+    def define_mapper_args(cls):
+        mapper_args = super(Form, cls).define_mapper_args()
+        mapper_args.update({
+            'polymorphic_identity': 'Model.Web.View.Form',
+        })
+        return mapper_args
 
     def add_template_bind(self, field):
         field.attrib['{%s}config' % field.nsmap['v-bind']] = "config"
