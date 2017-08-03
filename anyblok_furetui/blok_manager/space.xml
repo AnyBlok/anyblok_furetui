@@ -12,8 +12,7 @@
             <field name="add_new">0</field>
             <field name="add_edit">0</field>
             <field name="views">
-                <record external_id="view_blok_thumbnails">
-                    <field name="mode">Model.Web.View.Thumbnail</field>
+                <record external_id="view_blok_thumbnails" model="Model.Web.View.Thumbnail">
                     <field name="template">AnyBlokSystemBlokThumbnails</field>
                     <field name="border_fieldcolor">
                         (fields.state == 'uninstalled' &amp;&amp; 'red') 
@@ -21,8 +20,7 @@
                         || 'green'
                     </field>
                 </record>
-                <record external_id="view_blok_form">
-                    <field name="mode">Model.Web.View.Form</field>
+                <record external_id="view_blok_form" model="Model.Web.View.Form">
                     <field name="template">AnyBlokSystemBlokForm</field>
                 </record>
             </field>

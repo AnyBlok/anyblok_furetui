@@ -9,10 +9,25 @@ Model = Declarations.Model
 Mixin = Declarations.Mixin
 
 
-@register(Mixin)
-class ViewType:
+@register(Model.Web)
+class View:
+    mode_name = None
 
+    id = Integer(primary_key=True)
+    order = Integer(sequence='web__view_order_seq', nullable=False)
+    action = Many2One(model=Model.Web.Action, one2many='views', nullable=False)
     mode = Selection(selections='get_mode_choices', nullable=False)
+    template = String(nullable=False)
+    add_delete = Boolean(default=True)
+    add_new = Boolean(default=True)
+    add_edit = Boolean(default=True)
+    # # list view
+    # on_change = Many2One(model='Model.Web.View')
+    # selectable = Boolean(default=False)
+    # # thumbnail view
+    # on_change = Many2One(model='Model.Web.View')
+    # border_fieldcolor = String(size=256)
+    # background_fieldcolor = String(size=256)
 
     @classmethod
     def get_mode_choices(cls):
@@ -26,58 +41,37 @@ class ViewType:
             'Model.Web.View.Form': 'Form view',
         }
 
-
-@register(Model.Web)
-class View(Mixin.ViewType):
-
-    id = Integer(primary_key=True)
-    order = Integer(sequence='web__view_order_seq', nullable=False)
-    action = Many2One(model=Model.Web.Action, one2many='views', nullable=False)
-    template = String(nullable=False)
-    add_delete = Boolean(default=True)
-    add_new = Boolean(default=True)
-    add_edit = Boolean(default=True)
-    on_change = Many2One(model='Model.Web.View')
-    # list view
-    selectable = Boolean(default=False)
-    # thumbnail view
-    border_fieldcolor = String(size=256)
-    background_fieldcolor = String(size=256)
+    @classmethod
+    def define_mapper_args(cls):
+        mapper_args = super(View, cls).define_mapper_args()
+        mapper_args.update({
+            'polymorphic_identity': '',
+            'polymorphic_on': cls.mode,
+        })
+        return mapper_args
 
     def render(self):
-        return self.registry.get(self.mode)().render(self)
-
-    @classmethod
-    def bulk_render(cls, actionId=None, viewId=None, **kwargs):
-        action = cls.registry.Web.Action.query().get(int(actionId))
-        view = cls.registry.get('Model.Web.View.' + viewId.split('-')[0])()
-        return view.bulk_render(action, viewId)
-
-
-@register(Mixin)  # noqa
-class View:
-    mode_name = None
-
-    def render(self, view):
         buttons = [{'label': b.label, 'buttonId': b.method}
-                   for b in view.action.buttons + view.buttons
+                   for b in self.action.buttons + self.buttons
                    if b.mode == 'action']
         buttons2 = [{'label': b.label, 'buttonId': b.method}
-                    for b in view.action.buttons + view.buttons
+                    for b in self.action.buttons + self.buttons
                     if b.mode == 'more']
         return {
             'type': 'UPDATE_VIEW',
-            'viewId': str(view.id),
+            'viewId': str(self.id),
             'viewType': self.mode_name,
-            'creatable': view.action.add_new and view.add_new or False,
-            'deletable': view.action.add_delete and view.add_delete or False,
-            'editable': view.action.add_edit and view.add_edit or False,
-            'model': view.action.model,
+            'creatable': self.action.add_new and self.add_new or False,
+            'deletable': self.action.add_delete and self.add_delete or False,
+            'editable': self.action.add_edit and self.add_edit or False,
+            'model': self.action.model,
             'buttons': buttons,
             'onSelect_buttons': buttons2,
         }
 
-    def bulk_render(self, action, viewId):
+    @classmethod
+    def bulk_render(cls, actionId=None, viewId=None, **kwargs):
+        action = cls.registry.Web.Action.query().get(int(actionId))
         buttons = [{'label': b.label, 'buttonId': b.method}
                    for b in action.buttons
                    if b.mode == 'action']
@@ -87,7 +81,7 @@ class View:
         return {
             'type': 'UPDATE_VIEW',
             'viewId': viewId,
-            'viewType': self.mode_name,
+            'viewType': cls.mode_name,
             'creatable': action.add_new or False,
             'deletable': action.add_delete or False,
             'editable': action.add_edit or False,
@@ -97,7 +91,7 @@ class View:
         }
 
 
-@register(Mixin.View)  # noqa
+@register(Mixin)  # noqa
 class Template:
 
     def get_field_for_(self, field, _type, description):
@@ -199,7 +193,7 @@ class Template:
             html.tostring(template).decode('utf-8'))
 
 
-@register(Mixin.View)  # noqa
+@register(Mixin)  # noqa
 class Multi:
 
     def get_form_view(self, view):
@@ -213,10 +207,23 @@ class Multi:
 
 
 @register(Model.Web.View)
-class List(Mixin.View, Mixin.View.Multi):
+class List(Model.Web.View, Mixin.Multi):
     "List View"
 
     mode_name = 'List'
+
+    id = Integer(
+        primary_key=True,
+        foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
+    )
+
+    @classmethod
+    def define_mapper_args(cls):
+        mapper_args = super(List, cls).define_mapper_args()
+        mapper_args.update({
+            'polymorphic_identity': 'Model.Web.View.List',
+        })
+        return mapper_args
 
     def field_for_(self, field):
         res = {
@@ -306,7 +313,7 @@ class List(Mixin.View, Mixin.View.Multi):
 
 
 @register(Model.Web.View)
-class Thumbnail(Mixin.View, Mixin.View.Multi, Mixin.View.Template):
+class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
     "Thumbnail View"
 
     mode_name = 'Thumbnail'
@@ -334,7 +341,7 @@ class Thumbnail(Mixin.View, Mixin.View.Multi, Mixin.View.Template):
 
 
 @register(Model.Web.View)
-class Form(Mixin.View, Mixin.View.Template):
+class Form(Model.Web.View, Mixin.Template):
     "Form View"
 
     mode_name = 'Form'
