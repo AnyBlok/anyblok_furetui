@@ -268,11 +268,14 @@ class List(Mixin.View, Mixin.View.Multi):
     def bulk_render(self, action, viewType):
         res = super(List, self).bulk_render(action, viewType)
         Model = self.registry.get(action.model)
-        fields = self.registry.System.Column.query().filter_by(
-            model=action.model).all().name
+        Column = self.registry.System.Column
+        query = Column.query().filter(Column.model == action.model)
+        fields = query.order_by(Column.name).all().name
         headers = []
         search = []
-        for field_name, field in Model.fields_description(fields).items():
+        fd = Model.fields_description(fields)
+        for field_name in fields:
+            field = fd[field_name]
             if field['type'] == 'FakeColumn':
                 continue
 

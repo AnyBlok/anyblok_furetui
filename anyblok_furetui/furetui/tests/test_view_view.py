@@ -27,8 +27,13 @@ class TestViewView(PyramidBlokTestCase):
                     'creatable': True,
                     'deletable': True,
                     'editable': True,
-                    'fields': ['name', 'table', 'is_sql_model'],
+                    'fields': ['is_sql_model', 'name', 'table'],
                     'headers': [
+                        {
+                            'component': 'furet-ui-list-field-boolean',
+                            'label': 'Is a SQL model',
+                            'name': 'is_sql_model',
+                        },
                         {
                             'component': 'furet-ui-list-field-string',
                             'label': 'Name',
@@ -39,16 +44,16 @@ class TestViewView(PyramidBlokTestCase):
                             'label': 'Table',
                             'name': 'table',
                         },
-                        {
-                            'component': 'furet-ui-list-field-boolean',
-                            'label': 'Is a SQL model',
-                            'name': 'is_sql_model',
-                        },
                     ],
                     'model': 'Model.System.Model',
                     'onSelect': 'Form-%d' % action.id,
                     'onSelect_buttons': [],
                     'search': [
+                        {
+                            'key': 'is_sql_model',
+                            'label': 'Is a SQL model',
+                            'type': 'search',
+                        },
                         {
                             'key': 'name',
                             'label': 'Name',
@@ -57,11 +62,6 @@ class TestViewView(PyramidBlokTestCase):
                         {
                             'key': 'table',
                             'label': 'Table',
-                            'type': 'search',
-                        },
-                        {
-                            'key': 'is_sql_model',
-                            'label': 'Is a SQL model',
                             'type': 'search',
                         },
                     ],
@@ -91,7 +91,6 @@ class TestViewView(PyramidBlokTestCase):
         self.registry.furetui_views.compile()
         webserver = self.webserver
         resp = webserver.post_json('/furetui/view/%d' % view.id, {})
-        self.maxDiff = None
         self.assertEqual(
             resp.json,
             [
