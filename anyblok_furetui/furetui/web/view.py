@@ -214,7 +214,6 @@ class List(Model.Web.View, Mixin.Multi):
         primary_key=True,
         foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
     )
-    # on_change = Many2One(model='Model.Web.View')
     selectable = Boolean(default=False)
 
     @classmethod
@@ -295,9 +294,12 @@ class List(Model.Web.View, Mixin.Multi):
         fd = Model.fields_description()
         fields = list(fd.keys())
         fields.sort()
+        toRemoveFields = []
         for field_name in fields:
             field = fd[field_name]
-            if field['type'] == 'FakeColumn':
+            if field['type'] in ('FakeColumn', 'Many2Many', 'One2Many',
+                                 'Function'):
+                toRemoveFields.append(field_name)
                 continue
 
             meth = 'field_for_' + field['type']
@@ -322,7 +324,7 @@ class List(Model.Web.View, Mixin.Multi):
             'search': search,
             'buttons': [],
             'onSelect_buttons': buttons2,
-            'fields': fields,
+            'fields': [f for f in fields if f not in toRemoveFields],
         })
         return res
 
@@ -415,7 +417,8 @@ class Form(Model.Web.View, Mixin.Template):
             actionId=actionId, viewId=viewId, **kwargs)
         Model = cls.registry.get(action.model)
         fd = Model.fields_description()
-        fields = list(fd.keys())
+        fields = [x for x in fd.keys()
+                  if fd[x]['type'] not in ('FakeColumn', 'Function')]
         fields.sort()
         root = etree.Element("div")
         root.set('class', "columns is-multiline is-mobile")

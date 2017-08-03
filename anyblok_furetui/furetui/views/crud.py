@@ -74,9 +74,10 @@ class ConnectedInitialisation():
                     field, subfield = field
                     _Model = getattr(Model, field).property.mapper.class_
                     if fd[field]['type'] in ('Many2One', 'One2One'):
-                        _pks = getattr(entry, field).to_primary_keys()
-                        data[model][dumps(pks)][field] = dumps(_pks)
-                        self.getDataFor(data, _Model, [_pks], subfield)
+                        if getattr(entry, field):
+                            _pks = getattr(entry, field).to_primary_keys()
+                            data[model][dumps(pks)][field] = dumps(_pks)
+                            self.getDataFor(data, _Model, [_pks], subfield)
                     else:
                         _pks = [x.to_primary_keys()
                                 for x in getattr(entry, field)]
@@ -87,7 +88,8 @@ class ConnectedInitialisation():
                 else:
                     value = getattr(entry, field)
                     if fd[field]['type'] in ('Many2One', 'One2One'):
-                        value = dumps(value.to_primary_keys())
+                        if value:
+                            value = dumps(value.to_primary_keys())
                     elif fd[field]['type'] in ('Many2Many', 'One2Many'):
                         value = [dumps(x.to_primary_keys()) for x in value]
 
