@@ -42,7 +42,24 @@
                     </record>
                     <record external_id="menu_low_level_ui_view">
                         <field name="label">Views</field>
-                        <field name="action" external_id="action_ui_view"/>
+                        <field name="children">
+                            <record external_id="menu_low_level_ui_all_view">
+                                <field name="label">All views</field>
+                                <field name="action" external_id="action_ui_all_view"/>
+                            </record>
+                            <record external_id="menu_low_level_ui_list_view">
+                                <field name="label">List views</field>
+                                <field name="action" external_id="action_ui_list_view"/>
+                            </record>
+                            <record external_id="menu_low_level_ui_thumbnail_view">
+                                <field name="label">Thumbnail views</field>
+                                <field name="action" external_id="action_ui_thumbnail_view"/>
+                            </record>
+                            <record external_id="menu_low_level_ui_form_view">
+                                <field name="label">Form views</field>
+                                <field name="action" external_id="action_ui_form_view"/>
+                            </record>
+                        </field>
                     </record>
                 </field>
             </record>

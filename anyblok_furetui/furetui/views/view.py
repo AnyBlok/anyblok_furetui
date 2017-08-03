@@ -29,7 +29,8 @@ class View():
         try:
             view = View.query().get(int(viewId))
         except ValueError:
-            res.append(View.bulk_render(**params))
+            _View = getattr(View, viewId.split('-')[0])
+            res.append(_View.bulk_render(**params))
         else:
             res.append(view.render())
 

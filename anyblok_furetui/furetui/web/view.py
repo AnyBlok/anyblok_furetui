@@ -2,6 +2,7 @@ from anyblok import Declarations
 from anyblok.column import Integer, Boolean, String, Selection
 from anyblok.relationship import Many2One
 from lxml import etree, html
+from copy import deepcopy
 
 
 register = Declarations.register
@@ -21,9 +22,6 @@ class View:
     add_delete = Boolean(default=True)
     add_new = Boolean(default=True)
     add_edit = Boolean(default=True)
-    # # list view
-    # on_change = Many2One(model='Model.Web.View')
-    # selectable = Boolean(default=False)
 
     @classmethod
     def get_mode_choices(cls):
@@ -50,9 +48,6 @@ class View:
         buttons = [{'label': b.label, 'buttonId': b.method}
                    for b in self.action.buttons + self.buttons
                    if b.mode == 'action']
-        buttons2 = [{'label': b.label, 'buttonId': b.method}
-                    for b in self.action.buttons + self.buttons
-                    if b.mode == 'more']
         return {
             'type': 'UPDATE_VIEW',
             'viewId': str(self.id),
@@ -62,7 +57,6 @@ class View:
             'editable': self.action.add_edit and self.add_edit or False,
             'model': self.action.model,
             'buttons': buttons,
-            'onSelect_buttons': buttons2,
         }
 
     @classmethod
@@ -71,9 +65,6 @@ class View:
         buttons = [{'label': b.label, 'buttonId': b.method}
                    for b in action.buttons
                    if b.mode == 'action']
-        buttons2 = [{'label': b.label, 'buttonId': b.method}
-                    for b in action.buttons
-                    if b.mode == 'more']
         return {
             'type': 'UPDATE_VIEW',
             'viewId': viewId,
@@ -83,16 +74,16 @@ class View:
             'editable': action.add_edit or False,
             'model': action.model,
             'buttons': buttons,
-            'onSelect_buttons': buttons2,
         }
 
 
 @register(Mixin)  # noqa
 class Template:
 
-    def get_field_for_(self, field, _type, description):
+    @classmethod
+    def get_field_for_(cls, field, _type, description):
         field.tag = 'furet-ui-%s-field-%s' % (
-            self.mode_name.lower(), _type.lower())
+            cls.mode_name.lower(), _type.lower())
         attribs = list(description.keys())
         attribs.sort()
         for attrib in attribs:
@@ -107,20 +98,25 @@ class Template:
             else:
                 field.set(attrib, description[attrib])
 
-    def get_field_for_Integer(self, field, description):
-        return self.get_field_for_(field, 'Integer', description)
+    @classmethod
+    def get_field_for_Integer(cls, field, description):
+        return cls.get_field_for_(field, 'Integer', description)
 
-    def get_field_for_SmallInteger(self, field, description):
-        return self.get_field_for_(field, 'Integer', description)
+    @classmethod
+    def get_field_for_SmallInteger(cls, field, description):
+        return cls.get_field_for_(field, 'Integer', description)
 
-    def get_field_for_File(self, field, description):
-        return self.get_field_for_(field, 'File', description)
+    @classmethod
+    def get_field_for_File(cls, field, description):
+        return cls.get_field_for_(field, 'File', description)
 
-    def get_field_for_Sequence(self, field, description):
+    @classmethod
+    def get_field_for_Sequence(cls, field, description):
         description['readonly'] = True
-        return self.get_field_for_(field, 'String', description)
+        return cls.get_field_for_(field, 'String', description)
 
-    def get_field_for_Selection(self, field, description):
+    @classmethod
+    def get_field_for_Selection(cls, field, description):
         selections = {}
         if 'selections' in description:
             selections = description['selections']
@@ -130,44 +126,48 @@ class Template:
             selections = dict(selections)
 
         description['{%s}selections' % field.nsmap['v-bind']] = str(selections)
-        return self.get_field_for_(field, 'Selection', description)
+        return cls.get_field_for_(field, 'Selection', description)
 
-    def get_field_for_UUID(self, field, description):
+    @classmethod
+    def get_field_for_UUID(cls, field, description):
         description['readonly'] = True
-        return self.get_field_for_(field, 'String', description)
+        return cls.get_field_for_(field, 'String', description)
 
-    def replace_buttons(self, template, fields_description):
+    @classmethod
+    def replace_buttons(cls, template, fields_description):
         buttons = template.findall('.//button')
         for el in buttons:
-            el.tag = 'furet-ui-%s-button' % (self.mode_name.lower())
-            self.add_template_bind(el)
+            el.tag = 'furet-ui-%s-button' % (cls.mode_name.lower())
+            cls.add_template_bind(el)
             el.set('{%s}viewId' % el.nsmap['v-bind'], 'viewId')
             el.set('{%s}model' % el.nsmap['v-bind'], 'model')
             el.set('{%s}options' % el.nsmap['v-bind'],
                    el.attrib.get('data-options', '{}'))
             el.set('buttonId', el.attrib.get('data-method', ''))
 
-    def replace_fields(self, template, fields_description):
+    @classmethod
+    def replace_fields(cls, template, fields_description):
         fields = template.findall('.//field')
         for el in fields:
-            fd = fields_description[el.attrib.get('name')]
+            fd = deepcopy(fields_description[el.attrib.get('name')])
             _type = el.attrib.get('type', fd['type'])
             if _type == 'FakeColumn':
                 continue
 
             meth = 'get_field_for_' + _type
-            if hasattr(self, meth):
-                getattr(self, meth)(el, fd)
+            if hasattr(cls, meth):
+                getattr(cls, meth)(el, fd)
             else:
-                self.get_field_for_(el, _type, fd)
+                cls.get_field_for_(el, _type, fd)
 
-            self.add_template_bind(el)
+            cls.add_template_bind(el)
 
-    def update_interface_attributes(self, template, fields_description):
+    @classmethod
+    def update_interface_attributes(cls, template, fields_description):
         for el in template.findall('.//*[@visible-only-if]'):
             if el.tag == 'div':
-                el.tag = 'furet-ui-%s-group' % (self.mode_name.lower())
-                self.add_template_bind(el)
+                el.tag = 'furet-ui-%s-group' % (cls.mode_name.lower())
+                cls.add_template_bind(el)
 
             el.set('invisible', '!(' + el.attrib['visible-only-if'] + ')')
             del el.attrib['visible-only-if']
@@ -175,27 +175,29 @@ class Template:
         #TODO writable-only-if  warning propagation in children
         #TODO not-nullable-only-if  warning propagation in children
 
-    def _encode_to_furetui(self, template, fields_description):
+    @classmethod
+    def _encode_to_furetui(cls, template, fields_description):
         nsmap = {'v-bind': 'https://vuejs.org/'}
         etree.cleanup_namespaces(template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
-        self.update_interface_attributes(template, fields_description)
-        self.replace_fields(template, fields_description)
-        self.replace_buttons(template, fields_description)
+        cls.update_interface_attributes(template, fields_description)
+        cls.replace_fields(template, fields_description)
+        cls.replace_buttons(template, fields_description)
 
-    def encode_to_furetui(self, template, Model, fields):
+    @classmethod
+    def encode_to_furetui(cls, template, Model, fields):
         fields_description = Model.fields_description(fields)
-        self._encode_to_furetui(template, fields_description)
-        return self.registry.furetui_views.decode(
+        cls._encode_to_furetui(template, fields_description)
+        return cls.registry.furetui_views.decode(
             html.tostring(template).decode('utf-8'))
 
 
 @register(Mixin)  # noqa
 class Multi:
 
-    def get_form_view(self, view):
+    def get_form_view(self):
         views = [v.id
-                 for v in view.action.views
-                 if v.id != view.id and v.mode == 'Model.Web.View.Form']
+                 for v in self.action.views
+                 if v.id != self.id and v.mode == 'Model.Web.View.Form']
         if views:
             return views[0]
 
@@ -212,6 +214,8 @@ class List(Model.Web.View, Mixin.Multi):
         primary_key=True,
         foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
     )
+    # on_change = Many2One(model='Model.Web.View')
+    selectable = Boolean(default=False)
 
     @classmethod
     def define_mapper_args(cls):
@@ -221,7 +225,8 @@ class List(Model.Web.View, Mixin.Multi):
         })
         return mapper_args
 
-    def field_for_(self, field):
+    @classmethod
+    def field_for_(cls, field):
         res = {
             'name': field['id'],
             'label': field['label'],
@@ -234,61 +239,72 @@ class List(Model.Web.View, Mixin.Multi):
 
         return res
 
-    def field_for_BigInteger(self, field):
+    @classmethod
+    def field_for_BigInteger(cls, field):
         f = field.copy()
         f['type'] = 'Integer'
-        return self.field_for_(f)
+        return cls.field_for_(f)
 
-    def field_for_SmallInteger(self, field):
+    @classmethod
+    def field_for_SmallInteger(cls, field):
         f = field.copy()
         f['type'] = 'Integer'
-        return self.field_for_(f)
+        return cls.field_for_(f)
 
-    def field_for_LargeBinary(self, field):
+    @classmethod
+    def field_for_LargeBinary(cls, field):
         f = field.copy()
         f['type'] = 'file'
-        return self.field_for_(f)
+        return cls.field_for_(f)
 
-    def field_for_Sequence(self, field):
+    @classmethod
+    def field_for_Sequence(cls, field):
         f = field.copy()
         f['type'] = 'string'
-        res = self.field_for_(f)
+        res = cls.field_for_(f)
         res['readonly'] = True
         return res
 
-    def field_for_Selection(self, field):
+    @classmethod
+    def field_for_Selection(cls, field):
         f = field.copy()
+        if 'selections' not in f:
+            f['selections'] = {}
+
         if isinstance(f['selections'], list):
             f['selections'] = dict(f['selections'])
 
-        return self.field_for_(f)
+        return cls.field_for_(f)
 
-    def field_for_UUID(self, field):
+    @classmethod
+    def field_for_UUID(cls, field):
         f = field.copy()
         f['type'] = 'string'
-        res = self.field_for_(f)
+        res = cls.field_for_(f)
         res['readonly'] = True
         return res
 
-    def bulk_render(self, action, viewType):
-        res = super(List, self).bulk_render(action, viewType)
-        Model = self.registry.get(action.model)
-        Column = self.registry.System.Column
-        query = Column.query().filter(Column.model == action.model)
-        fields = query.order_by(Column.name).all().name
+    @classmethod
+    def bulk_render(cls, actionId=None, viewId=None, **kwargs):
+        action = cls.registry.Web.Action.query().get(int(actionId))
+        res = super(List, cls).bulk_render(
+            actionId=actionId, viewId=viewId, **kwargs)
+        Model = cls.registry.get(action.model)
         headers = []
         search = []
-        fd = Model.fields_description(fields)
+        fd = Model.fields_description()
+        fields = list(fd.keys())
+        fields.sort()
         for field_name in fields:
             field = fd[field_name]
             if field['type'] == 'FakeColumn':
                 continue
 
             meth = 'field_for_' + field['type']
-            if hasattr(self, meth):
-                headers.append(getattr(self, meth)(field))
+            if hasattr(cls, meth):
+                headers.append(getattr(cls, meth)(field))
             else:
-                headers.append(self.field_for_(field))
+                headers.append(cls.field_for_(field))
 
             search.append({
                 'key': field_name,
@@ -296,13 +312,16 @@ class List(Model.Web.View, Mixin.Multi):
                 'type': 'search',
             })
 
+        buttons2 = [{'label': b.label, 'buttonId': b.method}
+                    for b in action.buttons
+                    if b.mode == 'more']
         res.update({
             'selectable': False,
             'onSelect': 'Form-%d' % action.id,
             'headers': headers,
             'search': search,
             'buttons': [],
-            'onSelect_buttons': [],
+            'onSelect_buttons': buttons2,
             'fields': fields,
         })
         return res
@@ -330,22 +349,23 @@ class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
         })
         return mapper_args
 
-    def add_template_bind(self, field):
+    @classmethod
+    def add_template_bind(cls, field):
         field.attrib['{%s}data' % field.nsmap['v-bind']] = "card"
 
-    def render(self, view):
-        res = super(Thumbnail, self).render(view)
-        Model = self.registry.get(view.action.model)
+    def render(self):
+        res = super(Thumbnail, self).render()
+        Model = self.registry.get(self.action.model)
         template = self.registry.furetui_views.get_template(
-            view.template, tostring=False)
+            self.template, tostring=False)
         template.tag = 'div'
         fields = [el.attrib.get('name') for el in template.findall('.//field')]
         search = []
         res.update({
-            'onSelect': self.get_form_view(view),
+            'onSelect': self.get_form_view(),
             'template': self.encode_to_furetui(template, Model, fields),
-            'border_fieldcolor': view.border_fieldcolor,
-            'background_fieldcolor': view.background_fieldcolor,
+            'border_fieldcolor': self.border_fieldcolor,
+            'background_fieldcolor': self.background_fieldcolor,
             'search': search,
             'fields': fields,
         })
@@ -371,14 +391,15 @@ class Form(Model.Web.View, Mixin.Template):
         })
         return mapper_args
 
-    def add_template_bind(self, field):
+    @classmethod
+    def add_template_bind(cls, field):
         field.attrib['{%s}config' % field.nsmap['v-bind']] = "config"
 
-    def render(self, view):
-        res = super(Form, self).render(view)
-        Model = self.registry.get(view.action.model)
+    def render(self):
+        res = super(Form, self).render()
+        Model = self.registry.get(self.action.model)
         template = self.registry.furetui_views.get_template(
-            view.template, tostring=False)
+            self.template, tostring=False)
         template.tag = 'div'
         fields = [el.attrib.get('name') for el in template.findall('.//field')]
         res.update({
@@ -387,11 +408,15 @@ class Form(Model.Web.View, Mixin.Template):
         })
         return res
 
-    def bulk_render(self, action, viewType):
-        res = super(Form, self).bulk_render(action, viewType)
-        Model = self.registry.get(action.model)
-        fields = self.registry.System.Column.query().filter_by(
-            model=action.model).all().name
+    @classmethod
+    def bulk_render(cls, actionId=None, viewId=None, **kwargs):
+        action = cls.registry.Web.Action.query().get(int(actionId))
+        res = super(Form, cls).bulk_render(
+            actionId=actionId, viewId=viewId, **kwargs)
+        Model = cls.registry.get(action.model)
+        fd = Model.fields_description()
+        fields = list(fd.keys())
+        fields.sort()
         root = etree.Element("div")
         root.set('class', "columns is-multiline is-mobile")
         for field_name in fields:
@@ -402,7 +427,7 @@ class Form(Model.Web.View, Mixin.Template):
 
         res.update({
             'onClose': 'List-%d' % action.id,
-            'template': self.encode_to_furetui(root, Model, fields),
+            'template': cls.encode_to_furetui(root, Model, fields),
             'buttons': [],
             'fields': fields,
         })

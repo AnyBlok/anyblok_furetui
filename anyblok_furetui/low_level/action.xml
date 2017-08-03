@@ -27,9 +27,21 @@
         <field name="label">Actions</field>
         <field name="model">Model.Web.Action</field>
     </record>
-    <record external_id="action_ui_view">
-        <field name="label">Views</field>
+    <record external_id="action_ui_all_view">
+        <field name="label">All views</field>
         <field name="model">Model.Web.View</field>
+    </record>
+    <record external_id="action_ui_list_view">
+        <field name="label">List views</field>
+        <field name="model">Model.Web.View.List</field>
+    </record>
+    <record external_id="action_ui_thumbnail_view">
+        <field name="label">Thumbnail views</field>
+        <field name="model">Model.Web.View.Thumbnail</field>
+    </record>
+    <record external_id="action_ui_form_view">
+        <field name="label">Form views</field>
+        <field name="model">Model.Web.View.Form</field>
     </record>
     <record external_id="action_io_mapping">
         <field name="label">Mappings</field>

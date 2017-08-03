@@ -77,8 +77,7 @@ class TestViewView(PyramidBlokTestCase):
         Action = self.registry.Web.Action
         View = self.registry.Web.View
         action = Action.insert(model="Model.System.Model", label="Model")
-        view = View.insert(action=action, template="test_form_model",
-                           mode='Model.Web.View.Form')
+        view = View.Form.insert(action=action, template="test_form_model")
         et = html.fromstring(
             """
                 <template id="test_form_model">
@@ -101,7 +100,6 @@ class TestViewView(PyramidBlokTestCase):
                     'editable': True,
                     'fields': ['name', 'table'],
                     'model': 'Model.System.Model',
-                    'onSelect_buttons': [],
                     'template': (
                         '<div xmlns:v-bind="https://vuejs.org/" '
                         'id="test_form_model"><furet-ui-form-field-string name="name" '
