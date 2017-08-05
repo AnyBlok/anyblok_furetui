@@ -11,6 +11,7 @@ from anyblok_pyramid import current_blok
 from sqlalchemy import or_
 from logging import getLogger
 from json import loads, dumps
+from sqlalchemy.exc import ProgrammingError, InternalError
 
 logger = getLogger(__name__)
 
@@ -150,6 +151,8 @@ class ConnectedInitialisation():
                         search['label'] += ' : ' + params['value']
                         search['value'] = params['value']
                         res.append(search)
+                except (ProgrammingError, InternalError):
+                    self.registry.rollback()
                 except Exception as e:
                     logger.exception(e)
 
