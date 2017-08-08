@@ -8,7 +8,6 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from pyramid.view import view_defaults, view_config
 from anyblok_pyramid import current_blok
-from sqlalchemy import or_
 from logging import getLogger
 from json import loads, dumps
 from sqlalchemy.exc import ProgrammingError, InternalError
@@ -25,38 +24,6 @@ class ConnectedInitialisation():
     def __init__(self, request):
         self.request = request
         self.registry = request.anyblok.registry
-
-    def _rec_filter(self, query, Model, keys, searchText):
-        field = getattr(Model, keys[0])
-        if len(keys) == 1:
-            if isinstance(searchText, list):
-                query = query.filter(or_(*[field.ilike('%' + st + '%')
-                                           for st in searchText]))
-            else:
-                query = query.filter(field.ilike('%' + searchText + '%'))
-        else:
-            query = query.join(field)
-            query = self._rec_filter(
-                query, field.property.mapper.class_, keys[1:], searchText)
-
-        return query
-
-    def getPksFromFilter(self, model, filters):
-        pks = []
-        try:
-            Model = self.registry.get(model)
-            query = Model.query()
-            if filters:
-                for f in filters:
-                    query = self._rec_filter(
-                        query, Model, f['key'].split('.'), f['value']
-                    )
-
-            pks = [x.to_primary_keys() for x in query.all()]
-        except AttributeError as e:
-            logger.exception(e)
-
-        return pks
 
     def getDataFor(self, data, Model, pks_list, fields):  # noqa
         model = Model.__registry_name__
@@ -99,12 +66,12 @@ class ConnectedInitialisation():
     @view_config(route_name="furetui_crud_reads")
     def furetui_crud_reads(self):
         params = self.request.json_body
-        pks = self.getPksFromFilter(params['model'], params['filter'])
+        Model = self.registry.get(params['model'])
+        pks = Model.getPksFromFilters(params['filter'])
         fields = params.get('fields')
         if fields is None or not pks:
             return []
 
-        Model = self.registry.get(params['model'])
         data = {}
         self.getDataFor(data, Model, pks, fields)
         res = [{'type': 'UPDATE_DATA', 'model': m, 'data': d}
