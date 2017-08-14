@@ -112,8 +112,10 @@ class ConnectedInitialisation():
                 try:
                     Model = self.registry.get(search.get('model', params['model']))
                     fieldname = search.get('fieldname', search['key'])
-                    query = Model.query().filter(
-                        getattr(Model, fieldname).ilike('%' + params['value'] + '%'))
+                    query = Model._getPksFromFilterField(
+                        Model.query(), getattr(Model, fieldname),
+                        params.get('operator', 'ilike'), params['value']
+                    )
                     if query.count():
                         search['label'] += ' : ' + params['value']
                         search['value'] = params['value']

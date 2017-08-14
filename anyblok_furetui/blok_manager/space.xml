@@ -19,6 +19,11 @@
                         || (fields.version != fields.installed_version &amp;&amp; 'blue')
                         || 'green'
                     </field>
+                    <field name="searchs">
+                        <record>
+                            <field name="fieldname">version</field>
+                        </record>
+                    </field>
                 </record>
                 <record external_id="view_blok_form" model="Model.Web.View.Form">
                     <field name="template">AnyBlokSystemBlokForm</field>
@@ -28,6 +33,11 @@
                 <record external_id="buttons_blok_manager_reload_all_bloks">
                     <field name="label">Reload all bloks</field>
                     <field name="method">reload_blokmanager</field>
+                </record>
+            </field>
+            <field name="searchs">
+                <record>
+                    <field name="fieldname">name</field>
                 </record>
             </field>
         </field>

@@ -362,13 +362,12 @@ class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
             self.template, tostring=False)
         template.tag = 'div'
         fields = [el.attrib.get('name') for el in template.findall('.//field')]
-        search = []
         res.update({
             'onSelect': self.get_form_view(),
             'template': self.encode_to_furetui(template, Model, fields),
             'border_fieldcolor': self.border_fieldcolor,
             'background_fieldcolor': self.background_fieldcolor,
-            'search': search,
+            'search': self.registry.Web.Action.Search.get_from_view(self),
             'fields': fields,
         })
         return res

@@ -14,12 +14,32 @@ from sqlalchemy import or_
 class Base:
 
     @classmethod
+    def _getPksFromFilterField(cls, query, field, operator, value):
+        raise Exception('No filter for no SQL Model')
+
+    @classmethod
     def getPksFromFilters(cls, filters):
         raise Exception('No filter for no SQL Model')
 
 
 @Declarations.register(Declarations.Core)
 class SqlBase:
+
+    @classmethod
+    def getRemoteModelFor(cls, fieldname):
+        Field = cls.registry.System.Field
+        query = Field.query()
+        models = [cls.__registry_name__]
+        for base in cls.__anyblok_bases__:
+            models.append(base.__registry_name__)
+
+        query = query.filter(Field.model.in_(models))
+        query = query.filter(Field.name == fieldname)
+        field = query.first()
+        if field.remote_model:
+            return cls.registry.get(field.remote_model)
+
+        return None
 
     @classmethod
     def _getPksFromFilterField(cls, query, field, operator, value):
@@ -36,7 +56,7 @@ class SqlBase:
             query = cls._getPksFromFilterField(query, field, operator, value)
         else:
             query = query.join(field)
-            Model = field.property.mapper.class_
+            Model = cls.getRemoteModelFor(keys[0])
             query = Model._getPksFromFilter(query, keys[1:], operator, value)
 
         return query
