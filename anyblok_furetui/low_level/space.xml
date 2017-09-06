@@ -16,15 +16,23 @@
                     </record>
                     <record external_id="menu_low_level_db_field">
                         <field name="label">Fields</field>
-                        <field name="action" external_id="action_db_field"/>
-                    </record>
-                    <record external_id="menu_low_level_db_column">
-                        <field name="label">Columns</field>
-                        <field name="action" external_id="action_db_column"/>
-                    </record>
-                    <record external_id="menu_low_level_db_relationship">
-                        <field name="label">Relation Ships</field>
-                        <field name="action" external_id="action_db_rs"/>
+                        <field name="children">
+                            <record external_id="menu_low_level_db_all_field">
+                                <field name="label">All fields</field>
+                                <field name="action" external_id="action_db_field"/>
+                                <field name="order">1</field>
+                            </record>
+                            <record external_id="menu_low_level_db_column">
+                                <field name="label">Columns</field>
+                                <field name="action" external_id="action_db_column"/>
+                                <field name="order">2</field>
+                            </record>
+                            <record external_id="menu_low_level_db_relationship">
+                                <field name="label">Relation Ships</field>
+                                <field name="action" external_id="action_db_rs"/>
+                                <field name="order">3</field>
+                            </record>
+                        </field>
                     </record>
                 </field>
             </record>
