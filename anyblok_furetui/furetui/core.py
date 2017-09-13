@@ -21,6 +21,18 @@ class Base:
     def getPksFromFilters(cls, filters):
         raise Exception('No filter for no SQL Model')
 
+    @classmethod
+    def get_display_fields(cls, mode=None):
+        raise Exception('No fields for no SQL Model')
+
+    @classmethod
+    def get_default_action(cls, mode=None):
+        raise Exception('No fields for no SQL Model')
+
+    @classmethod
+    def get_default_menu_linked_with_action(cls, action=None, mode=None):
+        raise Exception('No fields for no SQL Model')
+
 
 @Declarations.register(Declarations.Core)
 class SqlBase:
@@ -71,3 +83,55 @@ class SqlBase:
             )
 
         return [x.to_primary_keys() for x in query.all()]
+
+    @classmethod
+    def __get_display_fields(cls, mode=None):
+        if hasattr(cls, '__x2m_display_fields'):
+            if isinstance(cls.__x2m_display_fields, list):
+                return cls.__x2m_display_fields
+
+            return [cls.__x2m_display_fields]
+
+        return []
+
+    @classmethod
+    def __get_display_fields_from_columns(cls, mode=None):
+        Column = cls.registry.System.Column
+        query = Column.query()
+        models = [cls.__registry_name__]
+        for base in cls.__anyblok_bases__:
+            models.append(base.__registry_name__)
+
+        query = query.filter(Column.model.in_(models))
+        query = query.filter(Column.ftype.in_(['String', 'uString']))
+        query = query.order_by(Column.name)
+        fields = query.all().name
+
+        for field in ('title', 'name', 'subject', 'label'):
+            if field in fields:
+                return [field]
+
+        return fields
+
+    @classmethod
+    def get_display_fields(cls, mode=None):
+        fields = cls.__get_display_fields(mode=mode)
+        if not fields:
+            fields = cls.__get_display_fields_from_columns(mode=mode)
+
+        return fields
+
+    @classmethod
+    def get_default_action(cls, mode=None):
+        Action = cls.registry.Web.Action
+        query = Action.query().filter(Action.model == cls.__registry_name__)
+        query = query.limit(1)
+        return query.one_or_none()
+
+    @classmethod
+    def get_default_menu_linked_with_action(cls, action=None, mode=None):
+        Menu = cls.registry.Web.Menu
+        query = Menu.query().filter(Menu.action == action)
+        query = query.order_by(Menu.order)
+        query = query.limit(1)
+        return query.one_or_none()

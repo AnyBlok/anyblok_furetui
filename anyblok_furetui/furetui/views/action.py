@@ -27,7 +27,14 @@ class Action():
         action = self.registry.Web.Action.query().get(actionId)
         render = action.render()
         res = [render]
-        if not params.get('viewId'):
+
+        if params.get('relationship') is True:
+                params['actionId'] = actionId
+                views = [x['viewId']
+                         for x in render['views']
+                         if x['type'] == 'Form']
+                params['viewId'] = views[0]
+        elif not params.get('viewId'):
             params['viewId'] = render['selected_view']
 
         if params.get('menuId'):
