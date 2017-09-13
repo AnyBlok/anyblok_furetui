@@ -130,6 +130,17 @@ class Template:
         return cls.get_field_for_(field, 'Many2One', description, [])
 
     @classmethod
+    def get_field_for_One2Many(cls, field, description, fields2read):
+        Model = cls.registry.get(description['model'])
+        fields = Model.get_display_fields(mode=cls.__registry_name__)
+        action = Model.get_default_action(mode=cls.__registry_name__)
+        print('One2Many', description)
+        description['x2oField'] = None
+        description['{%s}fields' % field.nsmap['v-bind']] = str(views)
+        fields2read.append([description['id'], fields])
+        return cls.get_field_for_(field, 'One2Many', description, [])
+
+    @classmethod
     def get_field_for_Sequence(cls, field, description, fields2read):
         description['readonly'] = True
         return cls.get_field_for_(field, 'String', description, fields2read)
@@ -263,7 +274,7 @@ class List(Model.Web.View, Mixin.Multi):
         return res
 
     @classmethod
-    def field_for_Many2One(cls, field, fields2read):
+    def field_for_relationship(cls, field, fields2read):
         f = field.copy()
         Model = cls.registry.get(f['model'])
         fields = Model.get_display_fields(mode=cls.__registry_name__)
@@ -275,6 +286,24 @@ class List(Model.Web.View, Mixin.Multi):
         f['menuId'] = str(menu.id) if menu else None
         fields2read.append([field['id'], fields])
         return cls.field_for_(f, [])
+
+    @classmethod
+    def field_for_Many2One(cls, field, fields2read):
+        return cls.field_for_relationship(field, fields2read)
+
+    @classmethod
+    def field_for_One2One(cls, field, fields2read):
+        f = field.copy()
+        f['type'] = 'Many2One'
+        return cls.field_for_relationship(field, fields2read)
+
+    @classmethod
+    def field_for_One2Many(cls, field, fields2read):
+        return cls.field_for_relationship(field, fields2read)
+
+    @classmethod
+    def field_for_Many2Many(cls, field, fields2read):
+        return cls.field_for_relationship(field, fields2read)
 
     @classmethod
     def field_for_BigInteger(cls, field, fields2read):
