@@ -252,7 +252,12 @@ class List(Model.Web.View, Mixin.Multi):
         }
         fields2read.append(field['id'])
         for k in field:
-            if k not in ('id', 'label', 'type', 'nullable', 'primary_key'):
+            if k in ('id', 'label', 'type', 'nullable', 'primary_key'):
+                continue
+            elif k == 'model':
+                if field[k]:
+                    res[k] = field[k]
+            else:
                 res[k] = field[k]
 
         return res

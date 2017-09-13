@@ -19,6 +19,7 @@ class TestViewView(PyramidBlokTestCase):
             'actionId': action.id,
             'viewId': 'List-%d' % action.id
         })
+        self.maxDiff = None
         self.assertEqual(
             resp.json,
             [
