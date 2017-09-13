@@ -23,41 +23,18 @@ class Action:
     add_new = Boolean(default=True)
     add_edit = Boolean(default=True)
 
-    def get_selected_view_modes(self):
-        return ['Model.Web.View.List', 'Model.Web.View.Thumbnail']
-
     def get_selected_view(self):
         View = self.registry.Web.View
         query = View.query().filter(View.id.in_([v.id for v in self.views]))
-        query = query.filter(View.mode.in_(self.get_selected_view_modes()))
         query = query.order_by(View.order)
-        return query.first().id
+        return [v.id for v in query.all() if v.unclickable][0]
 
     def render(self):
-        views = [
-            {
-                'viewId': str(v.id),
-                'type': v.mode.split('.')[-1],
-                'unclickable': v.mode not in self.get_selected_view_modes(),
-            }
-            for v in self.views
-        ]
-        if not views:
-            views = [
-                {
-                    'viewId': 'List-%d' % self.id,
-                    'type': 'List',
-                },
-                {
-                    'viewId': 'Form-%d' % self.id,
-                    'type': 'Form',
-                    'unclickable': True,
-                },
-            ]
-            selected_view = 'List-%d' % self.id
-        else:
-            selected_view = self.get_selected_view()
+        views = self.__class__.get_default_views_linked_with_action(
+            action=self)
+        selected_view = views[0]['viewId']
 
+        print(views, selected_view)
         return {
             'type': 'UPDATE_ACTION',
             'actionId': str(self.id),

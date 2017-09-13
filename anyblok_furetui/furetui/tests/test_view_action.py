@@ -26,11 +26,13 @@ class TestViewAction(PyramidBlokTestCase):
                     'views': [
                         {
                             'type': 'List',
+                            'order': 1,
                             'viewId': 'List-%d' % action.id,
                         },
                         {
                             'type': 'Form',
-                            'unclickable': True,
+                            'order': 2,
+                            'unclickable': '1',
                             'viewId': 'Form-%d' % action.id,
                         }
                     ]

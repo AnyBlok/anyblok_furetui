@@ -33,6 +33,10 @@ class Base:
     def get_default_menu_linked_with_action(cls, action=None, mode=None):
         raise Exception('No fields for no SQL Model')
 
+    @classmethod
+    def get_default_views_linked_with_action(cls, action=None, mode=None):
+        raise Exception('No fields for no SQL Model')
+
 
 @Declarations.register(Declarations.Core)
 class SqlBase:
@@ -135,3 +139,32 @@ class SqlBase:
         query = query.order_by(Menu.order)
         query = query.limit(1)
         return query.one_or_none()
+
+    @classmethod
+    def get_default_views_linked_with_action(cls, action=None, mode=None):
+        if action.views:
+            views = [
+                {
+                    'viewId': v.id,
+                    'type': v.mode.split('.')[-1],
+                    'order': v.order,
+                    'unclickable': v.unclickable,
+                }
+                for v in action.views
+            ]
+        else:
+            views = [
+                {
+                    'viewId': 'List-%d' % action.id,
+                    'order': 1,
+                    'type': 'List',
+                },
+                {
+                    'viewId': 'Form-%d' % action.id,
+                    'order': 2,
+                    'type': 'Form',
+                    'unclickable': '1',
+                },
+            ]
+
+        return sorted(views, key=lambda k: k['order'])

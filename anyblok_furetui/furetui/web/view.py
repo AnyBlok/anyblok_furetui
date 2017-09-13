@@ -134,9 +134,10 @@ class Template:
         Model = cls.registry.get(description['model'])
         fields = Model.get_display_fields(mode=cls.__registry_name__)
         action = Model.get_default_action(mode=cls.__registry_name__)
-        print('One2Many', description)
-        description['x2oField'] = None
-        description['{%s}fields' % field.nsmap['v-bind']] = str(views)
+        views = Model.get_default_views_linked_with_action(
+            action=action, mode=cls.__registry_name__)
+        description['x2oField'] = description.pop('remote_name')
+        description['{%s}views' % field.nsmap['v-bind']] = str(views)
         fields2read.append([description['id'], fields])
         return cls.get_field_for_(field, 'One2Many', description, [])
 
@@ -239,6 +240,7 @@ class List(Model.Web.View, Mixin.Multi):
     "List View"
 
     mode_name = 'List'
+    unclickable = False
 
     id = Integer(
         primary_key=True,
@@ -400,6 +402,7 @@ class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
     "Thumbnail View"
 
     mode_name = 'Thumbnail'
+    unclickable = False
 
     id = Integer(
         primary_key=True,
@@ -445,6 +448,7 @@ class Form(Model.Web.View, Mixin.Template):
     "Form View"
 
     mode_name = 'Form'
+    unclickable = True
 
     id = Integer(
         primary_key=True,
