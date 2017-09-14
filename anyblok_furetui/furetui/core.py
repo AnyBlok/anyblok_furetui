@@ -142,29 +142,32 @@ class SqlBase:
 
     @classmethod
     def get_default_views_linked_with_action(cls, action=None, mode=None):
-        if action.views:
-            views = [
-                {
-                    'viewId': v.id,
-                    'type': v.mode.split('.')[-1],
-                    'order': v.order,
-                    'unclickable': v.unclickable,
-                }
-                for v in action.views
-            ]
+        if action:
+            if action.views:
+                views = [
+                    {
+                        'viewId': v.id,
+                        'type': v.mode.split('.')[-1],
+                        'order': v.order,
+                        'unclickable': v.unclickable,
+                    }
+                    for v in action.views
+                ]
+            else:
+                views = [
+                    {
+                        'viewId': 'List-%d' % action.id,
+                        'order': 1,
+                        'type': 'List',
+                    },
+                    {
+                        'viewId': 'Form-%d' % action.id,
+                        'order': 2,
+                        'type': 'Form',
+                        'unclickable': '1',
+                    },
+                ]
         else:
-            views = [
-                {
-                    'viewId': 'List-%d' % action.id,
-                    'order': 1,
-                    'type': 'List',
-                },
-                {
-                    'viewId': 'Form-%d' % action.id,
-                    'order': 2,
-                    'type': 'Form',
-                    'unclickable': '1',
-                },
-            ]
+            views = []
 
         return sorted(views, key=lambda k: k['order'])

@@ -33,8 +33,6 @@ class Action:
         views = self.__class__.get_default_views_linked_with_action(
             action=self)
         selected_view = views[0]['viewId']
-
-        print(views, selected_view)
         return {
             'type': 'UPDATE_ACTION',
             'actionId': str(self.id),
