@@ -10,8 +10,10 @@ Model = Declarations.Model
 class Search:
 
     id = Integer(primary_key=True)
-    action = Many2One(model=Model.Web.Action, one2many='searchs')
-    view = Many2One(model=Model.Web.View, one2many='searchs')
+    action = Many2One(model=Model.Web.Action, one2many='searchs',
+                      foreign_key_options={'ondelete': 'cascade'})
+    view = Many2One(model=Model.Web.View, one2many='searchs',
+                    foreign_key_options={'ondelete': 'cascade'})
     fieldname = String(nullable=False)
     path = String()
     label = String()

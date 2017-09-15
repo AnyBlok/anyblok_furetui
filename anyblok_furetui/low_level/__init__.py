@@ -23,3 +23,7 @@ class LowLevelBlok(Blok):
         """ Update the database """
         self.import_file('xml', 'Model.Web.Action', 'action.xml')
         self.import_file('xml', 'Model.Web.Space', 'space.xml')
+
+    def uninstall(self):
+        self.registry.IO.Mapping.multi_delete(
+            'Model.Web.Space', 'setting_space_low_level', mapping_only=False)

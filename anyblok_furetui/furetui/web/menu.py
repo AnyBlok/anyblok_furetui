@@ -11,8 +11,10 @@ class Menu:
 
     id = Integer(primary_key=True)
     label = String(nullable=False)
-    space = Many2One(model=Web.Space, one2many='menus')
-    parent = Many2One(model='Model.Web.Menu', one2many='children')
+    space = Many2One(model=Web.Space, one2many='menus',
+                     foreign_key_options={'ondelete': 'cascade'})
+    parent = Many2One(model='Model.Web.Menu', one2many='children',
+                      foreign_key_options={'ondelete': 'cascade'})
     order = Integer(nullable=False, default=100)
     icon = String()
     position = Selection(

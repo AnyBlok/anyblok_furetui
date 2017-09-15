@@ -16,7 +16,9 @@ class Space:
     type = Selection(selections=[('client', 'Client'), ('space', 'Space')],
                      default='space', nullable=False)
     order = Integer(nullable=False, default=100)
-    category = Many2One(model="Model.Web.Space.Category", nullable=False)
+    category = Many2One(model="Model.Web.Space.Category", nullable=False,
+                        one2many="spaces",
+                        foreign_key_options={'ondelete': 'cascade'})
     default_menu = Many2One(model='Model.Web.Menu')
     default_action = Many2One(model='Model.Web.Action')
 

@@ -32282,12 +32282,10 @@ var ListViewBase = exports.ListViewBase = _vue2.default.component('furet-ui-list
                 if (view.colors.danger && safe_eval(view.colors.danger, row)) res = 'furetui-list-danger';else if (view.colors.warning && safe_eval(view.colors.warning, row)) res = 'furetui-list-warning';else if (view.colors.success && safe_eval(view.colors.success, row)) res = 'furetui-list-success';else if (view.colors.info && safe_eval(view.colors.info, row)) res = 'furetui-list-info';else if (view.colors.primary && safe_eval(view.colors.danger, row)) res = 'furetui-list-primary';else {
                     var keys = _underscore2.default.without(_underscore2.default.keys(view.colors), 'danger', 'warning', 'success', 'info', 'primary');
                     _underscore2.default.each(keys, function (key) {
-                        console.log(key, view.colors[key], safe_eval(view.colors[key], row));
                         if (safe_eval(view.colors[key], row)) res = 'furetui-list-' + key;
                     });
                 }
             }
-            console.log(' ===> ', res);
             return res;
         }
     }

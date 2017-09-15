@@ -89,30 +89,62 @@ class Blok:
         res = self.convert_path(res)
         return self.convert_rst2html(res)
 
-#    # FIXME install, upgrade and uninstall must relod if they are view
-#    def install_blok(self):
-#        """Hight level method to install one blok"""
-#        self.registry.upgrade(install=[self.name])
-#        return {'action': 'refresh', 'primary_keys': self.to_primary_keys()}
-#
-#    def upgrade_blok(self):
-#        """Hight level method to upgrade one blok"""
-#        self.registry.upgrade(update=[self.name])
-#        return {'action': 'refresh', 'primary_keys': self.to_primary_keys()}
-#
-#    def uninstall_blok(self):
-#        """Hight level method to uninstall one blok"""
-#        self.registry.upgrade(uninstall=[self.name])
-#        if self.name == 'erpblok-blok-manager':
-#            return {'action': 'reload', 'keephash': False}
-#
-#        return {'action': 'refresh', 'primary_keys': self.to_primary_keys()}
+    # FIXME install, upgrade and uninstall must:
+    # * RELOAD: when furetUI component is Modified
+    # * REFRESH: in the other case, just return data
+    @classmethod
+    def furetui_action_when_blok_states_have_changes(cls, viewId=None,
+                                                     entries=None):
+        print(' FIX ME : RELOAD OR REFRESH', viewId, entries)
+        return [{'type': 'RELOAD'}]
 
     @classmethod
-    def reload_blokmanager(cls, *args, **kwargs):
+    def install_blok(cls, entries=None, viewId=None, **kwargs):
+        """Hight level method to install one blok"""
+        if not entries:
+            return []
+
+        cls.registry.upgrade(install=[x.name for x in entries])
+        return cls.furetui_action_when_blok_states_have_changes(
+            viewId=viewId, entries=entries)
+
+    @classmethod
+    def upgrade_blok(cls, entries=None, viewId=None, **kwargs):
+        """Hight level method to upgrade one blok"""
+        if not entries:
+            return []
+
+        cls.registry.upgrade(update=[x.name for x in entries])
+        return cls.furetui_action_when_blok_states_have_changes(
+            viewId=viewId, entries=entries)
+
+    @classmethod
+    def uninstall_blok(cls, entries=None, viewId=None, **kwargs):
+        """Hight level method to uninstall one blok"""
+        if not entries:
+            return []
+
+        bloks = [x.name for x in entries]
+        cls.registry.upgrade(uninstall=bloks)
+        if 'blok_manager' in bloks:
+            return [
+                {
+                    'type': 'UPDATE_ROUTE',
+                    'name': 'homepage',
+                },
+                {
+                    'type': 'RELOAD',
+                },
+            ]
+
+        return cls.furetui_action_when_blok_states_have_changes(
+            viewId=viewId, entries=entries)
+
+    @classmethod
+    def reload_blokmanager(cls, **kwargs):
         """Reload all the  bloks with their code sources"""
         RegistryManager.clear()  # close all the registry
         BlokManager.reload()  # reload all the blok code
         # FIXME BlokManager.reload should close all the registry and
         # forbidden load registry during the reload
-        return {'action': 'reload'}
+        return [{'type': 'RELOAD'}]

@@ -16,7 +16,8 @@ class View:
 
     id = Integer(primary_key=True)
     order = Integer(sequence='web__view_order_seq', nullable=False)
-    action = Many2One(model=Model.Web.Action, one2many='views', nullable=False)
+    action = Many2One(model=Model.Web.Action, one2many='views', nullable=False,
+                      foreign_key_options={'ondelete': 'cascade'})
     mode = Selection(selections='get_mode_choices', nullable=False)
     template = String(nullable=False)
     add_delete = Boolean(default=True)
@@ -165,6 +166,10 @@ class Template:
         return cls.get_field_for_(field, 'String', description, fields2read)
 
     @classmethod
+    def replace_button_in_function_of_view(cls, button):
+        pass
+
+    @classmethod
     def replace_buttons(cls, template, fields_description):
         buttons = template.findall('.//button')
         for el in buttons:
@@ -175,6 +180,7 @@ class Template:
             el.set('{%s}options' % el.nsmap['v-bind'],
                    el.attrib.get('data-options', '{}'))
             el.set('buttonId', el.attrib.get('data-method', ''))
+            cls.replace_button_in_function_of_view(el)
 
     @classmethod
     def replace_fields(cls, template, fields_description, fields2read):
@@ -397,6 +403,17 @@ class List(Model.Web.View, Mixin.Multi):
         return res
 
 
+@register(Model.Web.View.List)
+class Color:
+
+    id = Integer(primary_key=True)
+    list_view = Many2One(model=Model.Web.View.List,
+                         nullable=False, one2many="colors",
+                         foreign_key_options={'ondelete': 'cascade'})
+    name = String(nullable=False)
+    condition = String(nullable=False)
+
+
 @register(Model.Web.View)
 class Thumbnail(Model.Web.View, Mixin.Multi, Mixin.Template):
     "Thumbnail View"
@@ -466,6 +483,10 @@ class Form(Model.Web.View, Mixin.Template):
     @classmethod
     def add_template_bind(cls, field):
         field.attrib['{%s}config' % field.nsmap['v-bind']] = "config"
+
+    @classmethod
+    def replace_button_in_function_of_view(cls, button):
+        button.attrib['{%s}dataId' % button.nsmap['v-bind']] = "dataId"
 
     def render(self):
         res = super(Form, self).render()
