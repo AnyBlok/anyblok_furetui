@@ -14,6 +14,8 @@ logger = getLogger(__name__)
 
 class BlokManager(Blok):
     version = version
+    author = 'Suzanne Jean-Sébastien'
+    logo = '../logo.png'
 
     required = [
         'furetui',
@@ -37,8 +39,7 @@ class BlokManager(Blok):
         self.import_file('xml', 'Model.Web.Space', 'space.xml')
 
     def uninstall(self):
-        self.registry.IO.Mapping.multi_delete(
-            'Model.Web.Space', 'setting_space_blok', mapping_only=False)
-        self.registry.IO.Mapping.multi_delete(
-            'Model.Web.Action', 'action_setting_blok', mapping_only=False)
+        Mapping = self.registry.IO.Mapping
+        Mapping.delete_for_blokname(self.name)
+        Mapping.clean(bloknames=[self.name])
         self.registry.expire_all()

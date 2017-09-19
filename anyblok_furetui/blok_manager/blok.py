@@ -1,11 +1,10 @@
 from anyblok import Declarations
-from anyblok.field import Function
 from anyblok.blok import BlokManager
 from anyblok.registry import RegistryManager
 from docutils.core import publish_programmatically
 from docutils import io
 from rst2html5_ import HTML5Writer
-from os.path import join, isfile
+from os.path import join
 from lxml import html
 
 
@@ -16,20 +15,6 @@ System = Declarations.Model.System
 @Declarations.register(Declarations.Model.System)
 class Blok:
 
-    logo = Function(fget='get_logo')
-
-    def _get_logo_for(self):
-        return {
-            'anyblok-core': {
-                'blok': 'furetui',
-                'path': 'static/images/logo.png',
-            }
-        }
-
-    def get_logo_for(self, blok_name):
-        entries = self._get_logo_for()
-        return entries.get(blok_name)
-
     def get_logo(self):
         """ Return the logo define in blok description
 
@@ -39,24 +24,12 @@ class Blok:
                 logo = 'path/to/the/logo/in/blok'
 
         """
-        blok = BlokManager.get(self.name)
+        file_path = super(Blok, self).get_logo()
+        if not file_path:
+            file_path = join(BlokManager.getPath('blok_manager'),
+                             'static/image/none.png')
 
-        def _get_logo(blok_name, logo_path):
-            path = BlokManager.getPath(blok_name)
-            file_path = join(path, logo_path)
-            if isfile(file_path):
-                return self.registry.Web.Image.filepath2html(file_path)
-            else:
-                return None
-
-        if hasattr(blok, 'logo'):
-            return _get_logo(self.name, blok.logo)
-        else:
-            entry = self.get_logo_for(self.name)
-            if entry:
-                return _get_logo(entry['blok'], entry['path'])
-
-            return _get_logo('blok_manager', 'static/image/none.png')
+        return self.registry.Web.Image.filepath2html(file_path)
 
     def convert_rst2html(self, rst):
         """Convert a rst to html

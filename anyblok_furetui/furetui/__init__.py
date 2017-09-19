@@ -16,13 +16,13 @@ logger = getLogger(__name__)
 
 class FuretUIBlok(Blok):
     version = version
+    author = 'Suzanne Jean-Sébastien'
+    logo = '../logo.png'
 
     required = [
         'anyblok-core',
         'anyblok-io-xml',
     ]
-
-    logo = 'static/images/logo.png'
 
     # if connected
     css = [

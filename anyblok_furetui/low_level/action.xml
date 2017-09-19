@@ -19,6 +19,14 @@
         <field name="label">Relation Ships</field>
         <field name="model">Model.System.RelationShip</field>
     </record>
+    <record external_id="action_db_sequence">
+        <field name="label">Sequences</field>
+        <field name="model">Model.System.Sequence</field>
+    </record>
+    <record external_id="action_db_parameter">
+        <field name="label">Parameters</field>
+        <field name="model">Model.System.Parameter</field>
+    </record>
     <record external_id="action_ui_space">
         <field name="label">Spaces</field>
         <field name="model">Model.Web.Space</field>

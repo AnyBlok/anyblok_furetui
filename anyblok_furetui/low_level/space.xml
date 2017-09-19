@@ -34,6 +34,14 @@
                             </record>
                         </field>
                     </record>
+                    <record external_id="menu_low_level_db_sequence">
+                        <field name="label">Sequences</field>
+                        <field name="action" external_id="action_db_sequence"/>
+                    </record>
+                    <record external_id="menu_low_level_db_parameter">
+                        <field name="label">Parameters</field>
+                        <field name="action" external_id="action_db_parameter"/>
+                    </record>
                 </field>
             </record>
             <record external_id="menu_low_level_ui">

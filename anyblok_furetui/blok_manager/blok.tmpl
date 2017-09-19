@@ -1,17 +1,20 @@
 <templates>
     <template id="AnyBlokSystemBlokButton">
-        <button data-method="install_blok"
-                visible-only-if="fields.state == 'uninstalled'"
-                class="is-success">Install this blok</button>
-        <div visible-only-if="fields.state != 'uninstalled'">
-            <button data-method="uninstall_blok"
-                    class="is-danger">Uninstall this blok</button>
-            <button data-method="upgrade_blok"
-                    visible-only-if="fields.version != fields.installed_version"
-            >Upgrade this blok</button>
+        <div class="field is-grouped is-grouped-centered">
+            <button data-method="install_blok"
+                    visible-only-if="fields.state == 'uninstalled'"
+                    class="is-success">Install</button>
+            <div visible-only-if="fields.state != 'uninstalled'">
+                <button data-method="uninstall_blok"
+                        class="is-danger">Uninstall</button>
+                <button data-method="upgrade_blok"
+                        visible-only-if="fields.version != fields.installed_version"
+                >Upgrade</button>
+            </div>
         </div>
     </template>
     <template id="AnyBlokSystemBlokState">
+        <field name="author"/>
         <field name="state"/>
         <field name="version" visible-only-if="fields.version != fields.installed_version"/>
         <field name="installed_version" visible-only-if="fields.state != 'uninstalled'"/>
@@ -38,7 +41,9 @@
         <h2><field name="name" label=""></h2>
         <div class="columns">
             <div class="column is-6-desktop is-6-tablet">
-                <field name="logo" type="File" filename="name" label=""></field>
+                <div class="card-image">
+                    <field name="logo" type="File" filename="name" label=""></field>
+                </div>
                 <call template="AnyBlokSystemBlokButton"/>
             </div>
             <div class="column is-5 is-6-tablet">
