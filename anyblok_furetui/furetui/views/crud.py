@@ -130,6 +130,33 @@ class ConnectedInitialisation():
 
         return res
 
+    @view_config(route_name="furetui_crud_delete")
+    def furetui_crud_delete(self):
+        params = self.request.json_body
+        Model = self.registry.get(params['model'])
+        for pks in params['dataIds']:
+            Model.query().filter_by(**loads(pks)).delete(
+                synchronize_session='fetch')
+
+        res = [{
+            'type': 'DELETE_DATA',
+            'model': params['model'],
+            'dataIds': params['dataIds'],
+        }]
+
+        if params.get('path'):
+            path = ['', 'space', str(params['path']['spaceId'])]
+            if params['path'].get('menuId'):
+                path.extend(['menu', str(params['path']['menuId'])])
+            path.extend(['action', str(params['path']['actionId'])])
+            path.extend(['view', str(params['path']['viewId'])])
+            res.append({
+                'type': 'UPDATE_ROUTE',
+                'path': '/'.join(path),
+            })
+
+        return res
+
     @view_config(route_name="furetui_x2m_get")
     def furetui_x2m_get(self):
         params = self.request.json_body

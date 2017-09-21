@@ -101,7 +101,7 @@ class FuretUIBlok(Blok):
         config.add_route('furetui_crud_reads', '/furetui/data/read')
         config.add_route('furetui_crud_read', '/furetui/data/read/{dataId}')
         # config.add_route('furetui_crud_update', '/furetui/data/update')
-        # config.add_route('furetui_crud_delete', '/furetui/data/delete')
+        config.add_route('furetui_crud_delete', '/furetui/data/delete')
         config.add_route('furetui_crud_search', '/furetui/data/search')
         config.add_route('furetui_login', '/furetui/client/login')
         config.add_route('furetui_logout', '/furetui/client/logout')
