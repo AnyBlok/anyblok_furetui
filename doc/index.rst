@@ -11,6 +11,7 @@ Welcome to AnyBlok / FuretUI's documentation!
    :caption: Contents:
 
    FRONT.rst
+   BLOKS.rst
    CHANGES.rst
    LICENSE.rst
 

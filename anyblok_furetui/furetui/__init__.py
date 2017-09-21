@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 class FuretUIBlok(Blok):
     version = version
     author = 'Suzanne Jean-Sébastien'
-    logo = '../logo.png'
+    logo = 'static/images/logo.png'
 
     required = [
         'anyblok-core',

@@ -1,0 +1,3 @@
+include doc/*.rst
+recursive-include anyblok_furetui */*.rst
+recursive-include anyblok_furetui */static/images/*.png
