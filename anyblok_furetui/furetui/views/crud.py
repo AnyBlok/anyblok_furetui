@@ -129,3 +129,16 @@ class ConnectedInitialisation():
                 res.append(search)
 
         return res
+
+    @view_config(route_name="furetui_x2m_get")
+    def furetui_x2m_get(self):
+        params = self.request.json_body
+        fields = params.get('fields')
+        if fields is None:
+            return []
+
+        Model = self.registry.get(params['model'])
+        data = {}
+        self.getDataFor(data, Model, [loads(x) for x in params['dataIds']], fields)
+        return [{'type': 'UPDATE_DATA', 'model': m, 'data': d}
+                for m, d in data.items()]

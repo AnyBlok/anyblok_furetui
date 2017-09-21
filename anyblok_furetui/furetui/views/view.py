@@ -21,17 +21,18 @@ class View():
         self.registry = request.anyblok.registry
 
     @view_config(route_name="furetui_view")
-    def furetui_action(self):
+    def furetui_view(self):
         viewId = self.request.matchdict['viewId']
         params = self.request.json_body
-        View = self.registry.Web.View
+        return [self.registry.Web.View.get_view_render(viewId, params)]
+
+    @view_config(route_name="furetui_x2m_view")
+    def furetui_x2m_view(self):
+        params = self.request.json_body
         res = []
-        try:
-            view = View.query().get(int(viewId))
-        except ValueError:
-            _View = getattr(View, viewId.split('-')[0])
-            res.append(_View.bulk_render(**params))
-        else:
-            res.append(view.render())
+        for viewId in params.pop('viewIds', []):
+            _params = params.copy()
+            _params['viewId'] = viewId
+            res.append(self.registry.Web.View.get_view_render(viewId, _params))
 
         return res

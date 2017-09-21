@@ -47,6 +47,14 @@
         <field name="label">All views</field>
         <field name="model">Model.Web.View</field>
     </record>
+    <record external_id="action_ui_button">
+        <field name="label">Buttons</field>
+        <field name="model">Model.Web.Action.Button</field>
+    </record>
+    <record external_id="action_ui_search">
+        <field name="label">Searchs</field>
+        <field name="model">Model.Web.Action.Search</field>
+    </record>
     <record external_id="action_ui_list_view">
         <field name="label">List views</field>
         <field name="model">Model.Web.View.List</field>

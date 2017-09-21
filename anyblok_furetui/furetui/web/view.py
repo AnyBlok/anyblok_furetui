@@ -77,6 +77,18 @@ class View:
             'buttons': buttons,
         }
 
+    @classmethod
+    def get_view_render(cls, viewId, params):
+        try:
+            view = cls.query().get(int(viewId))
+        except ValueError:
+            _View = getattr(cls, viewId.split('-')[0])
+            if 'actionId' not in params:
+                params['actionId'] = viewId.split('-')[-1]
+            return _View.bulk_render(**params)
+        else:
+            return view.render()
+
 
 @register(Mixin)  # noqa
 class Template:
@@ -133,14 +145,12 @@ class Template:
     @classmethod
     def get_field_for_One2Many(cls, field, description, fields2read):
         Model = cls.registry.get(description['model'])
-        fields = Model.get_display_fields(mode=cls.__registry_name__)
         action = Model.get_default_action(mode=cls.__registry_name__)
         views = Model.get_default_views_linked_with_action(
             action=action, mode=cls.__registry_name__)
         description['x2oField'] = description.pop('remote_name')
         description['{%s}views' % field.nsmap['v-bind']] = str(views)
-        fields2read.append([description['id'], fields])
-        return cls.get_field_for_(field, 'One2Many', description, [])
+        return cls.get_field_for_(field, 'One2Many', description, fields2read)
 
     @classmethod
     def get_field_for_Sequence(cls, field, description, fields2read):
