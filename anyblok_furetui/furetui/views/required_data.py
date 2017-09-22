@@ -13,6 +13,7 @@ from anyblok_pyramid import current_blok
 class InitialisationMixin:
 
     def getDisconnectedInitialisation(self):
+        """Defined the main display of FuretUI when nobody is connected"""
         return [
             {
                 'type': 'UPDATE_RIGHT_MENU',
@@ -52,6 +53,7 @@ class InitialisationMixin:
 class DisconnectedInitialisation(InitialisationMixin):
     @view_config(route_name="furetui_required_data")
     def required_data(self):
+        """Return the required data"""
         return self.getDisconnectedInitialisation()
 
 
@@ -66,10 +68,12 @@ class ConnectedInitialisation(InitialisationMixin):
         self.registry = request.anyblok.registry
 
     def getLeftMenu(self, res):
+        """Return The available ``Model.Space``"""
         params = self.request.json_body
         return self.registry.Web.Space.getSpaces(res, params)
 
     def getRightMenu(self, res):
+        """Return the rigth menu information"""
         res.append({
             'type': 'UPDATE_RIGHT_MENU',
             'value': {
@@ -98,6 +102,11 @@ class ConnectedInitialisation(InitialisationMixin):
 
     @view_config(route_name="furetui_required_data")
     def required_data(self):
+        """Return the required data
+
+        Check in the session if the user is connected and return left and right
+        menus else return the disconnect data
+        """
         state = self.request.session.get('state')
         if state == 'connected':
             res = []

@@ -45,8 +45,6 @@ def get_static(static_type):
 @view_config(route_name='furetui_main')
 def load_main(request):
     """ Return the client main page
-
-    .. http:get:: /
     """
     dbname = Configuration.get('get_db_name')(request)
     state = request.session.get('state')
