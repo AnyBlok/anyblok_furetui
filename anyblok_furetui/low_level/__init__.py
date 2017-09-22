@@ -21,6 +21,10 @@ class LowLevelBlok(Blok):
         'furetui',
     ]
 
+    views = [
+        'db.tmpl',
+    ]
+
     def update(self, latest_version):
         """ Update the database """
         self.import_file('xml', 'Model.Web.Action', 'action.xml')

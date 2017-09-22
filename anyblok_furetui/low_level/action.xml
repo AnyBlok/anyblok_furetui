@@ -6,6 +6,27 @@
         <field name="add_new">False</field>
         <field name="add_edit">False</field>
         <field name="add_delete">False</field>
+        <field name="views">
+            <record external_id="action_db_model_list" model="Model.Web.View.List">
+                <field name="template">AnyBlokSystemModelList</field>
+                <field name="default_sort">name desk</field>
+                <field name="searchs">
+                    <record>
+                        <field name="fieldname">name</field>
+                        <field name="fieldname">table</field>
+                    </record>
+                </field>
+                <field name="colors">
+                    <record>
+                        <field name="name">orange</field>
+                        <field name="condition">!fields.is_sql_model</field>
+                    </record>
+                </field>
+            </record>
+            <record external_id="action_db_model_form" model="Model.Web.View.Form">
+                <field name="template">AnyBlokSystemModelForm</field>
+            </record>
+        </field>
     </record>
     <record external_id="action_db_field">
         <field name="label">Fields</field>

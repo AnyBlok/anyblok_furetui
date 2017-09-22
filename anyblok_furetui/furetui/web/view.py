@@ -3,6 +3,7 @@ from anyblok.column import Integer, Boolean, String, Selection
 from anyblok.relationship import Many2One
 from lxml import etree, html
 from copy import deepcopy
+from simplejson import loads
 
 
 register = Declarations.register
@@ -263,6 +264,7 @@ class List(Model.Web.View, Mixin.Multi):
         foreign_key=Model.Web.View.use('id').options(ondelete="CASCADE")
     )
     selectable = Boolean(default=False)
+    default_sort = String()
 
     @classmethod
     def define_mapper_args(cls):
@@ -273,16 +275,27 @@ class List(Model.Web.View, Mixin.Multi):
         return mapper_args
 
     @classmethod
-    def field_for_(cls, field, fields2read):
+    def field_for_(cls, field, fields2read, **kwargs):
         res = {
             'name': field['id'],
             'label': field['label'],
             'component': 'furet-ui-list-field-' + field['type'].lower(),
         }
+        if 'sortable' in kwargs:
+            field['sortable'] = bool(eval(kwargs['sortable'], {}, {}))
+        if 'help' in kwargs:
+            field['tooltip'] = kwargs['help']
+
         fields2read.append(field['id'])
         for k in field:
-            if k in ('id', 'label', 'type', 'nullable', 'primary_key'):
+            if k in ('id', 'label', 'nullable', 'primary_key'):
                 continue
+            elif k == 'type':
+                res['numeric'] = (
+                    True if field['type'] in ('Integer', 'Float', 'Decimal')
+                    else False
+                )
+
             elif k == 'model':
                 if field[k]:
                     res[k] = field[k]
@@ -292,79 +305,109 @@ class List(Model.Web.View, Mixin.Multi):
         return res
 
     @classmethod
-    def field_for_relationship(cls, field, fields2read):
+    def field_for_relationship(cls, field, fields2read, **kwargs):
         f = field.copy()
         Model = cls.registry.get(f['model'])
-        fields = Model.get_display_fields(mode=cls.__registry_name__)
-        action = Model.get_default_action(mode=cls.__registry_name__)
-        menu = Model.get_default_menu_linked_with_action(
-            action=action, mode=cls.__registry_name__)
-        f['display'] = " + ', ' + ".join(['fields.' + x for x in fields])
+        Mapping = cls.registry.IO.Mapping
+        if 'display' in kwargs:
+            display = kwargs['display']
+            for op in ('!=', '==', '<', '<=', '>', '>='):
+                display = display.replace(op, ' ')
+
+            display = display.replace('!', '')
+            fields = []
+            for d in display:
+                if 'fields.' in d:
+                    fields.append(d.split('.')[1])
+
+            f['display'] = kwargs['display']
+            del kwargs['display']
+        else:
+            fields = Model.get_display_fields(mode=cls.__registry_name__)
+            f['display'] = " + ', ' + ".join(['fields.' + x for x in fields])
+
+        if 'action' in kwargs:
+            action = Mapping.get('Model.Web.Action', kwargs['action'])
+            del kwargs['action']
+        else:
+            action = Model.get_default_action(mode=cls.__registry_name__)
+
+        if 'menu' in kwargs:
+            menu = Mapping.get('Model.Web.Menu', kwargs['menu'])
+            del kwargs['menu']
+        else:
+            menu = Model.get_default_menu_linked_with_action(
+                action=action, mode=cls.__registry_name__)
+
         f['actionId'] = str(action.id) if action else None
         f['menuId'] = str(menu.id) if menu else None
         fields2read.append([field['id'], fields])
-        return cls.field_for_(f, [])
+        return cls.field_for_(f, [], **kwargs)
 
     @classmethod
-    def field_for_Many2One(cls, field, fields2read):
-        return cls.field_for_relationship(field, fields2read)
+    def field_for_Many2One(cls, field, fields2read, **kwargs):
+        return cls.field_for_relationship(field, fields2read, **kwargs)
 
     @classmethod
-    def field_for_One2One(cls, field, fields2read):
+    def field_for_One2One(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'Many2One'
-        return cls.field_for_relationship(field, fields2read)
+        return cls.field_for_relationship(field, fields2read, **kwargs)
 
     @classmethod
-    def field_for_One2Many(cls, field, fields2read):
-        return cls.field_for_relationship(field, fields2read)
+    def field_for_One2Many(cls, field, fields2read, **kwargs):
+        return cls.field_for_relationship(field, fields2read, **kwargs)
 
     @classmethod
-    def field_for_Many2Many(cls, field, fields2read):
-        return cls.field_for_relationship(field, fields2read)
+    def field_for_Many2Many(cls, field, fields2read, **kwargs):
+        return cls.field_for_relationship(field, fields2read, **kwargs)
 
     @classmethod
-    def field_for_BigInteger(cls, field, fields2read):
+    def field_for_BigInteger(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'Integer'
-        return cls.field_for_(f, fields2read)
+        return cls.field_for_(f, fields2read, **kwargs)
 
     @classmethod
-    def field_for_SmallInteger(cls, field, fields2read):
+    def field_for_SmallInteger(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'Integer'
-        return cls.field_for_(f, fields2read)
+        return cls.field_for_(f, fields2read, **kwargs)
 
     @classmethod
-    def field_for_LargeBinary(cls, field, fields2read):
+    def field_for_LargeBinary(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'file'
-        return cls.field_for_(f, fields2read)
+        return cls.field_for_(f, fields2read, **kwargs)
 
     @classmethod
-    def field_for_Sequence(cls, field, fields2read):
+    def field_for_Sequence(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'string'
-        res = cls.field_for_(f, fields2read)
+        res = cls.field_for_(f, fields2read, **kwargs)
         res['readonly'] = True
         return res
 
     @classmethod
-    def field_for_Selection(cls, field, fields2read):
+    def field_for_Selection(cls, field, fields2read, **kwargs):
         f = field.copy()
+        if 'selections' in kwargs:
+            f['selections'] = loads(kwargs['selections'])
+            del kwargs['selections']
+
         if 'selections' not in f:
             f['selections'] = {}
 
         if isinstance(f['selections'], list):
             f['selections'] = dict(f['selections'])
 
-        return cls.field_for_(f, fields2read)
+        return cls.field_for_(f, fields2read, **kwargs)
 
     @classmethod
-    def field_for_UUID(cls, field, fields2read):
+    def field_for_UUID(cls, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'string'
-        res = cls.field_for_(f, fields2read)
+        res = cls.field_for_(f, fields2read, **kwargs)
         res['readonly'] = True
         return res
 
@@ -408,6 +451,47 @@ class List(Model.Web.View, Mixin.Multi):
             'search': search,
             'buttons': [],
             'onSelect_buttons': buttons2,
+            'fields': fields2read,
+        })
+        return res
+
+    def render(self):
+        res = super(List, self).render()
+        Model = self.registry.get(self.action.model)
+        fd = Model.fields_description()
+        template = self.registry.furetui_views.get_template(
+            self.template, tostring=False)
+        fields2read = []
+        headers = []
+        for field in template.findall('.//field'):
+            attributes = deepcopy(field.attrib)
+            field = fd[attributes.pop('name')]
+            _type = attributes.pop('type', field['type'])
+            meth = 'field_for_' + _type
+            if hasattr(self.__class__, meth):
+                headers.append(getattr(self.__class__, meth)(
+                    field, fields2read, **attributes))
+            else:
+                headers.append(self.__class__.field_for_(
+                    field, fields2read, **attributes))
+
+        buttons = [{'label': b.label, 'buttonId': b.method}
+                   for b in self.action.buttons
+                   if b.mode == 'action']
+        buttons2 = [{'label': b.label, 'buttonId': b.method}
+                    for b in self.action.buttons
+                    if b.mode == 'more']
+        colors = {c.name: c.condition for c in self.colors}
+        res.update({
+            'onSelect': self.get_form_view(),
+            'selectable': self.selectable,
+            'default_sort': self.default_sort.split(' '),
+            'empty': '',  # TODO
+            'headers': headers,
+            'search': self.registry.Web.Action.Search.get_from_view(self),
+            'buttons': buttons,
+            'onSelect_buttons': buttons2,
+            'colors': colors,
             'fields': fields2read,
         })
         return res
