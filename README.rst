@@ -26,8 +26,12 @@
 AnyBlok
 =======
 
-It is integration of the client FuretUI for AnyBlok
+|furetui|
+
+FuretUI is a web client for AnyBlok.
 
 anyblok_furetui is released under the terms of the `Mozilla Public License`.
 
 See the `latest documentation <http://furetui.anyblok.org/>`_
+
+.. |furetui| image:: anyblok_furetui/furetui/static/images/logo.png
