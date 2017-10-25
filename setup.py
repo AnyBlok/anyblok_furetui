@@ -18,6 +18,7 @@ requires = [
     'pyramid_mako',
     'rst2html5',
     'python-magic',
+    'simplejson',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
