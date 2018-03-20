@@ -9,7 +9,7 @@
         <field name="views">
             <record external_id="action_db_model_list" model="Model.Web.View.List">
                 <field name="template">AnyBlokSystemModelList</field>
-                <field name="default_sort">name desk</field>
+                <field name="default_sort">name desc</field>
                 <field name="searchs">
                     <record>
                         <field name="fieldname">name</field>
