@@ -109,7 +109,9 @@ class Template:
                 continue
 
             if attrib == 'nullable':
-                field.set('required', '1' if description[attrib] else '0')
+                field.set('required', '0' if description[attrib] else '1')
+            elif attrib == 'readonly':
+                field.set('readonly', '1' if description[attrib] else '0')
             elif attrib == 'model':
                 if description[attrib]:
                     field.set(attrib, description[attrib])
