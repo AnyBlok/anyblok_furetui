@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<records>
-    <record external_id="setting_space_category">
-        <field name="label">Setting</field>
-        <field name="icon">fa-wrench</field>
-        <field name="order">1000</field>
-    </record>
-</records>

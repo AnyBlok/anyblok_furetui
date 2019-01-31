@@ -47,7 +47,7 @@ class Template:
         res = ''.join(res)
         return res.strip()
 
-    def get_template(self, name, tostring=True):
+    def get_template(self, name, tostring=True, first_children=False):
         """return a specific template
 
         :param name: name of the template
@@ -58,6 +58,8 @@ class Template:
             tmpl.tag = 'script'
             if tmpl.attrib.get('type') is None:
                 tmpl.set('type', 'text/html')
+        elif first_children:
+            tmpl = tmpl.getchildren()[0]
 
         if tostring:
             res = html.tostring(tmpl)
