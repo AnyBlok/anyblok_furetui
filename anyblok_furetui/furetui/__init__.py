@@ -25,18 +25,19 @@ class FuretUIBlok(Blok):
     ]
 
     css = [
-        'components/plop.css',
     ]
     js = [
         'components/about.js',
-        'components/plop.js',
+        'components/homepage.js',
+        'components/app.js',
     ]
 
     views = [
     ]
     components = [
         'components/about.tmpl',
-        'components/plop.tmpl',
+        'components/homepage.tmpl',
+        'components/app.tmpl',
     ]
 
     def load(self):
