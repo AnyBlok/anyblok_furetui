@@ -30,6 +30,8 @@ class FuretUIBlok(Blok):
         'components/about.js',
         'components/homepage.js',
         'components/app.js',
+        'components/login.js',
+        'components/logout.js',
     ]
 
     views = [
@@ -38,6 +40,8 @@ class FuretUIBlok(Blok):
         'components/about.tmpl',
         'components/homepage.tmpl',
         'components/app.tmpl',
+        'components/login.tmpl',
+        'components/logout.tmpl',
     ]
 
     def load(self):
@@ -75,11 +79,14 @@ class FuretUIBlok(Blok):
     @classmethod
     def import_declaration_module(cls):
         from . import furetui  # noqa
+        from . import menus  # noqa
 
     @classmethod
     def reload_declaration_module(cls, reload):
         from . import furetui
         reload(furetui)
+        from . import menus
+        reload(menus)
 
     @classmethod
     def pyramid_load_config(cls, config):

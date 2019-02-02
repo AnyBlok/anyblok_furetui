@@ -40,15 +40,16 @@ class FuretUI:
 
     @classmethod
     def get_user_menu(cls, authenticated_userid):
-        # TODO add user menus
-        return []
+        return cls.registry.FuretUI.Menu.User.get_for(authenticated_userid)
 
     @classmethod
     def get_spaces_menu(cls, authenticated_userid, default_space):
-        # TODO add spaces menu
-        return []
+        return cls.registry.FuretUI.Menu.Space.get_for(authenticated_userid)
 
     @classmethod
     def get_space_menus(cls, authenticated_userid, default_space):
-        # TODO add space menus
-        return []
+        if not default_space:
+            return []
+
+        return cls.registry.FuretUI.Menu.SpaceMenu.get_for(
+            authenticated_userid, default_space)

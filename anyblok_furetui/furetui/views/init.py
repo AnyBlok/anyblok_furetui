@@ -18,7 +18,7 @@ def get_global_init(request):
     FuretUI = registry.FuretUI
     authenticated_userid = request.authenticated_userid
     default_spaces_menu = FuretUI.get_default_space(authenticated_userid)
-    return {
+    res = {
         'templates': FuretUI.get_templates(),
         'js': FuretUI.get_js_files(),
         'css': FuretUI.get_css_files(),
@@ -31,6 +31,7 @@ def get_global_init(request):
                                                   default_spaces_menu),
         },
     }
+    return res
 
 
 static = Service(name='furet_ui_js_file',
