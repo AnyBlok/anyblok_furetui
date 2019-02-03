@@ -9,6 +9,7 @@
 from anyblok.blok import Blok, BlokManager
 from anyblok_furetui.release import version
 from .template import Template
+from os.path import join
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -45,7 +46,6 @@ class FuretUIBlok(Blok):
     ]
 
     def load(self):
-        from os.path import join
         tmpl_views = Template()
         tmpl_components = Template()
         js = []
@@ -90,4 +90,8 @@ class FuretUIBlok(Blok):
 
     @classmethod
     def pyramid_load_config(cls, config):
+        blok_path = BlokManager.getPath('furetui')
+        path = join(blok_path, 'static', 'furet-ui')
+        config.add_static_view('furet-ui/js', join(path, 'js'))
+        config.add_static_view('furet-ui/css', join(path, 'css'))
         config.scan(cls.__module__ + '.views')
