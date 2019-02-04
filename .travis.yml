@@ -40,7 +40,7 @@ env:
 
 script:
   - flake8 anyblok_furetui
-  - psql -c 'create database travis_ci_test;' -U postgres
+  - anyblok_createdb --install-bloks furetui
   - py.test --cov-report= --cov=anyblok_furetui anyblok_furetui
   
 after_success:
