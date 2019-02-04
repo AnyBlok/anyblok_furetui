@@ -8,7 +8,7 @@ from lxml import html
 class TestWebTemplate:
 
     @pytest.fixture(autouse=True)
-    def registry_rest_api_1(self, request):
+    def init_template(self, request):
         self.Template = Template()
 
     def format_element(self, element):

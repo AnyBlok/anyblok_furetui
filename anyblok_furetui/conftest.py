@@ -61,3 +61,20 @@ def rollback_registry(request, init_session):
             registry.rollback()
 
     request.addfinalizer(clean_up)
+
+
+# Pyramid
+from webtest import TestApp  # noqa
+from anyblok_pyramid.pyramid_config import Configurator  # noqa
+
+
+@pytest.fixture(scope="session")
+def webserver(request, init_session):
+    config = Configurator()
+    config.include_from_entry_point()
+    # No param here # for includeme in self.includemes:
+    # No param here #     config.include(includeme)
+
+    config.load_config_bloks()
+    app = config.make_wsgi_app()
+    return TestApp(app)
