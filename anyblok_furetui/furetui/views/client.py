@@ -29,6 +29,7 @@ init = Service(name='init_furet_ui',
 
 @init.get()
 def get_global_init(request):
+    # TODO call cached pre_load
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
     authenticated_userid = request.authenticated_userid

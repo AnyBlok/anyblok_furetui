@@ -8,7 +8,6 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.blok import Blok, BlokManager
 from anyblok_furetui.release import version
-from .template import Template
 from os.path import join
 from logging import getLogger
 
@@ -46,35 +45,7 @@ class FuretUIBlok(Blok):
     ]
 
     def load(self):
-        tmpl_views = Template()
-        tmpl_components = Template()
-        js = []
-        css = []
-        Blok = self.registry.System.Blok
-        for blok in Blok.list_by_state('installed'):
-            b = BlokManager.get(blok)
-            bpath = BlokManager.getPath(blok)
-            if hasattr(b, 'views'):
-                for template in b.views:
-                    with open(join(bpath, template), 'r') as fp:
-                        tmpl_views.load_file(fp)
-            if hasattr(b, 'components'):
-                for template in b.components:
-                    with open(join(bpath, template), 'r') as fp:
-                        tmpl_components.load_file(fp)
-            if hasattr(b, 'js'):
-                js.extend([join('furet-ui', blok, 'js', filename)
-                           for filename in b.js])
-            if hasattr(b, 'css'):
-                css.extend([join('furet-ui', blok, 'css', filename)
-                           for filename in b.css])
-
-        tmpl_views.compile()
-        self.registry.furetui_views = tmpl_views
-        tmpl_components.compile()
-        self.registry.furetui_components = tmpl_components
-        self.registry.furetui_js = js
-        self.registry.furetui_css = css
+        self.registry.FuretUI.pre_load()
 
     @classmethod
     def import_declaration_module(cls):
