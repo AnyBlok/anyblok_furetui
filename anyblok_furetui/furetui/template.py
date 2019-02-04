@@ -341,6 +341,28 @@ class Template:
 
         return elements
 
+    def apply_xpath(self, val, name):
+        action = val['action']
+        expression = val['expression']
+        mult = val['mult']
+        els = val['elements']
+        if action == 'insert':
+            self.xpath_insert(name, expression, mult, els)
+        elif action == 'insertBefore':
+            self.xpath_insertBefore(name, expression, mult, els)
+        elif action == 'insertAfter':
+            self.xpath_insertAfter(name, expression, mult, els)
+        elif action == 'replace':
+            self.xpath_replace(name, expression, mult, els)
+        elif action == 'remove':
+            self.xpath_remove(name, expression, mult)
+        elif action == 'attributes':
+            for attributes in self.get_xpath_attributes(els):
+                self.xpath_attributes(
+                    name, expression, mult, attributes)
+        else:
+            raise TemplateException("Unknown action %r" % action)
+
     def compile_template(self, name):
         """ compile a specific template
 
@@ -363,26 +385,7 @@ class Template:
 
         for el in elements:
             for val in self.get_xpath(el):
-                action = val['action']
-                expression = val['expression']
-                mult = val['mult']
-                els = val['elements']
-                if action == 'insert':
-                    self.xpath_insert(name, expression, mult, els)
-                elif action == 'insertBefore':
-                    self.xpath_insertBefore(name, expression, mult, els)
-                elif action == 'insertAfter':
-                    self.xpath_insertAfter(name, expression, mult, els)
-                elif action == 'replace':
-                    self.xpath_replace(name, expression, mult, els)
-                elif action == 'remove':
-                    self.xpath_remove(name, expression, mult)
-                elif action == 'attributes':
-                    for attributes in self.get_xpath_attributes(els):
-                        self.xpath_attributes(
-                            name, expression, mult, attributes)
-                else:
-                    raise TemplateException("Unknown action %r" % action)
+                self.apply_xpath(val, name)
 
         return self.compiled[name]
 
