@@ -39,7 +39,7 @@ env:
     - ANYBLOK_DATABASE_USER=postgres
 
 script:
-  - flake8 anyblok_furetui --ignore F999
+  - flake8 anyblok_furetui
   - psql -c 'create database travis_ci_test;' -U postgres
   - py.test --cov-report= --cov=anyblok_furetui anyblok_furetui
   
