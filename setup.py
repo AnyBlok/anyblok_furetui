@@ -14,8 +14,8 @@ requires = [
     'anyblok',
     'anyblok_pyramid',
     'anyblok_pyramid_beaker',
+    'anyblok_pyramid_rest_api',
     'lxml',
-    'pyramid_mako',
     'rst2html5',
     'python-magic',
     'simplejson',
@@ -64,8 +64,6 @@ setup(
     entry_points={
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
-            'low_level=anyblok_furetui.low_level:LowLevelBlok',
-            'blok_manager=anyblok_furetui.blok_manager:BlokManager',
         ],
     },
     extras_require={},

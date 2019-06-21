@@ -2,10 +2,12 @@ language: python
 sudo: true
 
 python:
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.6-dev"
+  - "3.7-dev"
+  - "nightly"
 
 virtualenv:
   system_site_packages: false
@@ -15,17 +17,19 @@ services:
 
 install:
   - pip install -U pip
-  - pip install --no-binary pycparser
+  # only eggs: do an erreur with wheel
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then pip install python_editor texttable PyYAML simplejson; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'nightly' ]]; then pip install python_editor texttable PyYAML simplejson; fi
+  # only wheel
+  - pip install -U flake8 pytest pytest-cov
+  - pip install wheel
   - pip install psycopg2
-  - pip install sqlalchemy
-  - pip install flake8
+  - pip install anyblok
+  - pip install marshmallow --pre
   - pip install coverage
-  - pip install nose
-  - pip install colour
-  - pip install passlib
-  - pip install furl
-  - pip install webtest
-  - pip install coveralls
+  - pip install python-coveralls
+  - pip install flake8 pytest pytest-cov
+  - pip install WebTest
   - python setup.py develop
 
 env:
@@ -35,9 +39,9 @@ env:
     - ANYBLOK_DATABASE_USER=postgres
 
 script:
-  - flake8 anyblok
-  - anyblok_createdb --install-all-bloks
-  - nosetests anyblok_furetui --with-anyblok-bloks -v -s --with-coverage --cover-package=anyblok_furetui
+  - flake8 anyblok_furetui
+  - anyblok_createdb --install-bloks furetui
+  - py.test --cov-report= --cov=anyblok_furetui anyblok_furetui
   
 after_success:
-  coveralls
+  coveralls --data_file=.coverage --config_file=.coveragerc

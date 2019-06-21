@@ -1,21 +1,15 @@
-from unittest import TestCase
+import pytest
 from ..template import Template, TemplateException
 from io import StringIO
 from lxml import html
 
 
-class TestWebTemplate(TestCase):
+@pytest.mark.usefixtures('rollback_registry')
+class TestWebTemplate:
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestWebTemplate, cls).setUpClass()
-        cls.Template = Template()
-        cls.compiled = cls.Template.compiled.copy()
-        cls.known = cls.Template.known.copy()
-
-    def tearDown(self):
-        self.Template.compiled = self.compiled.copy()
-        self.Template.known = self.known.copy()
+    @pytest.fixture(autouse=True)
+    def init_template(self, request):
+        self.Template = Template()
 
     def format_element(self, element):
         return html.tostring(element).decode("utf-8")
@@ -26,17 +20,19 @@ class TestWebTemplate(TestCase):
         f.write(t1)
         f.seek(0)
         self.Template.load_file(f)
-        self.assertEqual(
-            self.format_element(self.Template.known['test']['tmpl'][0]),
-            '<template id="test"><a><b1></b1><b2></b2></a></template>')
+        assert (
+            self.format_element(self.Template.known['test']['tmpl'][0]) ==
+            '<template id="test"><a><b1></b1><b2></b2></a></template>'
+        )
 
     def test_load_template(self):
         et = html.fromstring(
             '<template id="test"><a><b1/><b2/></a></template>')
         self.Template.load_template(et)
-        self.assertEqual(
-            self.format_element(self.Template.known['test']['tmpl'][0]),
-            '<template id="test"><a><b1></b1><b2></b2></a></template>')
+        assert (
+            self.format_element(self.Template.known['test']['tmpl'][0]) ==
+            '<template id="test"><a><b1></b1><b2></b2></a></template>'
+        )
 
     def test_load_template_for_extend(self):
         et = html.fromstring(
@@ -49,7 +45,7 @@ class TestWebTemplate(TestCase):
                 </xpath>
             </template>""")
         self.Template.load_template(et)
-        self.assertEqual(len(self.Template.known['test']['tmpl']), 2)
+        assert len(self.Template.known['test']['tmpl']) == 2
 
     def test_load_template_for_extend_unexisting_template(self):
         et = html.fromstring("""
@@ -58,7 +54,7 @@ class TestWebTemplate(TestCase):
                     <b3/>
                 </xpath>
             </template>""")
-        with self.assertRaises(TemplateException):
+        with pytest.raises(TemplateException):
             self.Template.load_template(et)
 
     def test_load_template_for_replace_existing_template_ko(self):
@@ -67,7 +63,7 @@ class TestWebTemplate(TestCase):
         self.Template.load_template(et)
         et = html.fromstring(
             '<template id="test"><a><c1/><c2/></a></template>')
-        with self.assertRaises(TemplateException):
+        with pytest.raises(TemplateException):
             self.Template.load_template(et)
 
     def test_load_template_for_replace_existing_template_ok(self):
@@ -77,10 +73,11 @@ class TestWebTemplate(TestCase):
         et = html.fromstring(
             '<template id="test" rewrite="1"><a><c1/><c2/></a></template>')
         self.Template.load_template(et)
-        self.assertEqual(
-            self.format_element(self.Template.known['test']['tmpl'][0]),
+        assert (
+            self.format_element(self.Template.known['test']['tmpl'][0]) ==
             '<template id="test" rewrite="1">%s</template>' %
-            '<a><c1></c1><c2></c2></a>')
+            '<a><c1></c1><c2></c2></a>'
+        )
 
     def test_get_xpath(self):
         et = html.fromstring("""
@@ -90,13 +87,13 @@ class TestWebTemplate(TestCase):
                 <xpath expression="//a3" action="insertAfter"><d/></xpath>
             </template>""")
         xpaths = self.Template.get_xpath(et)
-        self.assertEqual(len(xpaths), 3)
+        assert len(xpaths) == 3
 
         def check_xpath(xpath, result):
-            self.assertEqual(xpath['expression'], result['expression'])
-            self.assertEqual(xpath['action'], result['action'])
+            assert xpath['expression'] == result['expression']
+            assert xpath['action'] == result['action']
             els = [html.tostring(el) for el in xpath['elements']]
-            self.assertEqual(els, result['elements'])
+            assert els == result['elements']
 
         check_xpath(xpaths[0], {'expression': '//a1',
                                 'action': 'replace',
@@ -113,48 +110,53 @@ class TestWebTemplate(TestCase):
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insertBefore(
             'test', './/b1', True, [html.fromstring('<b0/>')])
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template name="test">%s</template>' %
-            '<a><b0></b0><b1></b1><b2></b2></a>')
+            '<a><b0></b0><b1></b1><b2></b2></a>'
+        )
 
     def test_xpath_insertAfter(self):
         self.Template.compiled['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insertAfter(
             'test', './/b2', True, [html.fromstring('<b3/>')])
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template name="test">%s</template>' %
-            '<a><b1></b1><b2></b2><b3></b3></a>')
+            '<a><b1></b1><b2></b2><b3></b3></a>'
+        )
 
     def test_xpath_insert(self):
         self.Template.compiled['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insert(
             'test', './/b2', True, [html.fromstring('<c/>')])
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template name="test">%s</template>' %
-            '<a><b1></b1><b2><c></c></b2></a>')
+            '<a><b1></b1><b2><c></c></b2></a>'
+        )
 
     def test_xpath_replace(self):
         self.Template.compiled['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_replace(
             'test', './/b2', True, [html.fromstring('<c/>')])
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template name="test">%s</template>' %
-            '<a><b1></b1><c></c></a>')
+            '<a><b1></b1><c></c></a>'
+        )
 
     def test_xpath_remove(self):
         self.Template.compiled['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_remove('test', './/b2', True)
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
-            '<template name="test"><a><b1></b1></a></template>')
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
+            '<template name="test"><a><b1></b1></a></template>'
+        )
 
     def test_get_xpath_attributes(self):
         ets = [
@@ -162,25 +164,26 @@ class TestWebTemplate(TestCase):
             html.fromstring("""<attribute a="b" c="d"/>"""),
         ]
         attributes = self.Template.get_xpath_attributes(ets)
-        self.assertEqual(len(attributes), 2)
+        assert len(attributes) == 2
 
-        self.assertEqual(attributes[0], {'name': 'test', 'test': 'name'})
-        self.assertEqual(attributes[1], {'a': 'b', 'c': 'd'})
+        assert attributes[0] == {'name': 'test', 'test': 'name'}
+        assert attributes[1] == {'a': 'b', 'c': 'd'}
 
     def test_xpath_attributes(self):
         self.Template.compiled['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_attributes(
             'test', './/b2', True, {'name': "test"})
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template name="test">%s</template>' %
-            '<a><b1></b1><b2 name="test"></b2></a>')
+            '<a><b1></b1><b2 name="test"></b2></a>'
+        )
 
     def test_get_template(self):
         template = '<a><b1></b1><b2></b2></a>'
         self.Template.compiled['test'] = html.fromstring(template)
-        self.assertEqual(self.Template.get_template('test'), template)
+        assert self.Template.get_template('test') == template
 
     def test_get_all_template(self):
         template = '<template name="%s"><a><b1></b1><b2></b2></a></template>'
@@ -190,7 +193,7 @@ class TestWebTemplate(TestCase):
         }
         res = ''.join(self.format_element(v)
                       for _, v in self.Template.compiled.items())
-        self.assertEqual(self.Template.get_all_template(), res)
+        assert self.Template.get_all_template() == res
 
     def test_compile_the_same_template(self):
         et = html.fromstring(
@@ -202,10 +205,11 @@ class TestWebTemplate(TestCase):
             </template>""")
         self.Template.load_template(et)
         self.Template.compile()
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template id="test">%s</template>' %
-            '<a><b1><c></c></b1><b2></b2></a>')
+            '<a><b1><c></c></b1><b2></b2></a>'
+        )
 
     def test_compile_with_extend_another_template(self):
         et = html.fromstring(
@@ -217,14 +221,16 @@ class TestWebTemplate(TestCase):
             </template>""")
         self.Template.load_template(et)
         self.Template.compile()
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template id="test">%s</template>' %
-            '<a><b1></b1><b2></b2></a>')
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test2']),
+            '<a><b1></b1><b2></b2></a>'
+        )
+        assert (
+            self.format_element(self.Template.compiled['test2']) ==
             '<template id="test2">%s</template>' %
-            '<a><b1><c></c></b1><b2></b2></a>')
+            '<a><b1><c></c></b1><b2></b2></a>'
+        )
 
     def test_compile_the_same_template_and_extend_it(self):
         et = html.fromstring(
@@ -241,12 +247,12 @@ class TestWebTemplate(TestCase):
             </template>""")
         self.Template.load_template(et)
         self.Template.compile()
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test']),
+        assert (
+            self.format_element(self.Template.compiled['test']) ==
             '<template id="test">%s</template>' %
             '<a><b1></b1><b2><c></c></b2></a>')
-        self.assertEqual(
-            self.format_element(self.Template.compiled['test2']),
+        assert (
+            self.format_element(self.Template.compiled['test2']) ==
             '<template id="test2">%s</template>' %
             '<a><b1><c></c></b1><b2><c></c></b2></a>')
 
@@ -254,14 +260,15 @@ class TestWebTemplate(TestCase):
         et = html.fromstring(
             '<template id="test" test><a><b1/><b2/></a></template>')
         self.Template.load_template(et)
-        self.assertEqual(
-            self.format_element(self.Template.known['test']['tmpl'][0]),
+        assert (
+            self.format_element(self.Template.known['test']['tmpl'][0]) ==
             '<template id="test" test><a><b1></b1><b2></b2></a></template>')
 
     def test_html_no_ending_tag(self):
         et = html.fromstring(
             '<template id="test"><a><b1></a></template>')
         self.Template.load_template(et)
-        self.assertEqual(
-            self.format_element(self.Template.known['test']['tmpl'][0]),
-            '<template id="test"><a><b1></b1></a></template>')
+        assert (
+            self.format_element(self.Template.known['test']['tmpl'][0]) ==
+            '<template id="test"><a><b1></b1></a></template>'
+        )
