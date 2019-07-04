@@ -1,0 +1,102 @@
+<templates>
+    <template id="FuretUiApp">
+        <div id="furet-ui-app">
+          <furet-ui-appbar />
+          <router-view></router-view>
+          <furet-ui-footer />
+        </div>
+    </template>
+    <template id="FuretUiAppBar">
+        <header class="hero is-primary">
+          <furet-ui-appbar-header />
+          <furet-ui-appbar-body />
+          <furet-ui-appbar-footer />
+        </header>
+    </template>
+    <template id="FuretUiAppBarHeader">
+        <div class="hero-head">
+          <nav class="navbar is-primary" role="navigation">
+            <div class="container">
+              <div class="navbar-brand">
+                <furet-ui-appbar-header-brand />
+                <a 
+                  role="button" 
+                  v-bind:class="['navbar-burger', 'burger', isOpen ? 'is-active' : '']" 
+                  aria-label="menu" 
+                  aria-expanded="false" 
+                  data-target="navbarUserMenu" 
+                  v-on:click="isOpen = !isOpen"
+                >
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                </a>
+              </div>
+              <div id="navbarUserMenu" v-bind:class="['navbar-menu', isOpen ? 'is-active' : '']">
+                <furet-ui-appbar-spaces-menu />
+                <furet-ui-appbar-user-menu />
+              </div>
+            </div>
+          </nav>
+        </div>
+    </template>
+    <template id="FuretUiAppBarHeaderBrand">
+        <img class="image is-64x64" src="/furetui/static/images/logo.png" alt="Logo">
+    </template>
+    <template id="FuretUiAppBarBody">
+        <div class="hero-body">
+          <div class="container has-text-centered">
+            <h1 class="title">
+              Furet UI
+            </h1>
+            <p class="subtitle">
+              Web Client for AnyBlok backend serveur
+            </p>
+          </div>
+        </div>
+    </template>
+    <template id="FuretUiAppBarFooter">
+        <div class="hero-foot" v-if="hasSpaceMenus">
+          <furet-ui-appbar-space-menus />
+        </div>
+    </template>
+    <template id="FuretUiAppBarHeadRouterLink">
+        <a class="navbar-item" v-on:click="goTo">
+          {{ label }}
+        </a>
+    </template>
+    <template id="FuretUiAppBarHeadRouterLinkButton">
+        <span class="navbar-item">
+          <a class="button is-primary is-inverted is-fullwidth" v-on:click="goTo">
+            <span class="icon" v-if="icon">
+              <font-awesome-icon v-bind:icon="icon" />
+            </span>
+            <span>{{ label }}</span>
+          </a>
+        </span>
+    </template>
+    <template id="FuretUiAppBarFootRouterLink">
+        <a v-on:click="goTo">
+          {{ label }}
+        </a>
+    </template>
+    <template id="FuretUiAppBarFootRouterLinkButton">
+        <a class="button is-primary is-inverted" v-on:click="goTo">
+          <span class="icon" v-if="icon">
+            <font-awesome-icon v-bind:icon="icon" />
+          </span>
+          <span>{{ label }}</span>
+        </a>
+    </template>
+    <template id="FuretUiFooter">
+        <footer class="footer">
+          <div class="content has-text-centered is-success">
+            <p>
+              <strong>Furet UI</strong> by <a href="https://github.com/jssuzanne">Jean-Sébastien Suzanne</a>. 
+              The source code is licensed <a href="http://opensource.org/licenses/MPL-2.0">MPL-2.0</a> and 
+              is available on <a href="https://github.com/AnyBlok/anyblok_furet_ui">Github</a>.
+            </p>
+          </div>
+        </footer>
+    </template>
+</templates>

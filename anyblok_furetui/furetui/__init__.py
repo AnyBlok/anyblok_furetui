@@ -17,6 +17,10 @@ logger = getLogger(__name__)
 LOADING_CONTENT = pkg_resources.resource_filename("vuecli", "loading.gif")
 VUE_PATH = pkg_resources.resource_filename("vue", None)
 JS_PATH = pkg_resources.resource_filename("vuecli", "js")
+COMPONENTS_PATH = pkg_resources.resource_filename(
+    "anyblok_furetui", "furetui/components")
+COMPONENTS_PATH = pkg_resources.resource_filename(
+    "anyblok_furetui", "furetui/components")
 
 
 class FuretUIBlok(Blok):
@@ -41,14 +45,17 @@ class FuretUIBlok(Blok):
     ]
 
     templates = [
+        'templates/app.tmpl',
+        'templates/homepage.tmpl',
+
+        'templates/about.tmpl',
+        'templates/login.tmpl',
+        'templates/logout.tmpl',
     ]
 
     components = [
-        # 'components/app.py',
-        # 'components/about.tmpl',
-        # 'components/homepage.tmpl',
-        # 'components/login.tmpl',
-        # 'components/logout.tmpl',
+        'components/app.py',
+        'components/homepage.py',
     ]
 
     def load(self):
@@ -72,5 +79,7 @@ class FuretUIBlok(Blok):
         config.add_static_view('/loading.gif', LOADING_CONTENT)
         config.add_static_view('/furet-ui/js', JS_PATH)
         config.add_static_view('/vue', VUE_PATH)
+        config.add_static_view('/furetui/components', COMPONENTS_PATH)
+        config.add_static_view('/routes', COMPONENTS_PATH)
 
         config.scan(cls.__module__ + '.views')
