@@ -15,10 +15,13 @@ requires = [
     'anyblok_pyramid',
     'anyblok_pyramid_beaker',
     'anyblok_pyramid_rest_api',
+    'pyramid_jinja2',
+    'pyyaml==5.1',
     'lxml',
     'rst2html5',
     'python-magic',
     'simplejson',
+    'vuepy',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

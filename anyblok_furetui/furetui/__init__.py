@@ -6,12 +6,17 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
-from anyblok.blok import Blok, BlokManager
+from anyblok.blok import Blok
 from anyblok_furetui.release import version
-from os.path import join
+import pkg_resources
 from logging import getLogger
 
 logger = getLogger(__name__)
+
+
+LOADING_CONTENT = pkg_resources.resource_filename("vuecli", "loading.gif")
+VUE_PATH = pkg_resources.resource_filename("vue", None)
+JS_PATH = pkg_resources.resource_filename("vuecli", "js")
 
 
 class FuretUIBlok(Blok):
@@ -25,23 +30,25 @@ class FuretUIBlok(Blok):
     ]
 
     css = [
+        'static/css/bulma.css',
+        'static/css/buefy.min.css',
+        'static/css/materialdesignicons.min.css',
     ]
     js = [
-        'components/about.js',
-        'components/homepage.js',
-        'components/app.js',
-        'components/login.js',
-        'components/logout.js',
+        'static/js/buefy.min.js',
+        'static/js/vue-router.js',
+        'static/js/axios.min.js',
     ]
 
-    views = [
+    templates = [
     ]
+
     components = [
-        'components/about.tmpl',
-        'components/homepage.tmpl',
-        'components/app.tmpl',
-        'components/login.tmpl',
-        'components/logout.tmpl',
+        # 'components/app.py',
+        # 'components/about.tmpl',
+        # 'components/homepage.tmpl',
+        # 'components/login.tmpl',
+        # 'components/logout.tmpl',
     ]
 
     def load(self):
@@ -61,8 +68,9 @@ class FuretUIBlok(Blok):
 
     @classmethod
     def pyramid_load_config(cls, config):
-        blok_path = BlokManager.getPath('furetui')
-        path = join(blok_path, 'static', 'furet-ui')
-        config.add_static_view('furet-ui/js', join(path, 'js'))
-        config.add_static_view('furet-ui/css', join(path, 'css'))
+        config.include('pyramid_jinja2')
+        config.add_static_view('/loading.gif', LOADING_CONTENT)
+        config.add_static_view('/furet-ui/js', JS_PATH)
+        config.add_static_view('/vue', VUE_PATH)
+
         config.scan(cls.__module__ + '.views')

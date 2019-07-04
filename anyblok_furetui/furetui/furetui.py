@@ -18,35 +18,34 @@ class FuretUI:
     @classmethod
     def pre_load(cls):
         # TODO add cache classmethod
-        tmpl_views = Template()
-        tmpl_components = Template()
+        tmpl = Template()
         js = []
         css = []
+        components = []
         Blok = cls.registry.System.Blok
         for blok in Blok.list_by_state('installed'):
             b = BlokManager.get(blok)
             bpath = BlokManager.getPath(blok)
-            if hasattr(b, 'views'):
-                for template in b.views:
+            if hasattr(b, 'templates'):
+                for template in b.templates:
                     with open(join(bpath, template), 'r') as fp:
-                        tmpl_views.load_file(fp)
-            if hasattr(b, 'components'):
-                for template in b.components:
-                    with open(join(bpath, template), 'r') as fp:
-                        tmpl_components.load_file(fp)
-            if hasattr(b, 'js'):
-                js.extend([join('furet-ui', blok, 'js', filename)
-                           for filename in b.js])
-            if hasattr(b, 'css'):
-                css.extend([join('furet-ui', blok, 'css', filename)
-                           for filename in b.css])
+                        tmpl.load_file(fp)
 
-        tmpl_views.compile()
-        cls.registry.furetui_views = tmpl_views
-        tmpl_components.compile()
-        cls.registry.furetui_components = tmpl_components
+            if hasattr(b, 'components'):
+                components.extend(
+                    [join(blok, filename) for filename in b.components])
+
+            if hasattr(b, 'js'):
+                js.extend([join(blok, filename) for filename in b.js])
+
+            if hasattr(b, 'css'):
+                css.extend([join(blok, filename) for filename in b.css])
+
+        tmpl.compile()
+        cls.registry.furetui_templates = tmpl
         cls.registry.furetui_js = js
         cls.registry.furetui_css = css
+        cls.registry.furetui_components = components
 
     @classmethod
     def get_default_space(cls, authenticated_userid):
@@ -55,10 +54,10 @@ class FuretUI:
 
     @classmethod
     def get_templates(cls):
-        components = cls.registry.furetui_components
+        templates = cls.registry.furetui_templates
         return {
-            known: components.get_template(known, first_children=True)
-            for known in components.known
+            known: templates.get_template(known, first_children=True)
+            for known in templates.known
         }
 
     @classmethod
@@ -68,6 +67,10 @@ class FuretUI:
     @classmethod
     def get_css_files(cls):
         return cls.registry.furetui_css
+
+    @classmethod
+    def get_component_files(cls):
+        return cls.registry.furetui_components
 
     @classmethod
     def get_global(cls, authenticated_userid):
