@@ -1,2 +1,12 @@
+defineComponent('app', {template: '#FuretUiApp'});
+defineComponent('furet-ui-app-errors', {template: '#FuretUiAppErrors'});
+defineComponent('furet-ui-appbar', {template: '#FuretUiAppBar'});
+defineComponent('furet-ui-appbar-header', {template: '#FuretUiAppBarHeader'});
 defineComponent('furet-ui-appbar-header-brand', {template: '#FuretUiAppBarHeaderBrand'});
 defineComponent('furet-ui-appbar-body', {template: '#FuretUiAppBarBody'});
+defineComponent('furet-ui-appbar-footer', {template: '#FuretUiAppBarFooter'});
+defineComponent('furet-ui-appbar-head-router-link', {template: '#FuretUiAppBarHeadRouterLink'});
+defineComponent('furet-ui-appbar-head-router-link-button', {template: '#FuretUiAppBarHeadRouterLinkButton'});
+defineComponent('furet-ui-appbar-foot-router-link', {template: '#FuretUiAppBarFootRouterLink'});
+defineComponent('furet-ui-appbar-foot-router-link-button', {template: '#FuretUiAppBarFootRouterLinkButton'});
+defineComponent('furet-ui-footer', {template: '#FuretUiFooter'});
