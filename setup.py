@@ -64,6 +64,7 @@ setup(
     entry_points={
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
+            'furetui-auth=anyblok_furetui.auth:FuretUIAuthBlok',
         ],
     },
     extras_require={},

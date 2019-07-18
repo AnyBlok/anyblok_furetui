@@ -9,6 +9,7 @@
 from anyblok.blok import Blok, BlokManager
 from anyblok_furetui.release import version
 from os.path import join
+from .i18n import fr, en
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -36,7 +37,10 @@ class FuretUIBlok(Blok):
 
     views = [
     ]
-    i18n = {}  # key is the local
+    i18n = {
+        'en': en,
+        'fr': fr,
+    }  # key is the local
     components = [
         'components/about.tmpl',
         'components/homepage.tmpl',
