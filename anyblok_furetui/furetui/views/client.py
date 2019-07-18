@@ -32,10 +32,15 @@ def get_global_init(request):
     # TODO call cached pre_load
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
+    if eval(Configuration.get('furetui_debug', False), {}, {}) is True:
+        FuretUI.pre_load()
+
     authenticated_userid = request.authenticated_userid
     default_spaces_menu = FuretUI.get_default_space(authenticated_userid)
     res = {
         'templates': FuretUI.get_templates(),
+        'lang': 'fr',
+        'langs': FuretUI.get_i18n(),
         'js': FuretUI.get_js_files(),
         'css': FuretUI.get_css_files(),
         'global': FuretUI.get_global(authenticated_userid),

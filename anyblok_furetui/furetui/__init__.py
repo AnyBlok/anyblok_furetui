@@ -36,6 +36,7 @@ class FuretUIBlok(Blok):
 
     views = [
     ]
+    i18n = {}  # key is the local
     components = [
         'components/about.tmpl',
         'components/homepage.tmpl',

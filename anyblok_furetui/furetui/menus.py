@@ -18,7 +18,12 @@ class Menu:
     label = String(nullable=False)
     component = String()
     properties = Json(default={})
-    logged = Boolean(default=False)
+    login_state = Selection(
+        selections={
+            'logged': 'Logged',
+            'unlogged': 'Unlogged',
+            'both': 'Logged and Unlogged',
+        }, nullable=False)
     label_is_props = String()
     type = Selection(
         selections={'user': 'User', 'spaces': 'Space',
@@ -45,9 +50,9 @@ class Menu:
     @classmethod
     def update_query_from_authenticated_id(cls, query, authenticated_userid):
         if authenticated_userid:
-            query = query.filter(cls.logged.is_(True))
+            query = query.filter(cls.login_state.in_(['logged', 'both']))
         else:
-            query = query.filter(cls.logged.in_([None, False]))
+            query = query.filter(cls.login_state.in_(['unlogged', 'both']))
 
         return query
 
