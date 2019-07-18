@@ -1,5 +1,5 @@
 defineComponent('app', {template: '#FuretUiApp'});
-defineComponent('furet-ui-app-errors', {template: '#FuretUiAppErrors'});
+defineComponent('furet-ui-page-errors', {template: '#FuretUiPageErrors'});
 defineComponent('furet-ui-appbar', {template: '#FuretUiAppBar'});
 defineComponent('furet-ui-appbar-header', {template: '#FuretUiAppBarHeader'});
 defineComponent('furet-ui-appbar-header-brand', {template: '#FuretUiAppBarHeaderBrand'});

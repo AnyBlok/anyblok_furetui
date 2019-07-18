@@ -10,5 +10,12 @@ fr = {
                 'about': 'A propos de ...',
             },
         },
+        'page': {
+            'list': {
+                'search': 'Rechercher',
+                'new': 'Créer',
+                'notFound': 'Aucun résultat ...',
+            },
+        },
     },
 }

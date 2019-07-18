@@ -31,6 +31,7 @@ class FuretUIAuthBlok(BlokImporter, Blok):
     js = [
          'components/login.js',
          'components/logout.js',
+         'components/user.js',
     ]
     i18n = {
         'en': en,
@@ -38,6 +39,7 @@ class FuretUIAuthBlok(BlokImporter, Blok):
     }  # key is the local
     components = [
          'components/login.tmpl',
+         'components/user.tmpl',
     ]
 
     @classmethod

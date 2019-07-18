@@ -7,16 +7,14 @@
           <furet-ui-footer />
         </div>
     </template>
-    <template id="FuretUiAppErrors">
-        <div class="container">
-          <b-message type="is-danger" v-if="errors && errors.length" v-bind:closable="false" v-bind:title="$i18n.t('error')">
-            <ul>
-              <li v-for="error in errors">
-                <pre>{{ error }}</pre>
-              </li>
-            </ul>
-          </b-message>
-        </div>
+    <template id="FuretUiPageErrors">
+      <b-message type="is-danger" v-if="errors && errors.length" v-bind:closable="false" v-bind:title="$i18n.t('error')">
+        <ul>
+          <li v-for="error in errors">
+            <pre>{{ error }}</pre>
+          </li>
+        </ul>
+      </b-message>
     </template>
     <template id="FuretUiAppBar">
         <header class="hero is-primary">

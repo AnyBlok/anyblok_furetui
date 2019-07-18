@@ -9,4 +9,20 @@ fr = {
             },
         },
     },
+    'users': {
+        'title': {
+            'list': 'Utilisateurs',
+            'new': 'Utilisateurs',
+            'page': 'Utilisateurs',
+            'edit': 'Utilisateurs',
+        },
+        'first_name': 'Prénom',
+        'last_name': 'Nom de famille',
+        'email': 'Courriel',
+        'roles': 'Rôles',
+        'name': 'Nom',
+        'login': 'Identifiant',
+        'password': 'Mot de passe',
+        'password2': 'Confirmez le mot de passe',
+    },
 }

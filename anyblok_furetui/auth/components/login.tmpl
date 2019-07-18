@@ -1,7 +1,7 @@
 <templates>
     <template extend="Login">
         <xpath expression="./section/div/div/div/a" action="insertBefore">
-            <furet-ui-app-errors v-bind:errors="errors" />
+            <furet-ui-page-errors v-bind:errors="errors" />
             <b-field v-bind:label="$i18n.t('components.login.username')">
                 <b-input v-model="username" expanded></b-input>
             </b-field>

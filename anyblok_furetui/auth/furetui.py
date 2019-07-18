@@ -25,6 +25,7 @@ class FuretUI:
                 'userName': "%s %s" % (user.first_name,
                                        (user.last_name or '').upper()),
                 'roles': user.get_roles(user.login),
+                'authenticated': True,
             })
 
         return res

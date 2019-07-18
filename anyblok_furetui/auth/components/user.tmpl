@@ -1,0 +1,34 @@
+<templates>
+  <template id="UsersList">
+    <div class="container">
+      <furet-ui-list
+        id="users"
+        v-bind:title="$i18n.t('users.title.list')"
+        v-bind:default_filters="filters"
+        v-bind:defaultSortField="sortField"
+        v-bind:defaultSortOrder="sortOrder"
+        rest_api_url="/api/v1/users"
+        v-on:click="goToPage"
+        can_go_to_new="true"
+        v-on:goToNew="goToNew"
+      >
+        <template slot-scope="props">
+          <b-table-column field="first_name" v-bind:label="$i18n.t('users.first_name')" sortable>
+            {{ props.row.first_name }}
+          </b-table-column>
+          <b-table-column field="last_name" v-bind:label="$i18n.t('users.last_name')" sortable>
+            {{ props.row.last_name }}
+          </b-table-column>
+          <b-table-column field="email" v-bind:label="$i18n.t('users.email')" sortable>
+            {{ props.row.email }}
+          </b-table-column>
+          <b-table-column field="roles" v-bind:label="$i18n.t('users.roles')" >
+            <b-taglist >
+              <b-tag type="is-info" v-if="props.row.roles.length" v-for="role in props.row.roles" v-bind:key="role.name">{{ role.label }}</b-tag>
+            </b-taglist>
+          </b-table-column>
+         </template>
+       </furet-ui-list>
+    </div>
+  </template>
+</templates>

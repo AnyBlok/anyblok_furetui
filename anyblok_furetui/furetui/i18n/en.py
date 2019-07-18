@@ -10,5 +10,13 @@ en = {
                 'about': 'About ...',
             },
         },
+        'page': {
+            'list': {
+                'search': 'Search',
+                'new': 'New',
+                'notFound': 'No result found',
+            },
+        },
+
     },
 }
