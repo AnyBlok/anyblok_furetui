@@ -7,7 +7,7 @@
       v-bind:defaultSortField="sortField"
       v-bind:defaultSortOrder="sortOrder"
       rest_api_url="/api/v1/users"
-      v-on:click="goToPage"
+      v-on:goToPage="goToPage"
       can_go_to_new="true"
       v-on:goToNew="goToNew"
     >

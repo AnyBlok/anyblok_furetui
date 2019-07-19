@@ -97,7 +97,7 @@ defineComponent('user-page', {
                 this.$router.push({name: 'user_edit', params: {login: this.login}});
             },
             goToList() {
-                this.$router.push({name: 'users', params: {query: 'page=1'}});
+                this.$router.push({name: 'users'});
             },
         },
     },
