@@ -11,11 +11,15 @@ fr = {
             },
         },
         'page': {
-            'list': {
+            'header': {
                 'search': 'Rechercher',
-                'new': 'Créer',
                 'notFound': 'Aucun résultat ...',
             },
+            'list': 'Retour',
+            'new': 'Créer',
+            'edit': 'Modifier',
+            'save': 'Sauver',
+            'clear': 'Annuler',
         },
     },
 }

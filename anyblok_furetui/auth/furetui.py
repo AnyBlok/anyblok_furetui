@@ -19,12 +19,23 @@ class FuretUI:
     @classmethod
     def get_global(cls, authenticated_userid):
         res = super(FuretUI, cls).get_global(authenticated_userid)
+        query = cls.registry.User.Role.query()
+        res.update({
+            'roles': [
+                {
+                    'name': role.name,
+                    'label': role.label,
+                    'depends': role.roles_name,
+                }
+                for role in query
+            ]
+        })
         if authenticated_userid:
             user = cls.registry.User.query().get(authenticated_userid)
             res.update({
                 'userName': "%s %s" % (user.first_name,
                                        (user.last_name or '').upper()),
-                'roles': user.get_roles(user.login),
+                'userRoles': user.get_roles(user.login),
                 'authenticated': True,
             })
 

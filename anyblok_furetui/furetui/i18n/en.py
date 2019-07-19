@@ -11,12 +11,15 @@ en = {
             },
         },
         'page': {
-            'list': {
+            'header': {
                 'search': 'Search',
-                'new': 'New',
                 'notFound': 'No result found',
             },
+            'list': 'Go to the List',
+            'new': 'New',
+            'edit': 'Edit',
+            'save': 'Save',
+            'clear': 'Clear',
         },
-
     },
 }
