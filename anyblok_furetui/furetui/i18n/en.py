@@ -20,6 +20,7 @@ en = {
             'edit': 'Edit',
             'save': 'Save',
             'clear': 'Clear',
+            'delete': 'Delete',
         },
     },
 }

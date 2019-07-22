@@ -20,6 +20,7 @@ fr = {
             'edit': 'Modifier',
             'save': 'Sauver',
             'clear': 'Annuler',
+            'delete': 'Suprimer',
         },
     },
 }
