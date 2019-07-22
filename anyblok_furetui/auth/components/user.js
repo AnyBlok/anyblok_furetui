@@ -142,4 +142,4 @@ defineComponent('user-edit', {
 defineResource('users', {path: 'users', templateName: 'users-list', mustBeAuthenticated: true})
 defineResource('user_new', {path: 'user/new', templateName: 'user-new', mustBeAuthenticated: true})
 defineResource('user_page', {path: 'user/page/:login', templateName: 'user-page', props: ['login'], mustBeAuthenticated: true})
-defineResource('user_edit', {path: 'user/edit/:login', templateName: 'user-edit', props: ['login'], mustBeAuthenticated: false})
+defineResource('user_edit', {path: 'user/edit/:login', templateName: 'user-edit', props: ['login'], mustBeAuthenticated: true})
