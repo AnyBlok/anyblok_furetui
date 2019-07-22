@@ -106,7 +106,7 @@ class FuretUI:
     @classmethod
     def get_global(cls, authenticated_userid):
         # TODO add global variable
-        return {}
+        return {'selection_labels': {}}
 
     @classmethod
     def get_user_menu(cls, authenticated_userid):
