@@ -7,6 +7,7 @@ defineComponent('furet-ui-appbar-body', {template: '#FuretUiAppBarBody'});
 defineComponent('furet-ui-appbar-footer', {template: '#FuretUiAppBarFooter'});
 defineComponent('furet-ui-appbar-head-router-link', {template: '#FuretUiAppBarHeadRouterLink'});
 defineComponent('furet-ui-appbar-head-router-link-button', {template: '#FuretUiAppBarHeadRouterLinkButton'});
+defineComponent('furet-ui-appbar-head-router-link-dropdown', {template: '#FuretUiAppBarHeadRouterLinkDropDown'});
 defineComponent('furet-ui-appbar-foot-router-link', {template: '#FuretUiAppBarFootRouterLink'});
 defineComponent('furet-ui-appbar-foot-router-link-button', {template: '#FuretUiAppBarFootRouterLinkButton'});
 defineComponent('furet-ui-footer', {template: '#FuretUiFooter'});
