@@ -6,10 +6,11 @@
       v-bind:default_filters="filters"
       v-bind:defaultSortField="sortField"
       v-bind:defaultSortOrder="sortOrder"
+      v-bind:browseFields="['login']"
       rest_api_url="/api/v1/users"
-      v-on:goToPage="goToPage"
+      v-on:go-to-page="goToPage"
       can_go_to_new="true"
-      v-on:goToNew="goToNew"
+      v-on:go-to-new="goToNew"
     >
       <template slot-scope="props">
         <b-table-column field="first_name" v-bind:label="$i18n.t('users.first_name')" sortable>
@@ -34,8 +35,8 @@
       v-bind:title="$i18n.t('users.title.new')"
       v-bind:default_data="user"
       rest_api_url="/api/v1/users"
-      v-on:goToPage="goToPage"
-      v-on:goToList="goToList"
+      v-on:go-to-page="goToPage"
+      v-on:go-to-list="goToList"
     >
       <template slot-scope="props">
         <b-field horizontal v-bind:label="$i18n.t('users.name')" >
@@ -70,8 +71,8 @@
        v-bind:title="$i18n.t('users.title.page')"
        v-bind:rest_api_url="getRestApiUrl"
        can_modify="true"
-       v-on:goToEdit="goToEdit"
-       v-on:goToList="goToList"
+       v-on:go-to-edit="goToEdit"
+       v-on:go-to-list="goToList"
      >
        <template slot-scope="props">
          <b-field horizontal v-bind:label="$i18n.t('users.name')" >
@@ -93,8 +94,8 @@
       v-bind:title="$i18n.t('users.title.edit')"
       v-bind:rest_api_url="getRestApiUrl"
       v-bind:get_body="get_body"
-      v-on:goToPage="goToPage"
-      v-on:goToList="goToList"
+      v-on:go-to-page="goToPage"
+      v-on:go-to-list="goToList"
     >
       <template slot-scope="props">
         <div class="box">
