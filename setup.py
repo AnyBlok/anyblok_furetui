@@ -19,6 +19,7 @@ requires = [
     'rst2html5',
     'python-magic',
     'simplejson',
+    'pyjsparser',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

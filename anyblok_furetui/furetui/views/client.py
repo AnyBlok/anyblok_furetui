@@ -5,6 +5,11 @@ from anyblok.blok import BlokManager
 from pyramid.response import FileResponse
 from os.path import join
 from cornice import Service
+from pyjsparser import PyJsParser
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 client = Service(name='client_furet_ui',
@@ -60,6 +65,17 @@ static = Service(name='furet_ui_js_file',
                  installed_blok=current_blok())
 
 
+class MyPyJsParser(PyJsParser):
+
+    def __init__(self, *args, **kwargs):
+        super(MyPyJsParser, self).__init__(*args, **kwargs)
+        self.exceptions = {}
+
+    def throwUnexpectedToken(self, token={}, message=''):
+        self.exceptions.setdefault(
+            token['lineNumber'], self.unexpectedTokenError(token, message))
+
+
 @static.get()
 def get_static_file(request):
     blok_name = request.matchdict['blok_name']
@@ -69,6 +85,19 @@ def get_static_file(request):
     content_type = 'text/html'
     if request.matchdict['filetype'] == 'js':
         content_type = 'application/javascript'
+        if eval(Configuration.get('furetui_debug', False), {}, {}) is True:
+            parser = MyPyJsParser()
+            with open(path, 'r') as fp:
+                content = fp.read()
+                try:
+                    parser.parse(content)
+                except Exception:
+                    pass
+
+                for exception in parser.exceptions.values():
+                    logger.error("Parsing error for %s:%r => %s",
+                                 blok_name, file_path, exception)
+
     elif request.matchdict['filetype'] == 'css':
         content_type = 'text/css'
 
