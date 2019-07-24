@@ -72,8 +72,10 @@ class MyPyJsParser(PyJsParser):
         self.exceptions = {}
 
     def throwUnexpectedToken(self, token={}, message=''):
-        self.exceptions.setdefault(
-            token['lineNumber'], self.unexpectedTokenError(token, message))
+        msg = str(self.unexpectedTokenError(token, message))
+        msg += '\n' + '\n'.join(self.source.split(
+            '\n')[token['lineNumber'] - 3: token['lineNumber']])
+        self.exceptions.setdefault(token['lineNumber'], msg)
 
 
 @static.get()
