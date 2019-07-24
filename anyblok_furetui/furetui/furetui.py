@@ -48,22 +48,17 @@ class FuretUI:
         for blok in Blok.list_by_state('installed'):
             b = BlokManager.get(blok)
             bpath = BlokManager.getPath(blok)
-            if hasattr(b, 'views'):
-                for template in b.views:
-                    with open(join(bpath, template), 'r') as fp:
-                        tmpl_views.load_file(fp)
-            if hasattr(b, 'components'):
-                for template in b.components:
+            if hasattr(b, 'furetui'):
+                for template in b.furetui.get('templates', []):
                     with open(join(bpath, template), 'r') as fp:
                         tmpl_components.load_file(fp)
-            if hasattr(b, 'js'):
+
                 js.extend([join('furet-ui', blok, 'js', filename)
-                           for filename in b.js])
-            if hasattr(b, 'css'):
+                           for filename in b.furetui.get('js', [])])
                 css.extend([join('furet-ui', blok, 'css', filename)
-                           for filename in b.css])
-            if hasattr(b, 'i18n'):
-                for local, translations in b.i18n.items():
+                           for filename in b.furetui.get('css', [])])
+
+                for local, translations in b.furetui.get('i18n', {}).items():
                     node = i18n.setdefault(local, {})
                     update_translation(node, translations)
 

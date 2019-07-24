@@ -25,29 +25,27 @@ class FuretUIBlok(Blok):
         'anyblok-core',
     ]
 
-    css = [
-    ]
-    js = [
-        'components/about.js',
-        'components/homepage.js',
-        'components/app.js',
-        'components/login.js',
-        'components/logout.js',
-    ]
-
-    views = [
-    ]
-    i18n = {
-        'en': en,
-        'fr': fr,
-    }  # key is the local
-    components = [
-        'components/about.tmpl',
-        'components/homepage.tmpl',
-        'components/app.tmpl',
-        'components/login.tmpl',
-        'components/logout.tmpl',
-    ]
+    furetui = {
+        'css': [],
+        'js': [
+            'components/about.js',
+            'components/homepage.js',
+            'components/app.js',
+            'components/login.js',
+            'components/logout.js',
+        ],
+        'i18n': {
+            'en': en,
+            'fr': fr,
+        },
+        'templates': [
+            'components/about.tmpl',
+            'components/homepage.tmpl',
+            'components/app.tmpl',
+            'components/login.tmpl',
+            'components/logout.tmpl',
+        ],
+    }
 
     def load(self):
         self.registry.FuretUI.pre_load()

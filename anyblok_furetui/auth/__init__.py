@@ -28,19 +28,22 @@ class FuretUIAuthBlok(BlokImporter, Blok):
         'furetui',
     ]
 
-    js = [
-         'components/login.js',
-         'components/logout.js',
-         'components/user.js',
-    ]
-    i18n = {
-        'en': en,
-        'fr': fr,
-    }  # key is the local
-    components = [
-         'components/login.tmpl',
-         'components/user.tmpl',
-    ]
+    furetui = {
+        'css': [],
+        'js': [
+             'components/login.js',
+             'components/logout.js',
+             'components/user.js',
+        ],
+        'i18n': {
+            'en': en,
+            'fr': fr,
+        },
+        'templates': [
+             'components/login.tmpl',
+             'components/user.tmpl',
+        ],
+    }
 
     @classmethod
     def pyramid_load_config(cls, config):
