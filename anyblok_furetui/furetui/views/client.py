@@ -77,6 +77,16 @@ class MyPyJsParser(PyJsParser):
             '\n')[token['lineNumber'] - 3: token['lineNumber']])
         self.exceptions.setdefault(token['lineNumber'], msg)
 
+    def parse(self, blok_name, file_path, content):
+        try:
+            super(MyPyJsParser, self).parse(content)
+        except Exception:
+            pass
+
+        for exception in self.exceptions.values():
+            logger.error("Parsing error for %s:%r => %s",
+                         blok_name, file_path, exception)
+
 
 @static.get()
 def get_static_file(request):
@@ -91,14 +101,7 @@ def get_static_file(request):
             parser = MyPyJsParser()
             with open(path, 'r') as fp:
                 content = fp.read()
-                try:
-                    parser.parse(content)
-                except Exception:
-                    pass
-
-                for exception in parser.exceptions.values():
-                    logger.error("Parsing error for %s:%r => %s",
-                                 blok_name, file_path, exception)
+                parser.parse(blok_name, file_path, content)
 
     elif request.matchdict['filetype'] == 'css':
         content_type = 'text/css'
