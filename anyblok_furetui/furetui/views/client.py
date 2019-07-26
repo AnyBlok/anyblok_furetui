@@ -20,6 +20,7 @@ client = Service(name='client_furet_ui',
 
 @client.get()
 def get_client_file(request):
+    print('get_client_file', request.query_string)
     blok_path = BlokManager.getPath('furetui')
     path = join(blok_path, 'static', 'index.html')
     return FileResponse(path, request=request, content_type='text/html')
@@ -35,6 +36,7 @@ init = Service(name='init_furet_ui',
 @init.get()
 def get_global_init(request):
     # TODO call cached pre_load
+    print('get_global_init', request.query_string)
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
     if eval(Configuration.get('furetui_debug', False), {}, {}) is True:

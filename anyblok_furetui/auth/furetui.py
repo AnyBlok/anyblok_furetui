@@ -21,6 +21,7 @@ class FuretUI:
         res = super(FuretUI, cls).get_global(authenticated_userid)
         query = cls.registry.User.Role.query()
         res.update({
+            'login': authenticated_userid,
             'roles': [
                 {
                     'name': role.name,
