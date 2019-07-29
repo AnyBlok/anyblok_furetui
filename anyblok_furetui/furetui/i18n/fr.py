@@ -14,6 +14,8 @@ fr = {
             'header': {
                 'search': 'Rechercher',
                 'notFound': 'Aucun résultat ...',
+                'next': '',
+                'previous': '',
             },
             'list': 'Retour',
             'new': 'Créer',

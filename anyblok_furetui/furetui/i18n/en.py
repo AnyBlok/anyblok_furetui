@@ -14,6 +14,8 @@ en = {
             'header': {
                 'search': 'Search',
                 'notFound': 'No result found',
+                'next': '',
+                'previous': '',
             },
             'list': 'Go to the List',
             'new': 'New',
