@@ -39,7 +39,7 @@ def get_global_init(request):
     print('get_global_init', request.query_string)
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
-    if eval(Configuration.get('furetui_debug', False), {}, {}) is True:
+    if eval(Configuration.get('furetui_debug', 'False'), {}, {}) is True:
         FuretUI.pre_load()
 
     authenticated_userid = request.authenticated_userid
@@ -99,7 +99,7 @@ def get_static_file(request):
     content_type = 'text/html'
     if request.matchdict['filetype'] == 'js':
         content_type = 'application/javascript'
-        if eval(Configuration.get('furetui_debug', False), {}, {}) is True:
+        if eval(Configuration.get('furetui_debug', 'False'), {}, {}) is True:
             parser = MyPyJsParser()
             with open(path, 'r') as fp:
                 content = fp.read()
