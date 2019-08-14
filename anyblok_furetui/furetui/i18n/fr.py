@@ -7,13 +7,13 @@ fr = {
         'logout': {
             'button': 'Se déconnecter',
             'appbar': {
-                'about': 'A propos de ...',
+                'about': 'A propos',
             },
         },
         'page': {
             'header': {
                 'search': 'Rechercher',
-                'notFound': 'Aucun résultat ...',
+                'notFound': 'Aucun résultat',
                 'next': '',
                 'previous': '',
             },
@@ -22,7 +22,10 @@ fr = {
             'edit': 'Modifier',
             'save': 'Sauver',
             'clear': 'Annuler',
-            'delete': 'Suprimer',
+            'delete': 'Supprimer',
         },
+        'fields': {
+            'notFound': 'Aucun résultat',
+        }
     },
 }
