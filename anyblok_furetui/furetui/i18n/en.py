@@ -7,7 +7,7 @@ en = {
         'logout': {
             'button': 'Log out',
             'appbar': {
-                'about': 'About ...',
+                'about': 'About',
             },
         },
         'page': {
@@ -24,5 +24,8 @@ en = {
             'clear': 'Clear',
             'delete': 'Delete',
         },
+        'fields': {
+            'notFound': 'No result found',
+        }
     },
 }
