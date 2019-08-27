@@ -11,6 +11,7 @@ from .template import Template
 from anyblok.blok import BlokManager
 from os.path import join
 from logging import getLogger
+from datetime import datetime
 
 
 logger = getLogger(__name__)
@@ -45,6 +46,7 @@ class FuretUI:
         css = []
         i18n = {}
         Blok = cls.registry.System.Blok
+        timestamp = datetime.utcnow().timestamp()
         for blok in Blok.list_by_state('installed'):
             b = BlokManager.get(blok)
             bpath = BlokManager.getPath(blok)
@@ -53,7 +55,8 @@ class FuretUI:
                     with open(join(bpath, template), 'r') as fp:
                         tmpl_components.load_file(fp)
 
-                js.extend([join('furet-ui', blok, 'js', filename)
+                js.extend(['%s?%s' % (join('furet-ui', blok, 'js', filename),
+                                      timestamp)
                            for filename in b.furetui.get('js', [])])
                 css.extend([join('furet-ui', blok, 'css', filename)
                            for filename in b.furetui.get('css', [])])
