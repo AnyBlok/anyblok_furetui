@@ -24,5 +24,13 @@ fr = {
         'login': 'Identifiant',
         'password': 'Mot de passe',
         'password2': 'Confirmez le mot de passe',
+        'update_password': {
+            'header': 'Définisser le nouveau mot de passe',
+            'open': "Changer le mot de passe de l'utilisateur",
+            'empty': 'Ce champ est requis',
+            'not_same': 'Les deux valeurs sont différentes',
+            'close': 'Fermer sans sauvegarder',
+            'submit': 'Sauvegarder et fermer',
+        }
     },
 }

@@ -59,4 +59,21 @@ class UsersResource(CrudResource):
             user.roles = Role.query().filter(
                 Role.name.in_([x['name'] for x in params['roles']])).all()
 
+        password = params.get('password', None)
+        password2 = params.get('password2', None)
+        if password or password2:
+            if password2 != password:
+                self.request.errors.add(
+                    'body', '400 bad request',
+                    'Password and confirm password are differents'
+                )
+                self.request.errors.status = '400'
+                return
+            CredentialStore = self.registry.User.CredentialStore
+            credential = CredentialStore.query().get(user.login)
+            if credential:
+                credential.password == password
+            else:
+                CredentialStore.insert(login=user.login, password=password)
+
         user.update(**values)

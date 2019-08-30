@@ -43,7 +43,6 @@ defineComponent('users-list', {
                 this.$router.push({name: 'user_page', params: {login: row.login}});
             },
             goToNew() {
-                console.log('plop')
                 this.$router.push({name: 'user_new'});
             },
         },
@@ -87,9 +86,26 @@ defineComponent('user-page', {
     template: '#UserPage',
     prototype: {
         props: ['login'],
+        data() {
+            return {
+                isCardModalActive: false,
+                password: '',
+                password2: '',
+                errors: [],
+                loading: false,
+            }
+        },
         computed: {
             getRestApiUrl() {
                 return '/api/v1/user/' + this.login;
+            },
+            empty_message() {
+                if (this.password != '') return '';
+                return this.$i18n.t('users.update_password.empty')
+            },
+            not_same_message() {
+                if (this.password == this.password2) return '';
+                return this.$i18n.t('users.update_password.not_same')
             },
         },
         methods: {
@@ -98,6 +114,27 @@ defineComponent('user-page', {
             },
             goToList() {
                 this.$router.push({name: 'users'});
+            },
+            update_password() {
+                this.errors = [];
+                this.loading = true;
+                axios.patch(this.getRestApiUrl, {password: this.password, password2: this.password2})
+                .then((response) => {
+                  this.loading = false;
+                  this.password = '';
+                  this.password2 = '';
+                  this.close_modal()
+                })
+                .catch((error) => {
+                  this.errors = error.response.data.errors;
+                  this.loading = false;
+                });
+            },
+            open_modal() {
+                this.isCardModalActive = true;
+            },
+            close_modal() {
+                this.isCardModalActive = false;
             },
         },
     },
