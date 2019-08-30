@@ -109,6 +109,12 @@ defineComponent('user-page', {
             },
         },
         methods: {
+            goToPage(response) {
+                this.$router.push({
+                    name: 'user_page', 
+                    params: {login: response.login}
+                });
+            },
             goToEdit() {
                 this.$router.push({name: 'user_edit', params: {login: this.login}});
             },
