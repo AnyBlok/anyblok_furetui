@@ -12,11 +12,11 @@ version = '0.0.1'
 
 requires = [
     'anyblok',
+    'anyblok_io',
     'anyblok_pyramid',
     'anyblok_pyramid_beaker',
     'anyblok_pyramid_rest_api',
     'lxml',
-    'rst2html5',
     'python-magic',
     'simplejson',
 ]
