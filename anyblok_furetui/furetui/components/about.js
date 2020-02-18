@@ -1,1 +1,0 @@
-defineComponent('about', {template: '#FuretUiAbout'});
