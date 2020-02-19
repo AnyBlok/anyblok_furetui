@@ -111,33 +111,18 @@ crud = Service(name='crud',
                path='/furet-ui/read',
                description='Generic Crud',
                cors_origins=('*',),
+               cors_credentials=True,
                installed_blok=current_blok())
 
 
 @crud.get()
 def crud_read(request):
     # check user is disconnected
+    # check user has access rigth to see this resource
     registry = request.anyblok.registry
     Model = registry.get(request.params['model'])
     qs = FuretuiQueryString(request, Model)
     query = qs.get_query()
     res = []
-    if Model.__registry_name__ == 'Model.FuretUI.Space':
-        res.append({
-            'type': 'UPDATE_SPACE_MENUS',
-            'menus': [
-                {
-                    'code': x.code,
-                    'label': x.label,
-                    'icon': {
-                        'code': x.icon_code,
-                        'type': x.icon_type,
-                    },
-                    'description': x.description,
-                    'path': x.get_path(),
-                }
-                for x in query
-            ],
-        })
-
+    # TODO make to dict in function of fields
     return res

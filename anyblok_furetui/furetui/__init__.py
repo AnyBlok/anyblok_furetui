@@ -7,8 +7,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
-from anyblok.blok import Blok
+from anyblok.blok import Blok, BlokManager
+from anyblok.config import Configuration
 from anyblok_furetui.release import version
+from os.path import join
 from logging import getLogger
 from .i18n import fr, en
 
@@ -55,4 +57,12 @@ class FuretUIBlok(Blok):
 
     @classmethod
     def pyramid_load_config(cls, config):
+        blok_name, static_path = Configuration.get(
+            'furetui_client_static', 'furetui:static').split(':')
+        blok_path = BlokManager.getPath(blok_name)
+        path = join(blok_path, *static_path.split('/'))
+        config.add_static_view('furet-ui/js', join(path, 'js'))
+        config.add_static_view('furet-ui/css', join(path, 'css'))
+        config.add_static_view('/js', join(path, 'js'))
+        config.add_static_view('/css', join(path, 'css'))
         config.scan(cls.__module__ + '.views')

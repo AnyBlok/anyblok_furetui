@@ -19,4 +19,10 @@ class Space:
     icon_type = String()
 
     def get_path(self):
-        return 'space/%s/resource/0' % self.code
+        return '/space/%s/resource/0' % self.code
+
+    @classmethod
+    def get_for_user(cls, authenticated_userid):
+        query = cls.query()
+        # TODO filter in function of access roles
+        return query

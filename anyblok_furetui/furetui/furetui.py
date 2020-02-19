@@ -68,6 +68,10 @@ class FuretUI:
     def get_user_informations(cls, authenticated_userid):
         return [
             {
+                'type': 'LOGIN',
+                'userName': authenticated_userid,
+            },
+            {
                 'type': 'UPDATE_MENUS',
                 'user': [
                     {
@@ -75,10 +79,6 @@ class FuretUI:
                         'component': 'furet-ui-appbar-user-dropmenu',
                     },
                 ],
-            },
-            {
-                'type': 'LOGIN',
-                'userName': authenticated_userid,
             },
         ]
 
@@ -91,7 +91,8 @@ class FuretUI:
                     {
                         'name': 'login',
                         'component': 'furet-ui-appbar-head-router-link-button',
-                        'props': {'to': '/login', 'label': 'components.login.appbar'},
+                        'props': {'to': '/login',
+                                  'label': 'components.login.appbar'},
                     },
                 ],
             },
@@ -107,8 +108,8 @@ class FuretUI:
             locale = Configuration.get('furetui_default_locale', 'en')
             locales.add(locale)
         else:
-            # TODO
-            pass
+            locale = Configuration.get('furetui_default_locale', 'en')
+            res.extend(cls.get_user_informations(authenticated_userid))
 
         res.extend([
             {'type': 'SET_LOCALE', 'locale': locale},
