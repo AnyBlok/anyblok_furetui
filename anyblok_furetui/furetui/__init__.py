@@ -17,6 +17,18 @@ from .i18n import fr, en
 logger = getLogger(__name__)
 
 
+def import_module(reload=None):
+    from . import furetui
+    from . import space
+    from . import resource
+    from . import menus
+    if reload is not None:
+        reload(furetui)
+        reload(space)
+        reload(resource)
+        reload(menus)
+
+
 class FuretUIBlok(Blok):
     """Setup FuretUI for AnyBlok"""
     version = version
@@ -42,18 +54,11 @@ class FuretUIBlok(Blok):
 
     @classmethod
     def import_declaration_module(cls):
-        from . import furetui  # noqa
-        from . import space  # noqa
-        # from . import menus  # noqa
+        import_module()
 
     @classmethod
     def reload_declaration_module(cls, reload):
-        from . import furetui
-        reload(furetui)
-        from . import space
-        reload(space)
-        # from . import menus
-        # reload(menus)
+        import_module(reload=reload)
 
     @classmethod
     def pyramid_load_config(cls, config):

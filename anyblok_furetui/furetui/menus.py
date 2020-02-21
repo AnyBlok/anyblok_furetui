@@ -7,98 +7,40 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
-from anyblok.column import Integer, String, Boolean, Json, Selection
+from anyblok.column import Integer, String, Boolean, Selection
+from anyblok.relationship import Many2One
 
 
 @Declarations.register(Declarations.Model.FuretUI)
 class Menu:
-    MENU_TYPE = None
+    pass
 
+
+@Declarations.register(Declarations.Model.FuretUI.Menu)
+class Root:
     id = Integer(primary_key=True)
-    label = String(nullable=False)
-    component = String()
-    properties = Json(default={})
-    logged = Boolean(default=False)
-    label_is_props = String()
+    label = String()
     type = Selection(
-        selections={'user': 'User', 'spaces': 'Space',
-                    'spaceiMenus': 'Space menus'},
-        nullable=False)
-
-    @classmethod
-    def define_mapper_args(cls):
-        mapper_args = super(Menu, cls).define_mapper_args()
-        if cls.__registry_name__ == 'Model.FuretUI.Menu':
-            mapper_args.update({'polymorphic_on': cls.type})
-
-        mapper_args.update({'polymorphic_identity': cls.MENU_TYPE})
-        return mapper_args
-
-    @classmethod
-    def query(cls, *args, **kwargs):
-        query = super(Menu, cls).query(*args, **kwargs)
-        if cls.__registry_name__ != 'Model.FuretUI.Menu':
-            query = query.filter(cls.type == cls.MENU_TYPE)
-
-        return query
-
-    @classmethod
-    def update_query_from_authenticated_id(cls, query, authenticated_userid):
-        if authenticated_userid:
-            query = query.filter(cls.logged.is_(True))
-        else:
-            query = query.filter(cls.logged.in_([None, False]))
-
-        return query
-
-    @classmethod
-    def get_for(cls, authenticated_userid):
-        # TODO raise if MENU_TYPE is None
-        query = cls.query()
-        query = cls.update_query_from_authenticated_id(
-            query, authenticated_userid)
-        return [x.format_menu() for x in query]
-
-    def format_menu(self):
-        menu = {}
-        if self.properties:
-            menu.update(self.properties)
-
-        menu.update({
-            'name': self.id,
-            'label': self.label,
-        })
-        if self.component:
-            menu['component'] = self.component
-
-        if self.label_is_props:
-            if 'props' not in menu:
-                menu['props'] = {}
-
-            menu['props'][self.label_is_props] = self.label
-
-        return menu
+        selections={'space': 'Space', 'resource': 'Resource'},
+        default='space', nullable=False)
+    order = Integer(nullable=False, default=100)
+    resource = Many2One(model=Declarations.Model.FuretUI.Resource)
+    space = Many2One(model=Declarations.Model.FuretUI.Space)
+    # TODO criteria of filter
+    # TODO check resource space requirement
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class User(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'user'
+class Resource:
+    id = Integer(primary_key=True)
+    root = Many2One(model=Declarations.Model.FuretUI.Menu.Root,
+                    nullable=False)
+    label = String(nullable=False)
+    order = Integer(nullable=False, default=100)
+    resource = Many2One(model=Declarations.Model.FuretUI.Resource,
+                        nullable=False)
+    default = Boolean(default=False)
+    # TODO criteria of filter
 
-
-@Declarations.register(Declarations.Model.FuretUI.Menu)
-class Space(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'spaces'
-
-
-@Declarations.register(Declarations.Model.FuretUI.Menu)
-class SpaceMenu(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'spaceMenus'
-    # TODO add dependencies with Space
-
-    @classmethod
-    def get_for(cls, authenticated_userid, default_space):
-        query = cls.query()
-        # TODO check dependencies
-        query = cls.update_query_from_authenticated_id(
-            query, authenticated_userid)
-        return [x.format_menu() for x in query]
+# Criteria is hierachical criteria = resource criteria + menu criteria + menu
+# root criteria

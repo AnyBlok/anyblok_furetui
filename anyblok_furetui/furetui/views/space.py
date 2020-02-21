@@ -50,11 +50,13 @@ def get_space(request):
     registry = request.anyblok.registry
     code = request.matchdict['code']
     space = registry.FuretUI.Space.query().get(code)
-    res = [
-        {
-            'type': 'UPDATE_CURRENT_SPACE',
-            'label': space.label,
-        },
-        # ADDed left menu
-    ]
+    res = []
+    if space:
+        res = [
+            {
+                'type': 'UPDATE_CURRENT_SPACE',
+                'label': space.label,
+            },
+            # ADDed left menu
+        ]
     return res

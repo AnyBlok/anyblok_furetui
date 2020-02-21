@@ -19,7 +19,22 @@ class Space:
     icon_type = String()
 
     def get_path(self):
-        return '/space/%s/resource/0' % self.code
+        MRe = self.registry.FuretUI.Menu.Resource
+        MRo = self.registry.FuretUI.Menu.Root
+        query = MRe.query()
+        # link with this space
+        query = query.join(MRe.root)
+        query = query.filter(MRo.space == self)
+        # order
+        query = query.order_by(MRo.order.desc())
+        query = query.order_by(MRe.order.desc()).order_by(MRe.id.asc())
+        # take the first default found
+        mre = query.filter(MRe.default.is_(True)).first()
+        if mre is None:
+            mre = query.first()
+
+        return '/space/%s/resource/%d' % (
+            self.code, mre.resource.id if mre else 0)
 
     @classmethod
     def get_for_user(cls, authenticated_userid):
