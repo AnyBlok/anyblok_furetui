@@ -33,8 +33,8 @@ class Space:
         if mre is None:
             mre = query.first()
 
-        return '/space/%s/resource/%d' % (
-            self.code, mre.resource.id if mre else 0)
+        return '/space/%s/menu/%d/resource/%d' % (
+            self.code, mre.id if mre else 0, mre.resource.id if mre else 0)
 
     @classmethod
     def get_for_user(cls, authenticated_userid):
