@@ -11,23 +11,24 @@ resource = Service(name='resource',
 
 
 @resource.get()
-def get_space(request):
+def get_resource(request):
     # check user is disconnected
     # check user has access right
     registry = request.anyblok.registry
     resourceId = request.matchdict['id']
     resource = registry.FuretUI.Resource.query().get(resourceId)
+    res = []
     if resource:
         res = [
             {
                 'type': 'UPDATE_RESOURCES',
                 'definitions': resource.get_definitions(),
             },
-            # ADDed Right menu
+            {
+                'type': 'UPDATE_CURRENT_RIGHT_MENUS',
+                'menus': resource.get_menus(),
+            },
         ]
-    else:
-        res = []
-        # TODO fix this
 
-    print(res)
+    print('RESOURCE', res)
     return res

@@ -57,6 +57,10 @@ def get_space(request):
                 'type': 'UPDATE_CURRENT_SPACE',
                 'label': space.label,
             },
-            # ADDed left menu
+            {
+                'type': 'UPDATE_CURRENT_LEFT_MENUS',
+                'menus': space.get_menus(),
+            },
         ]
+    print('SPACE', res)
     return res
