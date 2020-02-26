@@ -39,7 +39,7 @@ class Resource(Declarations.Model.FuretUI.Menu):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
     root = Many2One(model=Declarations.Model.FuretUI.Menu.Root,
-                    nullable=False)
+                    nullable=False, one2many="resources")
     label = String(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource,
                         nullable=False)

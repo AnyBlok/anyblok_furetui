@@ -40,23 +40,23 @@ class FuretUI:
     @classmethod
     def pre_load(cls):
         logger.info('Preload furet UI component')
-        views = Template()
+        templates = Template()
         i18n = {}
         Blok = cls.registry.System.Blok
         for blok in Blok.list_by_state('installed'):
             b = BlokManager.get(blok)
             bpath = BlokManager.getPath(blok)
             if hasattr(b, 'furetui'):
-                for template in b.furetui.get('views', []):
+                for template in b.furetui.get('templates', []):
                     with open(join(bpath, template), 'r') as fp:
-                        views.load_file(fp)
+                        templates.load_file(fp)
 
                 for local, translations in b.furetui.get('i18n', {}).items():
                     node = i18n.setdefault(local, {})
                     update_translation(node, translations)
 
-        views.compile()
-        cls.registry.furetui_views = views
+        templates.compile()
+        cls.registry.furetui_templates = templates
         cls.registry.furetui_i18n = i18n
 
     @classmethod

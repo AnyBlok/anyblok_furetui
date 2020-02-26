@@ -48,10 +48,10 @@ class Space:
         MRe = self.registry.FuretUI.Menu.Resource
         MRo = self.registry.FuretUI.Menu.Root
         mros = MRo.query().filter(MRo.space == self)
-        mros = mros.order_by(MRo.order.desc())
+        mros = mros.order_by(MRo.order.asc())
         for mro in mros:
             mres = MRe.query().filter(MRe.root == mro)
-            mres = mres.order_by(MRe.order.desc()).order_by(MRe.id.asc())
+            mres = mres.order_by(MRe.order.asc()).order_by(MRe.id.asc())
             mres = mres.all()
             if not mres:
                 continue

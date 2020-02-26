@@ -13,6 +13,7 @@ from anyblok_furetui.release import version
 from os.path import join
 from logging import getLogger
 from .i18n import fr, en
+from .pyramid import json_data_adapter
 
 logger = getLogger(__name__)
 
@@ -45,7 +46,7 @@ class FuretUIBlok(Blok):
             'en': en,
             'fr': fr,
         },
-        'views': [
+        'templates': [
         ],
     }
 
@@ -62,6 +63,7 @@ class FuretUIBlok(Blok):
 
     @classmethod
     def pyramid_load_config(cls, config):
+        json_data_adapter(config)
         blok_name, static_path = Configuration.get(
             'furetui_client_static', 'furetui:static').split(':')
         blok_path = BlokManager.getPath(blok_name)

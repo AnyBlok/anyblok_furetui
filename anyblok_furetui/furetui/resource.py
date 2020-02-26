@@ -94,27 +94,29 @@ class List(Declarations.Model.FuretUI.Resource):
     # TODO criteria of filter
 
     def field_for_(cls, field, fields2read, **kwargs):
+        widget = kwargs.get('widget', field['type']).lower()
         res = {
             'name': field['id'],
-            'label': field['label'],
-            'component': 'furet-ui-field',
-            'type': field['type'].lower(),
+            'label': kwargs.get('label', field['label']),
+            'component': kwargs.get('component', 'furet-ui-field'),
+            'type': widget,
+            'numeric': (
+                True if widget in ('Integer', 'Float', 'Decimal') else False),
         }
         if 'sortable' in kwargs:
-            field['sortable'] = bool(eval(kwargs['sortable'], {}, {}))
+            sortable = kwargs['sortable']
+            if sortable == '':
+                res['sortable'] = True
+            else:
+                res['sortable'] = bool(eval(sortable, {}, {}))
+
         if 'help' in kwargs:
-            field['tooltip'] = kwargs['help']
+            res['tooltip'] = kwargs['help']
 
         fields2read.append(field['id'])
         for k in field:
-            if k in ('id', 'label', 'nullable', 'primary_key'):
+            if k in ('id', 'label', 'nullable', 'primary_key', 'type'):
                 continue
-            elif k == 'type':
-                res['numeric'] = (
-                    True if field['type'] in ('Integer', 'Float', 'Decimal')
-                    else False
-                )
-
             elif k == 'model':
                 if field[k]:
                     res[k] = field[k]
@@ -129,7 +131,7 @@ class List(Declarations.Model.FuretUI.Resource):
         headers = []
         fields2read = []
         if self.template:
-            template = self.registry.furetui_views.get_template(
+            template = self.registry.furetui_templates.get_template(
                 self.template, tostring=False)
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
