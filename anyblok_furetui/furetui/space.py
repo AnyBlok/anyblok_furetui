@@ -7,13 +7,14 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
-from anyblok.column import String
+from anyblok.column import String, Integer
 
 
 @Declarations.register(Declarations.Model.FuretUI)
 class Space:
     code = String(primary_key=True)
     label = String(nullable=False)
+    order = Integer(default=100, nullable=False)
     description = String()
     icon_code = String()
     icon_type = String()
@@ -38,7 +39,7 @@ class Space:
 
     @classmethod
     def get_for_user(cls, authenticated_userid):
-        query = cls.query()
+        query = cls.query().order_by(cls.order.asc())
         # TODO filter in function of access roles
         return query
 
