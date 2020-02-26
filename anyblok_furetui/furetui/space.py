@@ -56,11 +56,13 @@ class Space:
                 continue
 
             mres = [{'resource': mre.resource.id,
-                     **mre.to_dict('id', 'order', 'label')}
+                     **mre.to_dict('id', 'order', 'label', 'icon_code',
+                                   'icon_type')}
                     for mre in mres]
             if mro.label:
                 menus.append(
-                    {'children': mres, **mro.to_dict('id', 'order', 'label')})
+                    {'children': mres, **mro.to_dict('id', 'order', 'label',
+                                                     'icon_code', 'icon_type')})
             else:
                 menus.extend(mres)
 

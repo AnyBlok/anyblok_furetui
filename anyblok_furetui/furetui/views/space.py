@@ -62,5 +62,4 @@ def get_space(request):
                 'menus': space.get_menus(),
             },
         ]
-    print('SPACE', res)
     return res

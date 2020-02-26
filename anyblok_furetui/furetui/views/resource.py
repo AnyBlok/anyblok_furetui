@@ -30,5 +30,4 @@ def get_resource(request):
             },
         ]
 
-    print('RESOURCE', res)
     return res

@@ -15,6 +15,8 @@ from anyblok.relationship import Many2One
 class Menu:
     id = Integer(primary_key=True)
     order = Integer(nullable=False, default=100)
+    icon_code = String()
+    icon_type = String()
     # TODO criteria of filter
 
 
