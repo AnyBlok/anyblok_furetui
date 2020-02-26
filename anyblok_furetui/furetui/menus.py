@@ -13,34 +13,37 @@ from anyblok.relationship import Many2One
 
 @Declarations.register(Declarations.Model.FuretUI)
 class Menu:
-    pass
+    id = Integer(primary_key=True)
+    order = Integer(nullable=False, default=100)
+    icon_code = String()
+    icon_type = String()
+    # TODO criteria of filter
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class Root:
-    id = Integer(primary_key=True)
+class Root(Declarations.Model.FuretUI.Menu,
+           ):
+    id = Integer(primary_key=True,
+                 foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
     label = String()
     type = Selection(
         selections={'space': 'Space', 'resource': 'Resource'},
         default='space', nullable=False)
-    order = Integer(nullable=False, default=100)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource)
     space = Many2One(model=Declarations.Model.FuretUI.Space)
-    # TODO criteria of filter
     # TODO check resource space requirement
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class Resource:
-    id = Integer(primary_key=True)
+class Resource(Declarations.Model.FuretUI.Menu):
+    id = Integer(primary_key=True,
+                 foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
     root = Many2One(model=Declarations.Model.FuretUI.Menu.Root,
                     nullable=False)
     label = String(nullable=False)
-    order = Integer(nullable=False, default=100)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource,
                         nullable=False)
     default = Boolean(default=False)
-    # TODO criteria of filter
 
 # Criteria is hierachical criteria = resource criteria + menu criteria + menu
 # root criteria

@@ -104,7 +104,7 @@ class FuretuiQueryString(QueryString):
     def get_query(self):
         query = self.Model.query()
         # TODO update query in function of user
-        return self.update_sqlalchemy_query(query)
+        return query
 
 
 crud = Service(name='crud',
@@ -120,9 +120,33 @@ def crud_read(request):
     # check user is disconnected
     # check user has access rigth to see this resource
     registry = request.anyblok.registry
-    Model = registry.get(request.params['model'])
+    model = request.params['model']
+    Model = registry.get(model)
+    fields = request.params['fields'].split(',')
+    # TODO complex case of relationship
     qs = FuretuiQueryString(request, Model)
     query = qs.get_query()
-    res = []
-    # TODO make to dict in function of fields
-    return res
+    query = qs.from_filter_by(query)
+    query = qs.from_tags(query)
+
+    query2 = qs.from_order_by(query)
+    query2 = qs.from_limit(query2)
+    query2 = qs.from_offset(query2)
+
+    data = []
+    pks = []
+    for entry in query2:
+        pk = entry.to_primary_keys()
+        pks.append(pk)
+        data.append({
+            'type': 'UPDATE_DATA',
+            'model': model,
+            'pk': pk,
+            'data': entry.to_dict(*fields),
+        })
+
+    return {
+        'pks': pks,
+        'total': query.count(),
+        'data': data,
+    }
