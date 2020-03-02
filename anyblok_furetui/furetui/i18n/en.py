@@ -26,6 +26,10 @@ en = {
         },
         'fields': {
             'notFound': 'No result found',
+            'yesno': {
+                'yes': 'Yes',
+                'no': 'No',
+            },
         }
     },
 }

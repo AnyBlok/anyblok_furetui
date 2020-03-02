@@ -19,11 +19,13 @@ logger = getLogger(__name__)
 
 
 def import_module(reload=None):
+    from . import core
     from . import furetui
     from . import space
     from . import resource
     from . import menus
     if reload is not None:
+        reload(core)
         reload(furetui)
         reload(space)
         reload(resource)

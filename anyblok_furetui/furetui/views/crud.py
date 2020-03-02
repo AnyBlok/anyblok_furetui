@@ -108,7 +108,7 @@ class FuretuiQueryString(QueryString):
 
 
 crud = Service(name='crud',
-               path='/furet-ui/read',
+               path='/furet-ui/crud',
                description='Generic Crud',
                cors_origins=('*',),
                cors_credentials=True,
@@ -122,7 +122,21 @@ def crud_read(request):
     registry = request.anyblok.registry
     model = request.params['model']
     Model = registry.get(model)
-    fields = request.params['fields'].split(',')
+    fields_ = request.params['fields'].split(',')
+    fields = []
+    subfields = {}
+
+    for f in fields_:
+        if '.' in f:
+            field, subfield = f.split('.')
+            fields.append(field)
+            if field not in subfields:
+                subfields[field] = []
+
+            subfields[field].append(subfield)
+        else:
+            fields.append(f)
+
     # TODO complex case of relationship
     qs = FuretuiQueryString(request, Model)
     query = qs.get_query()
@@ -144,6 +158,14 @@ def crud_read(request):
             'pk': pk,
             'data': entry.to_dict(*fields),
         })
+        for field, subfield in subfields.items():
+            entry_ = getattr(entry, field)
+            data.append({
+                'type': 'UPDATE_DATA',
+                'model': entry_.__registry_name__,
+                'pk': entry_.to_primary_keys(),
+                'data': entry_.to_dict(*subfield),
+            })
 
     return {
         'pks': pks,

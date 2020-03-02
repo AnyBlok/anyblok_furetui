@@ -26,6 +26,10 @@ fr = {
         },
         'fields': {
             'notFound': 'Aucun résultat',
+            'yesno': {
+                'yes': 'Oui',
+                'no': 'Non',
+            },
         }
     },
 }

@@ -6,10 +6,167 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import json
 from copy import deepcopy
+from lxml import etree, html
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection
 from anyblok.relationship import Many2One
+from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+
+
+@Declarations.register(Declarations.Mixin)  # noqa
+class Template:
+
+    def get_field_for_(self, field, _type, description, fields2read):
+        config = {
+            'name': field.attrib.get('name'),
+            'type': _type.lower(),
+            'label': field.attrib.get('label', description['label']),
+            'required': field.attrib.get(
+                'required', '1' if description.get('nullable') else '0')
+
+        }
+        model = field.attrib.get('model', description.get('model'))
+        if model:
+            config['model'] = model
+
+        field.tag = 'furet-ui-field'
+        attribs = list(description.keys())
+        attribs.sort()
+        fields2read.append(description['id'])
+        for attrib in attribs:
+            if attrib in ('id', 'label', 'type', 'primary_key',
+                          'nullable', 'model'):
+                continue
+            else:
+                config[attrib] = description[attrib]
+
+        field.attrib['{%s}config' % field.nsmap['v-bind']] = json.dumps(config)
+
+    def get_field_for_String(self, field, description, fields2read):
+        Model = self.registry.get(self.model)
+        description.update({
+            'maxlength': Model.registry.loaded_namespaces_first_step[
+                self.model][description['id']].size,
+            'placeholder': field.attrib.get('placeholder', ''),
+            'icon': field.attrib.get('icon', ''),
+        })
+        return self.get_field_for_(field, 'String', description, fields2read)
+
+    # def get_field_for_Integer(cls, field, description, fields2read):
+    #     return cls.get_field_for_(field, 'Integer', description, fields2read)
+
+    # def get_field_for_SmallInteger(cls, field, description, fields2read):
+    #     return cls.get_field_for_(field, 'Integer', description, fields2read)
+
+    # def get_field_for_File(cls, field, description, fields2read):
+    #     return cls.get_field_for_(field, 'File', description, fields2read)
+
+    # def get_field_for_Many2One(cls, field, description, fields2read):
+    #     Model = cls.registry.get(description['model'])
+    #     fields = Model.get_display_fields(mode=cls.__registry_name__)
+    #     action = Model.get_default_action(mode=cls.__registry_name__)
+    #     menu = Model.get_default_menu_linked_with_action(
+    #         action=action, mode=cls.__registry_name__)
+    #     description['display'] = " + ', ' + ".join(
+    #         ['fields.' + x for x in fields])
+    #     description['{%s}fields' % field.nsmap['v-bind']] = str(fields)
+    #     description['actionId'] = str(action.id) if action else None
+    #     description['menuId'] = str(menu.id) if menu else None
+    #     fields2read.append([description['id'], fields])
+    #     return cls.get_field_for_(field, 'Many2One', description, [])
+
+    # def get_field_for_One2Many(cls, field, description, fields2read):
+    #     Model = cls.registry.get(description['model'])
+    #     action = Model.get_default_action(mode=cls.__registry_name__)
+    #     views = Model.get_default_views_linked_with_action(
+    #         action=action, mode=cls.__registry_name__)
+    #     description['x2oField'] = description.pop('remote_name')
+    #     description['{%s}views' % field.nsmap['v-bind']] = str(views)
+    #     return cls.get_field_for_(field, 'One2Many', description, fields2read)
+
+    # def get_field_for_Sequence(cls, field, description, fields2read):
+    #     description['readonly'] = True
+    #     return cls.get_field_for_(field, 'String', description, fields2read)
+
+    # def get_field_for_Selection(cls, field, description, fields2read):
+    #     selections = {}
+    #     if 'selections' in description:
+    #         selections = description['selections']
+    #         del description['selections']
+
+    #     if isinstance(selections, list):
+    #         selections = dict(selections)
+
+    #     description['{%s}selections' % field.nsmap['v-bind']] = str(selections)
+    #     return cls.get_field_for_(field, 'Selection', description, fields2read)
+
+    # def get_field_for_UUID(cls, field, description, fields2read):
+    #     description['readonly'] = True
+    #     return cls.get_field_for_(field, 'String', description, fields2read)
+
+    # def replace_button_in_function_of_view(cls, button):
+    #     pass
+
+    # def replace_buttons(cls, template, fields_description):
+    #     buttons = template.findall('.//button')
+    #     for el in buttons:
+    #         el.tag = 'furet-ui-%s-button' % (cls.mode_name.lower())
+    #         cls.add_template_bind(el)
+    #         el.set('{%s}viewId' % el.nsmap['v-bind'], 'viewId')
+    #         el.set('{%s}model' % el.nsmap['v-bind'], 'model')
+    #         el.set('{%s}options' % el.nsmap['v-bind'],
+    #                el.attrib.get('data-options', '{}'))
+    #         el.set('buttonId', el.attrib.get('data-method', ''))
+    #         cls.replace_button_in_function_of_view(el)
+
+    def replace_fields(self, template, fields_description, fields2read):
+        fields = template.findall('.//field')
+        for el in fields:
+            fd = deepcopy(fields_description[el.attrib.get('name')])
+            _type = el.attrib.get('widget', fd['type'])
+            if _type == 'FakeColumn':
+                continue
+
+            meth = 'get_field_for_' + _type
+            if hasattr(self, meth):
+                getattr(self, meth)(el, fd, fields2read)
+            else:
+                self.get_field_for_(el, _type, fd, fields2read)
+
+            self.add_template_bind(el)
+
+    def update_interface_attributes(self, template, fields_description):
+        for el in template.findall('.//*[@visible-only-if]'):
+            if el.tag == 'div':
+                el.tag = 'furet-ui-group'
+                self.add_template_bind(el)
+
+            config = {'invisible': '!(' + el.attrib['visible-only-if'] + ')'}
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
+            del el.attrib['visible-only-if']
+
+        # TODO writable-only-if  warning propagation in children
+        # TODO not-nullable-only-if  warning propagation in children
+
+    def _encode_to_furetui(self, template, fields_description, fields2read):
+        nsmap = {'v-bind': 'https://vuejs.org/'}
+        etree.cleanup_namespaces(template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
+        self.update_interface_attributes(template, fields_description)
+        self.replace_fields(template, fields_description, fields2read)
+    #     cls.replace_buttons(template, fields_description)
+
+    def encode_to_furetui(self, template, fields, fields2read):
+        Model = self.registry.get(self.model)
+        fields_description = Model.fields_description(fields)
+        self._encode_to_furetui(template, fields_description, fields2read)
+        return self.registry.furetui_templates.decode(
+            html.tostring(template).decode('utf-8'))
+
+    def add_template_bind(self, field):
+        field.attrib['{%s}resource' % field.nsmap['v-bind']] = "resource"
+        field.attrib['{%s}data' % field.nsmap['v-bind']] = "data"
 
 
 @Declarations.register(Declarations.Model.FuretUI)
@@ -125,11 +282,75 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return res
 
+    def field_for_BigInteger(self, field, fields2read, **kwargs):
+        f = field.copy()
+        f['type'] = 'Integer'
+        return self.field_for_(f, fields2read, **kwargs)
+
+    def field_for_SmallInteger(self, field, fields2read, **kwargs):
+        f = field.copy()
+        f['type'] = 'Integer'
+        return self.field_for_(f, fields2read, **kwargs)
+
+    def field_for_relationship(self, field, fields2read, **kwargs):
+        f = field.copy()
+        Model = self.registry.get(f['model'])
+        # Mapping = cls.registry.IO.Mapping
+        if 'display' in kwargs:
+            display = kwargs['display']
+            for op in ('!=', '==', '<', '<=', '>', '>='):
+                display = display.replace(op, ' ')
+
+            display = display.replace('!', '')
+            fields = []
+            for d in display:
+                if 'fields.' in d:
+                    fields.append(d.split('.')[1])
+
+            f['display'] = kwargs['display']
+            del kwargs['display']
+        else:
+            fields = Model.get_display_fields()
+            f['display'] = " + ', ' + ".join(['fields.' + x for x in fields])
+
+        resource = None
+        menu = None
+        if eval(kwargs.get('no-link', 'False')):
+            pass
+        elif 'menu' in kwargs:
+            pass
+        elif 'resource' in kwargs:
+            pass
+        else:
+            pass
+
+        # if 'action' in kwargs:
+        #     action = Mapping.get('Model.Web.Action', kwargs['action'])
+        #     del kwargs['action']
+        # else:
+        #     action = Model.get_default_action(mode=cls.__registry_name__)
+
+        # if 'menu' in kwargs:
+        #     menu = Mapping.get('Model.Web.Menu', kwargs['menu'])
+        #     del kwargs['menu']
+        # else:
+        #     menu = Model.get_default_menu_linked_with_action(
+        #         action=action, mode=cls.__registry_name__)
+
+        f['resource'] = resource
+        f['menu'] = menu
+        fields2read.extend(['%s.%s' % (field['id'], x) for x in fields])
+        return self.field_for_(f, [], **kwargs)
+
+    def field_for_Many2One(self, field, fields2read, **kwargs):
+        return self.field_for_relationship(field, fields2read, **kwargs)
+
     def get_definitions(self):
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
         headers = []
         fields2read = []
+        fields2read.extend(Model.get_primary_keys())
         if self.template:
             template = self.registry.furetui_templates.get_template(
                 self.template, tostring=False)
@@ -164,7 +385,10 @@ class List(Declarations.Model.FuretUI.Resource):
             'type': self.type.label.lower(),
             'title': self.title,
             'model': self.model,
-            # 'filters': [],  # TODO
+            'filters': self.registry.FuretUI.Resource.Filter.get_for_resource(
+                list=self),
+            'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
+                list=self),
             # 'sort': [],  # TODO
             # 'buttons': [],  # TODO
             # 'on_selected_buttons': [],  # TODO
@@ -184,13 +408,89 @@ class Thumbnail(Declarations.Model.FuretUI.Resource):
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
-class Form(Declarations.Model.FuretUI.Resource):
+class Filter:
+    id = Integer(primary_key=True)
+    key = String(nullable=False)
+    list = Many2One(model=Declarations.Model.FuretUI.Resource.List,
+                    one2many="filters")
+    thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail,
+                         one2many="filters")
+    mode = Selection(selections={'include': 'Include', 'exclude': 'Exclude'},
+                     default='include', nullable=False)
+    op = Selection(selections={x: x for x in FILTER_OPERATORS},
+                   default='or-ilike', nullable=False)
+    label = String(nullable=False)
+    values = String()
+
+    @classmethod
+    def get_for_resource(cls, **resource):
+        query = cls.query().filter_by(**resource)
+        res = [{'values': x.values.split(',') if x.values else [],
+                **x.to_dict('key', 'mode', 'op', 'label')}
+               for x in query]
+        return res
+
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Tags:
+    id = Integer(primary_key=True)
+    key = String(nullable=False)
+    list = Many2One(model=Declarations.Model.FuretUI.Resource.List,
+                    one2many="tags")
+    thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail,
+                         one2many="tags")
+    values = String()
+
+    @classmethod
+    def get_for_resource(cls, **resource):
+        query = cls.query().filter_by(**resource)
+        return [x.to_dict('key', 'label') for x in query]
+
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Form(
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
-    model = String(foreign_key=Declarations.Model.System.Model.use('name'))
+    model = String(foreign_key=Declarations.Model.System.Model.use('name'),
+                   nullable=False)
+    title = String()
     template = String()
     is_polymorphic = Boolean(default=False)
     # TODO field Selection RO / RW / WO
+
+    def get_definitions(self):
+        res = self.to_dict('id', 'type', 'title', 'model')
+        Model = self.registry.get(self.model)
+        buttons = []
+        fd = Model.fields_description()
+        if self.template:
+            pass
+        else:
+            fields = [x for x in fd.keys()
+                      if fd[x]['type'] not in ('FakeColumn', 'Function')]
+            fields.sort()
+            root = etree.Element("div")
+            root.set('class', "columns is-multiline is-mobile")
+            for field_name in fields:
+                column = etree.SubElement(root, "div")
+                column.set('class',
+                           "column is-4-desktop is-6-tablet is-12-mobile")
+                field = etree.SubElement(column, "field")
+                field.set('name', field_name)
+
+        fields2read = []
+        res.update({
+            'template': self.encode_to_furetui(root, fields, fields2read),
+            'buttons': buttons,
+            'fields': fields2read,
+        })
+        return [res]
+
+    def get_primary_keys_for(self):
+        return self.registry.get(self.model).get_primary_keys()
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -208,10 +508,29 @@ class PolymorphicForm():
 class Set(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+    can_create = Boolean(default=True)
+    can_modify = Boolean(default=True)
+    can_delete = Boolean(default=True)
+
     form = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                     nullable=False)
+    multi_type = Selection(
+        selections={'list': 'List', 'thumbnail': 'Thumbnail'},
+        nullable=False, default="list")
     list = Many2One(model=Declarations.Model.FuretUI.Resource.List)
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail)
     # TODO add checkonstraint on multi + select
-    # TODO add form new for create
     # TODO add boolean can_create, can_modify, can_delete
+
+    def get_definitions(self):
+        definition = self.to_dict(
+            'id', 'type', 'can_create', 'can_modify', 'can_delete')
+        definition.update({
+            'pks': self.form.get_primary_keys_for(),
+            'form': self.form.id,
+            'multi': getattr(self, self.multi_type).id,
+        })
+        res = [definition]
+        res.extend(self.form.get_definitions())
+        res.extend(getattr(self, self.multi_type).get_definitions())
+        return res
