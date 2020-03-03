@@ -54,28 +54,60 @@ class Template:
         })
         return self.get_field_for_(field, 'String', description, fields2read)
 
-    # def get_field_for_Integer(cls, field, description, fields2read):
-    #     return cls.get_field_for_(field, 'Integer', description, fields2read)
+    def get_field_for_Integer(self, field, description, fields2read):
+        return self.get_field_for_(field, 'Integer', description, fields2read)
 
-    # def get_field_for_SmallInteger(cls, field, description, fields2read):
-    #     return cls.get_field_for_(field, 'Integer', description, fields2read)
+    def get_field_for_SmallInteger(self, field, description, fields2read):
+        return self.get_field_for_(field, 'Integer', description, fields2read)
 
-    # def get_field_for_File(cls, field, description, fields2read):
-    #     return cls.get_field_for_(field, 'File', description, fields2read)
+    def get_field_for_File(self, field, description, fields2read):
+        return self.get_field_for_(field, 'File', description, fields2read)
 
-    # def get_field_for_Many2One(cls, field, description, fields2read):
-    #     Model = cls.registry.get(description['model'])
-    #     fields = Model.get_display_fields(mode=cls.__registry_name__)
-    #     action = Model.get_default_action(mode=cls.__registry_name__)
-    #     menu = Model.get_default_menu_linked_with_action(
-    #         action=action, mode=cls.__registry_name__)
-    #     description['display'] = " + ', ' + ".join(
-    #         ['fields.' + x for x in fields])
-    #     description['{%s}fields' % field.nsmap['v-bind']] = str(fields)
-    #     description['actionId'] = str(action.id) if action else None
-    #     description['menuId'] = str(menu.id) if menu else None
-    #     fields2read.append([description['id'], fields])
-    #     return cls.get_field_for_(field, 'Many2One', description, [])
+    def get_field_for_Many2One(self, field, description, fields2read):
+        Model = self.registry.get(description['model'])
+        description = description.copy()
+
+        display = field.attrib.get('display')
+        if display:
+            for op in ('!=', '==', '<', '<=', '>', '>='):
+                display = display.replace(op, ' ')
+
+            display = display.replace('!', '')
+            fields = []
+            for d in display:
+                if 'fields.' in d:
+                    fields.append(d.split('.')[1])
+
+        else:
+            fields = Model.get_display_fields()
+            display = " + ', ' + ".join(['fields.' + x for x in fields])
+
+        description['display'] = display
+
+        filter_by = field.attrib.get('filter_by')
+        if filter_by:
+            filter_by = filter_by.split(',')
+        else:
+            filter_by = Model.get_filter_fields()
+
+        resource = field.attrib.get('resource')
+        menu = field.attrib.get('menu')
+        if eval(field.attrib.get('no-link', 'False')):
+            pass
+        elif menu:
+            pass
+        elif resource:
+            pass
+        else:
+            pass
+
+        description['resource'] = resource
+        description['menu'] = menu
+        description['fields'] = fields
+        description['filter_by'] = filter_by
+        description['limit'] = field.attrib.get('limit', 10)
+        fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
+        return self.get_field_for_(field, 'Many2One', description, [])
 
     # def get_field_for_One2Many(cls, field, description, fields2read):
     #     Model = cls.registry.get(description['model'])

@@ -1,5 +1,7 @@
+from copy import deepcopy
 from anyblok_pyramid import current_blok
 from anyblok_pyramid_rest_api.querystring import QueryString
+from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 import re
 
@@ -172,3 +174,33 @@ def crud_read(request):
         'total': query.count(),
         'data': data,
     }
+
+
+def create_data(registry, model, changes, uuid):
+    Model = registry.get(model)
+    fd = Model.fields_description()
+    data = changes[model]['new'].pop(uuid, {})
+    for field in data:
+        if fd[field]['type'] in ('Many2One', 'One2One'):
+            M2 = registry.get(fd[field]['model'])
+            data[field] = M2.from_primary_keys(**data[field])
+
+        # TODO one2many and many2many
+
+    return Model.insert(**data)
+
+
+@crud.post()
+def crud_create(request):
+    registry = request.anyblok.registry
+    data = request.json_body
+    model = data['model']
+    uuid = data['uuid']
+    changes = deepcopy(data['changes'])
+
+    with saved_errors_in_request(request):
+        obj = create_data(registry, model, changes, uuid)
+        # create_or_update(registry, changes, firstmodel=model)
+        return {
+            'pks': obj.to_primary_keys(),
+        }
