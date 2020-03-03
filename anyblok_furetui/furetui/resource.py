@@ -467,15 +467,19 @@ class Form(
         buttons = []
         fd = Model.fields_description()
         if self.template:
-            pass
+            template = self.registry.furetui_templates.get_template(
+                self.template, tostring=False)
+            template.tag = 'div'
+            fields = [el.attrib.get('name')
+                      for el in template.findall('.//field')]
         else:
             fields = [x for x in fd.keys()
                       if fd[x]['type'] not in ('FakeColumn', 'Function')]
             fields.sort()
-            root = etree.Element("div")
-            root.set('class', "columns is-multiline is-mobile")
+            template = etree.Element("div")
+            template.set('class', "columns is-multiline is-mobile")
             for field_name in fields:
-                column = etree.SubElement(root, "div")
+                column = etree.SubElement(template, "div")
                 column.set('class',
                            "column is-4-desktop is-6-tablet is-12-mobile")
                 field = etree.SubElement(column, "field")
@@ -483,7 +487,7 @@ class Form(
 
         fields2read = []
         res.update({
-            'template': self.encode_to_furetui(root, fields, fields2read),
+            'template': self.encode_to_furetui(template, fields, fields2read),
             'buttons': buttons,
             'fields': fields2read,
         })
