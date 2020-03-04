@@ -1,3 +1,4 @@
+import json
 from copy import deepcopy
 from anyblok_pyramid import current_blok
 from anyblok_pyramid_rest_api.querystring import QueryString
@@ -176,10 +177,8 @@ def crud_read(request):
     }
 
 
-def create_data(registry, model, changes, uuid):
-    Model = registry.get(model)
+def format_data(registry, Model, data):
     fd = Model.fields_description()
-    data = changes[model]['new'].pop(uuid, {})
     for field in data:
         if fd[field]['type'] in ('Many2One', 'One2One'):
             M2 = registry.get(fd[field]['model'])
@@ -187,7 +186,32 @@ def create_data(registry, model, changes, uuid):
 
         # TODO one2many and many2many
 
+
+def create_data(registry, model, changes, uuid):
+    Model = registry.get(model)
+    data = changes[model]['new'].pop(uuid, {})
+    format_data(registry, Model, data)
     return Model.insert(**data)
+
+
+def update_data(registry, model, changes, pks):
+    Model = registry.get(model)
+    data = {}
+    for key in changes[model].keys():
+        if dict(json.loads(key)) == pks:
+            data = changes[model].pop(key)
+            break
+
+    format_data(registry, Model, data)
+    obj = Model.from_primary_keys(**pks)
+    obj.update(**data)
+    return obj
+
+
+def delete_data(registry, model, pks):
+    Model = registry.get(model)
+    obj = Model.from_primary_keys(**pks)
+    obj.delete()
 
 
 @crud.post()
@@ -203,4 +227,34 @@ def crud_create(request):
         # create_or_update(registry, changes, firstmodel=model)
         return {
             'pks': obj.to_primary_keys(),
+        }
+
+
+@crud.patch()
+def crud_update(request):
+    registry = request.anyblok.registry
+    data = request.json_body
+    model = data['model']
+    pks = data['pks']
+    changes = deepcopy(data['changes'])
+
+    with saved_errors_in_request(request):
+        obj = update_data(registry, model, changes, pks)
+        # create_or_update(registry, changes, firstmodel=model)
+        return {
+            'pks': obj.to_primary_keys(),
+        }
+
+
+@crud.delete()
+def crud_delete(request):
+    registry = request.anyblok.registry
+    data = request.params
+    model = data['model']
+    pks = dict(json.loads(data['pks']))
+
+    with saved_errors_in_request(request):
+        delete_data(registry, model, pks)
+        return {
+            'pks': pks,
         }
