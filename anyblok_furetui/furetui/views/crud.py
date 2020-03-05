@@ -163,12 +163,13 @@ def crud_read(request):
         })
         for field, subfield in subfields.items():
             entry_ = getattr(entry, field)
-            data.append({
-                'type': 'UPDATE_DATA',
-                'model': entry_.__registry_name__,
-                'pk': entry_.to_primary_keys(),
-                'data': entry_.to_dict(*subfield),
-            })
+            if entry_:
+                data.append({
+                    'type': 'UPDATE_DATA',
+                    'model': entry_.__registry_name__,
+                    'pk': entry_.to_primary_keys(),
+                    'data': entry_.to_dict(*subfield),
+                })
 
     return {
         'pks': pks,

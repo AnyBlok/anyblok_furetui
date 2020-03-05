@@ -60,6 +60,14 @@ class FuretUI:
         cls.registry.furetui_i18n = i18n
 
     @classmethod
+    def get_template(cls, *args, **kwargs):
+        reload_at_change = Configuration.get('pyramid.reload_all', False)
+        if reload_at_change:
+            cls.pre_load()
+
+        return cls.registry.furetui_templates.get_template(*args, **kwargs)
+
+    @classmethod
     def get_default_path(cls, authenticated_userid):
         # TODO add default path on user
         return '/'

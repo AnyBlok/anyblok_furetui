@@ -19,17 +19,30 @@ from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
 class Template:
 
     def get_field_for_(self, field, _type, description, fields2read):
+
+        required = field.attrib.get(
+            'required', '1' if not description.get('nullable') else '0')
+        if required == '':
+            required = '1'
+
         config = {
             'name': field.attrib.get('name'),
             'type': _type.lower(),
             'label': field.attrib.get('label', description['label']),
-            'required': field.attrib.get(
-                'required', '1' if description.get('nullable') else '0')
-
+            'tooltip': field.attrib.get('tooltip'),
+            'model': field.attrib.get('model', description.get('model')),
+            'required': required,
         }
-        model = field.attrib.get('model', description.get('model'))
-        if model:
-            config['model'] = model
+
+        for key in ('readonly', 'writable', 'hidden'):
+            value = field.attrib.get(key)
+            if value == '':
+                value = '1'
+
+            if not value:
+                continue
+
+            config[key] = value
 
         field.tag = 'furet-ui-field'
         attribs = list(description.keys())
@@ -55,10 +68,14 @@ class Template:
         return self.get_field_for_(field, 'String', description, fields2read)
 
     def get_field_for_Integer(self, field, description, fields2read):
+        description.update({
+            'min': field.attrib.get('min'),
+            'max': field.attrib.get('max'),
+        })
         return self.get_field_for_(field, 'Integer', description, fields2read)
 
     def get_field_for_SmallInteger(self, field, description, fields2read):
-        return self.get_field_for_(field, 'Integer', description, fields2read)
+        return self.get_field_for_Integer(field, description, fields2read)
 
     def get_field_for_File(self, field, description, fields2read):
         return self.get_field_for_(field, 'File', description, fields2read)
@@ -109,6 +126,22 @@ class Template:
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, 'Many2One', description, [])
 
+    def get_field_for_DateTime(self, field, description, fields2read):
+        description.update({
+            'placeholder': field.attrib.get('placeholder', ''),
+            'editable': eval(field.attrib.get('editable', 'True')),
+            'icon': field.attrib.get('icon', ''),
+            'datepicker': {
+              'showWeekNumber': eval(
+                  field.attrib.get('show-week-number', 'True')),
+            },
+            'timepicker': {
+                'enableSeconds': eval(field.attrib.get('show-second', 'True')),
+                'hourFormat': field.attrib.get('hour-format', '24'),
+            },
+        })
+        return self.get_field_for_(field, 'DateTime', description, fields2read)
+
     # def get_field_for_One2Many(cls, field, description, fields2read):
     #     Model = cls.registry.get(description['model'])
     #     action = Model.get_default_action(mode=cls.__registry_name__)
@@ -122,17 +155,19 @@ class Template:
     #     description['readonly'] = True
     #     return cls.get_field_for_(field, 'String', description, fields2read)
 
-    # def get_field_for_Selection(cls, field, description, fields2read):
-    #     selections = {}
-    #     if 'selections' in description:
-    #         selections = description['selections']
-    #         del description['selections']
+    def get_field_for_Selection(self, field, description, fields2read):
+        description = deepcopy(description)
+        for key in ('selections', 'colors'):
+            if key in field.attrib:
+                description[key] = eval(field.attrib.get(key), {}, {})
 
-    #     if isinstance(selections, list):
-    #         selections = dict(selections)
+            if key not in description:
+                description[key] = {}
 
-    #     description['{%s}selections' % field.nsmap['v-bind']] = str(selections)
-    #     return cls.get_field_for_(field, 'Selection', description, fields2read)
+            if isinstance(description[key], list):
+                description[key] = dict(description[key])
+
+        return self.get_field_for_(field, 'Selection', description, fields2read)
 
     # def get_field_for_UUID(cls, field, description, fields2read):
     #     description['readonly'] = True
@@ -169,23 +204,77 @@ class Template:
 
             self.add_template_bind(el)
 
-    def update_interface_attributes(self, template, fields_description):
-        for el in template.findall('.//*[@visible-only-if]'):
-            if el.tag == 'div':
-                el.tag = 'furet-ui-group'
-                self.add_template_bind(el)
+    def update_interface_attributes(self, el, fields2read, *attributes):
+        config = {}
+        for key in attributes:
+            value = el.attrib.get(key)
+            if value == '':
+                value = '1'
 
-            config = {'invisible': '!(' + el.attrib['visible-only-if'] + ')'}
+            if not value:
+                continue
+
+            fields = value
+            for op in ('!=', '==', '<', '<=', '>', '>='):
+                fields = fields.replace(op, ' ')
+
+            fields = fields.replace('!', '')
+            fields = [d.strip().split('.')[1]
+                      for d in fields.split(' ')
+                      if 'fields.' in d]
+
+            config[key] = value
+            fields2read.extend(fields)
+
+        if config:
+            config['props'] = initial_props = {}
+            for key in el.attrib:
+                if key in attributes:
+                    continue
+
+                initial_props[key] = el.attrib.get(key)
+
+        return config
+
+    def replace_divs(self, template, fields2read):
+        fields = template.findall('.//div')
+        for el in fields:
+            config = self.update_interface_attributes(
+                el, fields2read, 'hidden')
+            if not config:
+                continue
+
+            el.tag = 'furet-ui-div'
+            self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
-            del el.attrib['visible-only-if']
 
-        # TODO writable-only-if  warning propagation in children
-        # TODO not-nullable-only-if  warning propagation in children
+    def replace_by_(self, template, fields2read, tag):
+        fields = template.findall('.//%s' % tag)
+        for el in fields:
+            config = self.update_interface_attributes(
+                el, fields2read, 'readonly', 'hidden', 'writable')
+
+            el.tag = 'furet-ui-%s' % tag
+            self.add_template_bind(el)
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
+
+    def replace_fieldsets(self, template, fields2read):
+        self.replace_by_(template, fields2read, 'fieldset')
+
+    def replace_tabs(self, template, fields2read):
+        self.replace_by_(template, fields2read, 'tabs')
+
+    def replace_tab(self, template, fields2read):
+        self.replace_by_(template, fields2read, 'tab')
 
     def _encode_to_furetui(self, template, fields_description, fields2read):
         nsmap = {'v-bind': 'https://vuejs.org/'}
-        etree.cleanup_namespaces(template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
-        self.update_interface_attributes(template, fields_description)
+        etree.cleanup_namespaces(
+            template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
+        self.replace_divs(template, fields2read)
+        self.replace_fieldsets(template, fields2read)
+        self.replace_tabs(template, fields2read)
+        self.replace_tab(template, fields2read)
         self.replace_fields(template, fields_description, fields2read)
     #     cls.replace_buttons(template, fields_description)
 
@@ -285,22 +374,23 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_(cls, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
         res = {
+            'hidden': False,
             'name': field['id'],
             'label': kwargs.get('label', field['label']),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
             'numeric': (
                 True if widget in ('Integer', 'Float', 'Decimal') else False),
+            'tooltip': kwargs.get('tooltip'),
         }
-        if 'sortable' in kwargs:
-            sortable = kwargs['sortable']
-            if sortable == '':
-                res['sortable'] = True
-            else:
-                res['sortable'] = bool(eval(sortable, {}, {}))
-
-        if 'help' in kwargs:
-            res['tooltip'] = kwargs['help']
+        for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
+                    'hidden'):
+            if key in kwargs:
+                value = kwargs[key]
+                if value == '':
+                    res[key] = True
+                else:
+                    res[key] = bool(eval(value, {}, {}))
 
         fields2read.append(field['id'])
         for k in field:
@@ -356,19 +446,6 @@ class List(Declarations.Model.FuretUI.Resource):
         else:
             pass
 
-        # if 'action' in kwargs:
-        #     action = Mapping.get('Model.Web.Action', kwargs['action'])
-        #     del kwargs['action']
-        # else:
-        #     action = Model.get_default_action(mode=cls.__registry_name__)
-
-        # if 'menu' in kwargs:
-        #     menu = Mapping.get('Model.Web.Menu', kwargs['menu'])
-        #     del kwargs['menu']
-        # else:
-        #     menu = Model.get_default_menu_linked_with_action(
-        #         action=action, mode=cls.__registry_name__)
-
         f['resource'] = resource
         f['menu'] = menu
         fields2read.extend(['%s.%s' % (field['id'], x) for x in fields])
@@ -377,6 +454,43 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_Many2One(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
+    # @classmethod
+    # def field_for_LargeBinary(cls, field, fields2read, **kwargs):
+    #     f = field.copy()
+    #     f['type'] = 'file'
+    #     return cls.field_for_(f, fields2read, **kwargs)
+
+    # @classmethod
+    # def field_for_Sequence(cls, field, fields2read, **kwargs):
+    #     f = field.copy()
+    #     f['type'] = 'string'
+    #     res = cls.field_for_(f, fields2read, **kwargs)
+    #     res['readonly'] = True
+    #     return res
+
+    def field_for_Selection(self, field, fields2read, **kwargs):
+        f = field.copy()
+        for key in ('selections', 'colors'):
+            if key in kwargs:
+                f[key] = eval(kwargs[key], {}, {})
+                del kwargs[key]
+
+            if key not in f:
+                f[key] = {}
+
+            if isinstance(f[key], list):
+                f[key] = dict(f[key])
+
+        return self.field_for_(f, fields2read, **kwargs)
+
+    # @classmethod
+    # def field_for_UUID(cls, field, fields2read, **kwargs):
+    #     f = field.copy()
+    #     f['type'] = 'string'
+    #     res = cls.field_for_(f, fields2read, **kwargs)
+    #     res['readonly'] = True
+    #     return res
+
     def get_definitions(self):
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
@@ -384,12 +498,12 @@ class List(Declarations.Model.FuretUI.Resource):
         fields2read = []
         fields2read.extend(Model.get_primary_keys())
         if self.template:
-            template = self.registry.furetui_templates.get_template(
+            template = self.registry.FuretUI.get_template(
                 self.template, tostring=False)
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
                 field = fd[attributes.pop('name')]
-                _type = attributes.pop('type', field['type'])
+                _type = attributes.get('widget', field['type'])
                 meth = 'field_for_' + _type
                 if hasattr(self.__class__, meth):
                     headers.append(getattr(self, meth)(
@@ -499,7 +613,7 @@ class Form(
         buttons = []
         fd = Model.fields_description()
         if self.template:
-            template = self.registry.furetui_templates.get_template(
+            template = self.registry.FuretUI.get_template(
                 self.template, tostring=False)
             template.tag = 'div'
             fields = [el.attrib.get('name')

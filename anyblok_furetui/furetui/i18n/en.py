@@ -22,6 +22,7 @@ en = {
             'edit': 'Edit',
             'save': 'Save',
             'clear': 'Clear',
+            'cancel': 'Cancel',
             'delete': 'Delete',
         },
         'fields': {
