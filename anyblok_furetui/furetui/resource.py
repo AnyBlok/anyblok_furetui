@@ -35,12 +35,11 @@ class Template:
         }
 
         for key in ('readonly', 'writable', 'hidden'):
-            value = field.attrib.get(key)
+            value = field.attrib.get(key, '0')
             if value == '':
                 value = '1'
-
-            if not value:
-                continue
+            elif key == value:
+                value = '1'
 
             config[key] = value
 
@@ -66,6 +65,24 @@ class Template:
             'icon': field.attrib.get('icon', ''),
         })
         return self.get_field_for_(field, 'String', description, fields2read)
+
+    def get_field_for_Password(self, field, description, fields2read):
+        Model = self.registry.get(self.model)
+        description.update({
+            'maxlength': Model.registry.loaded_namespaces_first_step[
+                self.model][description['id']].size,
+            'placeholder': field.attrib.get('placeholder', ''),
+            'icon': field.attrib.get('icon', ''),
+        })
+        for key in ('reveal',):
+            value = field.attrib.get(key, '0')
+            if value == '':
+                value = '1'
+            elif key == value:
+                value = '1'
+
+            description[key] = value
+        return self.get_field_for_(field, 'Password', description, fields2read)
 
     def get_field_for_Integer(self, field, description, fields2read):
         description.update({
@@ -390,7 +407,7 @@ class List(Declarations.Model.FuretUI.Resource):
                 if value == '':
                     res[key] = True
                 else:
-                    res[key] = bool(eval(value, {}, {}))
+                    res[key] = value
 
         fields2read.append(field['id'])
         for k in field:

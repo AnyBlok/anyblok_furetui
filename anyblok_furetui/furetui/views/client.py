@@ -8,6 +8,10 @@ from anyblok.blok import BlokManager
 from pyramid.response import FileResponse
 from os.path import join
 from cornice import Service
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 client = Service(name='client_furet_ui',
@@ -62,18 +66,20 @@ def post_login(request):
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
 
-    User = registry.User
-    params = request.json_body
+    Pyramid = registry.Pyramid
+    params = Pyramid.format_login_params(request)
     login = params['login']
-    user = User.query().get(login)
-
-    if not user:
-        request.errors.add('header', 'username', 'wrong username')
+    try:
+        Pyramid.check_user_exists(login)
+    except Exception as e:
+        logger.info('Fail check_user_exists: %r', e)
+        registry.rollback()
+        request.errors.add('header', 'login', 'wrong username')
         request.errors.status = 401
         return
 
     try:
-        User.check_login(**params)
+        Pyramid.check_login(**params)
         headers = remember(request, login)
         authenticated_userid = request.authenticated_userid
         res = FuretUI.get_user_informations(authenticated_userid)
@@ -82,6 +88,7 @@ def post_login(request):
         res.append({'type': 'UPDATE_ROUTE', 'path': redirect})
         return Response(json_body=res, headers=headers)
     except HTTPUnauthorized:
+        registry.rollback()
         request.errors.add('header', 'password', 'wrong password')
         request.errors.status = 401
         return
