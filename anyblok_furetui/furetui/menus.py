@@ -7,7 +7,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
-from anyblok.column import Integer, String, Boolean, Selection
+from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 
 
@@ -17,7 +17,6 @@ class Menu:
     order = Integer(nullable=False, default=100)
     icon_code = String()
     icon_type = String()
-    # TODO criteria of filter
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
@@ -44,6 +43,9 @@ class Resource(Declarations.Model.FuretUI.Menu):
     resource = Many2One(model=Declarations.Model.FuretUI.Resource,
                         nullable=False)
     default = Boolean(default=False)
+    tags = String()
+    order_by = String()
+    filters = Json(default={})
 
-# Criteria is hierachical criteria = resource criteria + menu criteria + menu
-# root criteria
+    def check_acl(self, authenticated_userid):
+        return self.resource.check_acl(authenticated_userid)

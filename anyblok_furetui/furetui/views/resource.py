@@ -1,5 +1,7 @@
+from pyramid.httpexceptions import HTTPUnauthorized
 from anyblok_pyramid import current_blok
 from cornice import Service
+from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 
 
 resource = Service(name='resource',
@@ -12,22 +14,27 @@ resource = Service(name='resource',
 
 @resource.get()
 def get_resource(request):
-    # check user is disconnected
-    # check user has access right
-    registry = request.anyblok.registry
-    resourceId = request.matchdict['id']
-    resource = registry.FuretUI.Resource.query().get(resourceId)
-    res = []
-    if resource:
-        res = [
-            {
-                'type': 'UPDATE_RESOURCES',
-                'definitions': resource.get_definitions(),
-            },
-            {
-                'type': 'UPDATE_CURRENT_RIGHT_MENUS',
-                'menus': resource.get_menus(),
-            },
-        ]
+    with saved_errors_in_request(request):
+        userId = request.authenticated_userid
+        if not userId:
+            raise HTTPUnauthorized(comment='user not log in')
 
-    return res
+        registry = request.anyblok.registry
+
+        registry.Pyramid.check_user_exists(userId)
+        resourceId = request.matchdict['id']
+        resource = registry.FuretUI.Resource.query().get(resourceId)
+        res = []
+        if resource:
+            res = [
+                {
+                    'type': 'UPDATE_RESOURCES',
+                    'definitions': resource.get_definitions(userId),
+                },
+                {
+                    'type': 'UPDATE_CURRENT_RIGHT_MENUS',
+                    'menus': resource.get_menus(),
+                },
+            ]
+
+        return res

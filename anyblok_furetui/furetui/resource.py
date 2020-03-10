@@ -311,6 +311,7 @@ class Template:
 class Resource:
 
     id = Integer(primary_key=True)
+    code = String()
     type = Selection(
         selections={
             'Model.FuretUI.Resource.Custom': 'Custom',
@@ -333,7 +334,7 @@ class Resource:
 
         return mapper_args
 
-    def get_definitions(self):
+    def get_definitions(self, **kwargs):
         raise Exception('This method must be over right')
 
     def to_dict(self, *a, **kw):
@@ -342,6 +343,14 @@ class Resource:
             res['type'] = self.type.label.lower()
 
         return res
+
+    def check_acl(self, authenticated_userid):
+        if not self.code:
+            return True
+
+        type_ = self.type.label.lower()
+        return self.registry.Pyramid.check_acl(
+            authenticated_userid, self.code, type_)
 
     def get_menus(self):
         menus = []
@@ -374,7 +383,7 @@ class Custom(Declarations.Model.FuretUI.Resource):
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
     component = String(nullable=False)
 
-    def get_definitions(self):
+    def get_definitions(self, **kwargs):
         return [self.to_dict()]
 
 
@@ -386,7 +395,6 @@ class List(Declarations.Model.FuretUI.Resource):
     model = String(nullable=False,
                    foreign_key=Declarations.Model.System.Model.use('name'))
     template = String()
-    # TODO criteria of filter
 
     def field_for_(cls, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
@@ -517,7 +525,7 @@ class List(Declarations.Model.FuretUI.Resource):
     #     res['readonly'] = True
     #     return res
 
-    def get_definitions(self):
+    def get_definitions(self, **kwargs):
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
         headers = []
@@ -635,7 +643,7 @@ class Form(
     is_polymorphic = Boolean(default=False)
     # TODO field Selection RO / RW / WO
 
-    def get_definitions(self):
+    def get_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'title', 'model')
         Model = self.registry.get(self.model)
         buttons = []
@@ -687,8 +695,14 @@ class Set(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
     can_create = Boolean(default=True)
-    can_modify = Boolean(default=True)
+    can_read = Boolean(default=True)
+    can_update = Boolean(default=True)
     can_delete = Boolean(default=True)
+
+    acl_create = String()
+    acl_read = String()
+    acl_update = String()
+    acl_delete = String()
 
     form = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                     nullable=False)
@@ -698,11 +712,21 @@ class Set(Declarations.Model.FuretUI.Resource):
     list = Many2One(model=Declarations.Model.FuretUI.Resource.List)
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail)
     # TODO add checkonstraint on multi + select
-    # TODO add boolean can_create, can_modify, can_delete
 
-    def get_definitions(self):
-        definition = self.to_dict(
-            'id', 'type', 'can_create', 'can_modify', 'can_delete')
+    def get_definitions(self, authenticated_userid=None, **kwargs):
+        definition = self.to_dict('id', 'type')
+        check_acl = self.registry.Pyramid.check_acl
+        for acl in ('create', 'read', 'update', 'delete'):
+            if getattr(self, 'can_%s' % acl):
+                if not self.code:
+                    definition['can_%s'] = True
+                else:
+                    type_ = getattr(self, 'acl_%s' % acl)
+                    definition['can_%s' % acl] = check_acl(
+                        authenticated_userid, self.code, type_)
+            else:
+                definition['can_%s' % acl] = True
+
         definition.update({
             'pks': self.form.get_primary_keys_for(),
             'form': self.form.id,
@@ -712,3 +736,7 @@ class Set(Declarations.Model.FuretUI.Resource):
         res.extend(self.form.get_definitions())
         res.extend(getattr(self, self.multi_type).get_definitions())
         return res
+
+    def check_acl(self, authenticated_userid):
+        multi = getattr(self, self.multi_type)
+        return multi.check_acl(authenticated_userid)

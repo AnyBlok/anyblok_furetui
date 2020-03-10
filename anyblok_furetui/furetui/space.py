@@ -6,6 +6,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import json
+from sqlalchemy import or_
 from anyblok.declarations import Declarations
 from anyblok.column import String, Integer
 
@@ -14,6 +16,7 @@ from anyblok.column import String, Integer
 class Space:
     code = String(primary_key=True)
     label = String(nullable=False)
+    role = String()
     order = Integer(default=100, nullable=False)
     description = String()
     icon_code = String()
@@ -27,23 +30,34 @@ class Space:
         query = query.join(MRe.root)
         query = query.filter(MRo.space == self)
         # order
-        query = query.order_by(MRo.order.desc())
-        query = query.order_by(MRe.order.desc()).order_by(MRe.id.asc())
+        query = query.order_by(MRo.order.asc())
+        query = query.order_by(MRe.order.asc()).order_by(MRe.id.asc())
         # take the first default found
         mre = query.filter(MRe.default.is_(True)).first()
         if mre is None:
             mre = query.first()
 
-        return '/space/%s/menu/%d/resource/%d' % (
-            self.code, mre.id if mre else 0, mre.resource.id if mre else 0)
+        query = []
+        if mre.order_by:
+            query.append('order=%s' % mre.order_by)
+        if mre.tags:
+            query.append('tags=%s' % mre.tags)
+        if mre.filters:
+            query.append('filters=%s' % json.dumps(mre.filters))
+
+        return '/space/%s/menu/%d/resource/%d?%s' % (
+            self.code, mre.id if mre else 0, mre.resource.id if mre else 0,
+            '&'.join(query))
 
     @classmethod
     def get_for_user(cls, authenticated_userid):
+        roles = cls.registry.Pyramid.get_roles(authenticated_userid)
         query = cls.query().order_by(cls.order.asc())
-        # TODO filter in function of access roles
+        query = query.filter(or_(
+            cls.role.in_(roles), cls.role.is_(None), cls.role == ''))
         return query
 
-    def get_menus(self):
+    def get_menus(self, authenticated_userid):
         menus = []
         MRe = self.registry.FuretUI.Menu.Resource
         MRo = self.registry.FuretUI.Menu.Root
@@ -58,12 +72,17 @@ class Space:
 
             mres = [{'resource': mre.resource.id,
                      **mre.to_dict('id', 'order', 'label', 'icon_code',
-                                   'icon_type')}
-                    for mre in mres]
+                                   'icon_type', 'tags', 'order_by', 'filters')}
+                    for mre in mres
+                    if mre.check_acl(authenticated_userid)]
+
+            if not mres:
+                continue
+
             if mro.label:
                 menus.append(
-                    {'children': mres, **mro.to_dict('id', 'order', 'label',
-                                                     'icon_code', 'icon_type')})
+                    {'children': mres, **mro.to_dict(
+                        'id', 'order', 'label', 'icon_code', 'icon_type')})
             else:
                 menus.extend(mres)
 
