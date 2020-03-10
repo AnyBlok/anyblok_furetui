@@ -471,6 +471,15 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_Many2One(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
+    def field_for_One2One(self, field, fields2read, **kwargs):
+        return self.field_for_relationship(field, fields2read, **kwargs)
+
+    def field_for_Many2Many(self, field, fields2read, **kwargs):
+        return self.field_for_relationship(field, fields2read, **kwargs)
+
+    def field_for_One2Many(self, field, fields2read, **kwargs):
+        return self.field_for_relationship(field, fields2read, **kwargs)
+
     # @classmethod
     # def field_for_LargeBinary(cls, field, fields2read, **kwargs):
     #     f = field.copy()
@@ -543,7 +552,7 @@ class List(Declarations.Model.FuretUI.Resource):
                 else:
                     headers.append(self.field_for_(field, fields2read))
 
-        return [{
+        res = [{
             'id': self.id,
             'type': self.type.label.lower(),
             'title': self.title,
@@ -558,6 +567,8 @@ class List(Declarations.Model.FuretUI.Resource):
             'headers': headers,
             'fields': fields2read,
         }]
+        print(res)
+        return res
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -598,11 +609,11 @@ class Filter:
 class Tags:
     id = Integer(primary_key=True)
     key = String(nullable=False)
+    label = String(nullable=False)
     list = Many2One(model=Declarations.Model.FuretUI.Resource.List,
                     one2many="tags")
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail,
                          one2many="tags")
-    values = String()
 
     @classmethod
     def get_for_resource(cls, **resource):

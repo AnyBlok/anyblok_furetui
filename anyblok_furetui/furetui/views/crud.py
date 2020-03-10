@@ -88,7 +88,7 @@ class FuretuiQueryString(QueryString):
     """
     def __init__(self, request, Model):
         self.request = request
-        self.adapter = None  # TODO check model has_furetui_adapter
+        self.adapter = Model.get_furetui_adapter()
         self.Model = Model
         if request.params is not None:
             parsed_params = deserialize_querystring(request.params)
@@ -192,7 +192,7 @@ def create_data(registry, model, changes, uuid):
     Model = registry.get(model)
     data = changes[model]['new'].pop(uuid, {})
     format_data(registry, Model, data)
-    return Model.insert(**data)
+    return Model.furetui_insert(**data)
 
 
 def update_data(registry, model, changes, pks):
@@ -205,14 +205,14 @@ def update_data(registry, model, changes, pks):
 
     format_data(registry, Model, data)
     obj = Model.from_primary_keys(**pks)
-    obj.update(**data)
+    obj.furetui_update(**data)
     return obj
 
 
 def delete_data(registry, model, pks):
     Model = registry.get(model)
     obj = Model.from_primary_keys(**pks)
-    obj.delete()
+    obj.furetui_delete()
 
 
 @crud.post()

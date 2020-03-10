@@ -5,6 +5,8 @@ class SqlMixin:
 
     _display_fields = None
     _filter_fields = None
+    FuretUIAdapter = None
+    adapter_ = None
 
     @classmethod_cache()
     def get_display_fields(cls):
@@ -33,6 +35,27 @@ class SqlMixin:
                 return [field]
 
         return cls.get_primary_keys()
+
+    @classmethod
+    def get_furetui_adapter(cls):
+        if cls.FuretUIAdapter is None:
+            return None
+
+        if not cls.adapter_:
+            cls.adapter_ = cls.FuretUIAdapter(cls.registry, cls)
+            cls.adapter_.load_decorators()
+
+        return cls.adapter_
+
+    @classmethod
+    def furetui_insert(cls, **kwargs):
+        return cls.insert(**kwargs)
+
+    def furetui_update(self, **kwargs):
+        return self.update(**kwargs)
+
+    def furetui_delete(self):
+        return self.delete()
 
 
 @Declarations.register(Declarations.Core)
