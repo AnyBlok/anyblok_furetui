@@ -47,6 +47,10 @@ class SqlMixin:
 
         return cls.adapter_
 
+
+@Declarations.register(Declarations.Core)
+class SqlBase(SqlMixin):
+
     @classmethod
     def furetui_insert(cls, **kwargs):
         return cls.insert(**kwargs)
@@ -59,10 +63,14 @@ class SqlMixin:
 
 
 @Declarations.register(Declarations.Core)
-class SqlBase(SqlMixin):
-    pass
-
-
-@Declarations.register(Declarations.Core)
 class SqlViewBase(SqlMixin):
-    pass
+
+    @classmethod
+    def furetui_insert(cls, **kwargs):
+        raise Exception("View is not allowed to do this action")
+
+    def furetui_update(self, **kwargs):
+        raise Exception("View is not allowed to do this action")
+
+    def furetui_delete(self):
+        raise Exception("View is not allowed to do this action")

@@ -208,7 +208,11 @@ class Template:
     def replace_fields(self, template, fields_description, fields2read):
         fields = template.findall('.//field')
         for el in fields:
-            fd = deepcopy(fields_description[el.attrib.get('name')])
+            try:
+                fd = deepcopy(fields_description[el.attrib.get('name')])
+            except KeyError:
+                fd = {'type': '', 'label': '', 'id': el.attrib['name']}
+
             _type = el.attrib.get('widget', fd['type'])
             if _type == 'FakeColumn':
                 continue
@@ -266,8 +270,8 @@ class Template:
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
     def replace_by_(self, template, fields2read, tag):
-        fields = template.findall('.//%s' % tag)
-        for el in fields:
+        tags = template.findall('.//%s' % tag)
+        for el in tags:
             config = self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden', 'writable')
 
@@ -277,6 +281,32 @@ class Template:
 
     def replace_fieldsets(self, template, fields2read):
         self.replace_by_(template, fields2read, 'fieldset')
+
+    def replace_selector(self, template, fields2read):
+        tags = template.findall('.//selector')
+        count = 0
+        for el in tags:
+            config = self.update_interface_attributes(
+                el, fields2read, 'readonly', 'hidden')
+
+            config['name'] = 'tag%d' % count
+            count += 1
+
+            if 'model' in el.attrib:
+                Model = self.registry.get(el.attrib['model'])
+                query = Model.query()
+                code = el.attrib.get('field_code')
+                label = el.attrib.get('field_label')
+                config['selections'] = {getattr(x, code): getattr(x, label)
+                                        for x in query}
+
+            for key in ('selections', 'selection_colors', 'name'):
+                if key in el.attrib:
+                    config[key] = el.attrib[key]
+
+            el.tag = 'furet-ui-selector'
+            self.add_template_bind(el)
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
     def replace_tabs(self, template, fields2read):
         self.replace_by_(template, fields2read, 'tabs')
@@ -289,6 +319,7 @@ class Template:
         etree.cleanup_namespaces(
             template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
         self.replace_divs(template, fields2read)
+        self.replace_selector(template, fields2read)
         self.replace_fieldsets(template, fields2read)
         self.replace_tabs(template, fields2read)
         self.replace_tab(template, fields2read)
@@ -638,13 +669,12 @@ class Form(
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
     model = String(foreign_key=Declarations.Model.System.Model.use('name'),
                    nullable=False)
-    title = String()
     template = String()
     is_polymorphic = Boolean(default=False)
     # TODO field Selection RO / RW / WO
 
     def get_definitions(self, **kwargs):
-        res = self.to_dict('id', 'type', 'title', 'model')
+        res = self.to_dict('id', 'type', 'model')
         Model = self.registry.get(self.model)
         buttons = []
         fd = Model.fields_description()
@@ -668,8 +698,19 @@ class Form(
                 field.set('name', field_name)
 
         fields2read = []
+        for tag in ('header', 'footer'):
+            sub_template = template.find('./%s' % tag)
+            if not sub_template:
+                continue
+
+            sub_template.tag = 'div'
+            template.remove(sub_template)
+            res['%s_template' % tag] = self.encode_to_furetui(
+                sub_template, fields, fields2read)
+
         res.update({
-            'template': self.encode_to_furetui(template, fields, fields2read),
+            'body_template': self.encode_to_furetui(
+                template, fields, fields2read),
             'buttons': buttons,
             'fields': fields2read,
         })
@@ -725,7 +766,7 @@ class Set(Declarations.Model.FuretUI.Resource):
                     definition['can_%s' % acl] = check_acl(
                         authenticated_userid, self.code, type_)
             else:
-                definition['can_%s' % acl] = True
+                definition['can_%s' % acl] = False
 
         definition.update({
             'pks': self.form.get_primary_keys_for(),
