@@ -125,6 +125,7 @@ def crud_read(request):
     registry = request.anyblok.registry
     model = request.params['model']
     Model = registry.get(model)
+    fd = Model.fields_description()
     fields_ = request.params['fields'].split(',')
     fields = []
     subfields = {}
@@ -164,12 +165,21 @@ def crud_read(request):
         for field, subfield in subfields.items():
             entry_ = getattr(entry, field)
             if entry_:
-                data.append({
-                    'type': 'UPDATE_DATA',
-                    'model': entry_.__registry_name__,
-                    'pk': entry_.to_primary_keys(),
-                    'data': entry_.to_dict(*subfield),
-                })
+                if fd[field]['type'] in ('Many2One', 'One2One'):
+                    data.append({
+                        'type': 'UPDATE_DATA',
+                        'model': fd[field]['model'],
+                        'pk': entry_.to_primary_keys(),
+                        'data': entry_.to_dict(*subfield),
+                    })
+                else:
+                    for entry__ in entry_:
+                        data.append({
+                            'type': 'UPDATE_DATA',
+                            'model': fd[field]['model'],
+                            'pk': entry__.to_primary_keys(),
+                            'data': entry__.to_dict(*subfield),
+                        })
 
     return {
         'pks': pks,

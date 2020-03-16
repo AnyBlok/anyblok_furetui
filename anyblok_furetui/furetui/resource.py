@@ -726,7 +726,7 @@ class Form(
             'body_template': self.encode_to_furetui(
                 template, fields, fields2read),
             'buttons': buttons,
-            'fields': fields2read,
+            'fields': list(set(fields2read)),
         })
         return [res]
 
