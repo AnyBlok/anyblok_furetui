@@ -760,7 +760,7 @@ class Set(Declarations.Model.FuretUI.Resource):
         for acl in ('create', 'read', 'update', 'delete'):
             if getattr(self, 'can_%s' % acl):
                 if not self.code:
-                    definition['can_%s'] = True
+                    definition['can_%s' % acl] = True
                 else:
                     type_ = getattr(self, 'acl_%s' % acl)
                     definition['can_%s' % acl] = check_acl(
