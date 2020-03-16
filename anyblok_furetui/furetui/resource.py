@@ -186,6 +186,20 @@ class Template:
 
         return self.get_field_for_(field, 'Selection', description, fields2read)
 
+    def get_field_for_StatusBar(self, field, description, fields2read):
+        description = deepcopy(description)
+        for key in ('selections',):
+            if key in field.attrib:
+                description[key] = eval(field.attrib.get(key), {}, {})
+
+            if key not in description:
+                description[key] = {}
+
+            if isinstance(description[key], list):
+                description[key] = dict(description[key])
+
+        return self.get_field_for_(field, 'StatusBar', description, fields2read)
+
     # def get_field_for_UUID(cls, field, description, fields2read):
     #     description['readonly'] = True
     #     return cls.get_field_for_(field, 'String', description, fields2read)
