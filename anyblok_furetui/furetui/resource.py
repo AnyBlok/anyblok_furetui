@@ -116,6 +116,8 @@ class Template:
             fields = Model.get_display_fields()
             display = " + ', ' + ".join(['fields.' + x for x in fields])
 
+        fields = list(set(fields))
+
         description['display'] = display
 
         filter_by = field.attrib.get('filter_by')

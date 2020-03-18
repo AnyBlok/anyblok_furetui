@@ -54,6 +54,10 @@ class FuretUIBlok(Blok):
 
     def load(self):
         self.registry.FuretUI.pre_load()
+        logger.info('Preload Models.field_description')
+        for Model in self.registry.loaded_namespaces.values():
+            if Model.is_sql:
+                Model.fields_description()
 
     @classmethod
     def import_declaration_module(cls):

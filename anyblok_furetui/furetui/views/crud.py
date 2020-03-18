@@ -4,6 +4,8 @@ from anyblok_pyramid import current_blok
 from anyblok_pyramid_rest_api.querystring import QueryString
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
+from sqlalchemy.orm import load_only, joinedload
+from sqlalchemy import func
 import re
 
 
@@ -65,8 +67,8 @@ def deserialize_querystring(params=None):
             tags.extend(v.split(','))
         elif k.startswith("order_by["):
             # Ordering
-            op = parse_key_with_one_element(k)
-            order_by.append(dict(key=v, op=op))
+            key = parse_key_with_one_element(k)
+            order_by.append(dict(key=key, op=v))
         elif k == 'limit':
             # TODO check to allow positive integer only if value
             limit = int(v) if v else None
@@ -128,6 +130,7 @@ def crud_read(request):
     fd = Model.fields_description()
     fields_ = request.params['fields'].split(',')
     fields = []
+    fields2read = []
     subfields = {}
 
     for f in fields_:
@@ -139,8 +142,10 @@ def crud_read(request):
 
             subfields[field].append(subfield)
         else:
+            fields2read.append(f)
             fields.append(f)
 
+    fields = list(set(fields))
     # TODO complex case of relationship
     qs = FuretuiQueryString(request, Model)
     query = qs.get_query()
@@ -150,6 +155,11 @@ def crud_read(request):
     query2 = qs.from_order_by(query)
     query2 = qs.from_limit(query2)
     query2 = qs.from_offset(query2)
+    query2 = query.options(
+        load_only(*fields2read),
+        *[joinedload(field).load_only(*subfield)
+          for field, subfield in subfields.items()]
+    )
 
     data = []
     pks = []
@@ -181,9 +191,12 @@ def crud_read(request):
                             'data': entry__.to_dict(*subfield),
                         })
 
+    # query.count do a sub query, we do not want it, because mysql
+    # has a terrible support of subqueries
+    total = query.with_entities(func.count('*')).scalar()
     return {
         'pks': pks,
-        'total': query.count(),
+        'total': total,
         'data': data,
     }
 
