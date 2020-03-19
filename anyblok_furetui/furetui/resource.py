@@ -100,7 +100,6 @@ class Template:
     def get_field_for_Many2One(self, field, description, fields2read):
         Model = self.registry.get(description['model'])
         description = description.copy()
-
         display = field.attrib.get('display')
         if display:
             for op in ('!=', '==', '<', '<=', '>', '>='):
@@ -117,7 +116,6 @@ class Template:
             display = " + ', ' + ".join(['fields.' + x for x in fields])
 
         fields = list(set(fields))
-
         description['display'] = display
 
         filter_by = field.attrib.get('filter_by')
@@ -145,6 +143,34 @@ class Template:
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, 'Many2One', description, [])
 
+    def get_field_for_One2Many(self, field, description, fields2read):
+        description = description.copy()
+        model = description['model']
+        resource = field.attrib.get('resource-external_id')
+        if not resource:
+            query = self.registry.FuretUI.Resource.List.query()
+            query = query.filter_by(model=model)
+            resource = query.one_or_none()
+        else:
+            resource_type = field.attrib.get('resource-type', 'set')
+            resource_model = 'Model.FuretUI.Resource.%s' % (
+                resource_type.capitalize())
+            resource = self.registry.IO.Mapping.get(resource_model, resource)
+            if not resource:
+                for type_ in ('set', 'list', 'thumbnail'):
+                    resource_model = 'Model.FuretUI.Resource.%s' % type_
+                    resource = self.registry.IO.Mapping.get(
+                        resource_model, resource)
+                    if resource:
+                        break
+
+        if resource:
+            description['resource'] = resource.id
+
+        fields = self.registry.get(model).get_primary_keys()
+        fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
+        return self.get_field_for_(field, 'One2Many', description, [])
+
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
             'placeholder': field.attrib.get('placeholder', ''),
@@ -160,15 +186,6 @@ class Template:
             },
         })
         return self.get_field_for_(field, 'DateTime', description, fields2read)
-
-    # def get_field_for_One2Many(cls, field, description, fields2read):
-    #     Model = cls.registry.get(description['model'])
-    #     action = Model.get_default_action(mode=cls.__registry_name__)
-    #     views = Model.get_default_views_linked_with_action(
-    #         action=action, mode=cls.__registry_name__)
-    #     description['x2oField'] = description.pop('remote_name')
-    #     description['{%s}views' % field.nsmap['v-bind']] = str(views)
-    #     return cls.get_field_for_(field, 'One2Many', description, fields2read)
 
     # def get_field_for_Sequence(cls, field, description, fields2read):
     #     description['readonly'] = True

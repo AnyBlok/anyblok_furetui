@@ -29,7 +29,8 @@ def get_resource(request):
             res = [
                 {
                     'type': 'UPDATE_RESOURCES',
-                    'definitions': resource.get_definitions(userId),
+                    'definitions': resource.get_definitions(
+                        authenticated_userid=userId),
                 },
                 {
                     'type': 'UPDATE_CURRENT_RIGHT_MENUS',

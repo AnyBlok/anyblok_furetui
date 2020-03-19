@@ -5,7 +5,7 @@ from anyblok_pyramid_rest_api.querystring import QueryString
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 from sqlalchemy.orm import load_only, joinedload
-from sqlalchemy import func
+# from sqlalchemy import func
 import re
 
 
@@ -155,7 +155,7 @@ def crud_read(request):
     query2 = qs.from_order_by(query)
     query2 = qs.from_limit(query2)
     query2 = qs.from_offset(query2)
-    query2 = query.options(
+    query2 = query2.options(
         load_only(*fields2read),
         *[joinedload(field).load_only(*subfield)
           for field, subfield in subfields.items()]
@@ -193,7 +193,8 @@ def crud_read(request):
 
     # query.count do a sub query, we do not want it, because mysql
     # has a terrible support of subqueries
-    total = query.with_entities(func.count('*')).scalar()
+    # total = query.with_entities(func.count('*')).scalar()
+    total = query.count()
     return {
         'pks': pks,
         'total': total,
