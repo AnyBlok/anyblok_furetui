@@ -13,6 +13,7 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+from uuid import uuid1
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -32,6 +33,7 @@ class Template:
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
+            'key': str(uuid1()),
         }
 
         for key in ('readonly', 'writable', 'hidden'):
@@ -342,7 +344,15 @@ class Template:
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
     def replace_tabs(self, template, fields2read):
-        self.replace_by_(template, fields2read, 'tabs')
+        tags = template.findall('.//tabs')
+        for el in tags:
+            config = self.update_interface_attributes(
+                el, fields2read, 'readonly', 'hidden', 'writable')
+
+            el.tag = 'furet-ui-tabs'
+            config['name'] = el.attrib.get('name', str(uuid1()))
+            self.add_template_bind(el)
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
     def replace_tab(self, template, fields2read):
         self.replace_by_(template, fields2read, 'tab')
@@ -715,6 +725,7 @@ class Form(
             template = self.registry.FuretUI.get_template(
                 self.template, tostring=False)
             template.tag = 'div'
+            template.set('key', str(uuid1()))
             fields = [el.attrib.get('name')
                       for el in template.findall('.//field')]
         else:
@@ -737,6 +748,7 @@ class Form(
                 continue
 
             sub_template.tag = 'div'
+            sub_template.set('key', str(uuid1()))
             template.remove(sub_template)
             res['%s_template' % tag] = self.encode_to_furetui(
                 sub_template, fields, fields2read)
