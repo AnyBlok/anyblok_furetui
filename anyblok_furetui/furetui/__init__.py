@@ -40,7 +40,6 @@ class FuretUIBlok(Blok):
 
     required = [
         'anyblok-core',
-        'auth-password',
     ]
 
     furetui = {
