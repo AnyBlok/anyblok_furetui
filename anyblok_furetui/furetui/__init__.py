@@ -40,6 +40,7 @@ class FuretUIBlok(Blok):
 
     required = [
         'anyblok-core',
+        'pyramid',
     ]
 
     furetui = {
