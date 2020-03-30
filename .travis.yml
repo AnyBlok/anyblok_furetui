@@ -5,8 +5,10 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.6-dev"
-  - "3.7-dev"
+  - "3.6"
+  - "3.7"
+  - "3.8-dev"
+  - "3.9-dev"
   - "nightly"
 
 virtualenv:
@@ -42,6 +44,5 @@ script:
   - flake8 anyblok_furetui
   - anyblok_createdb --install-bloks furetui
   - py.test --cov-report= --cov=anyblok_furetui anyblok_furetui
-  
-after_success:
-  coveralls --data_file=.coverage --config_file=.coveragerc
+
+after_success: coveralls --data_file=.coverage --config_file=.coveragerc
