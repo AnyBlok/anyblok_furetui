@@ -131,14 +131,23 @@ class Template:
         if eval(field.attrib.get('no-link', 'False')):
             pass
         elif menu:
-            pass
+            menu = self.registry.IO.Mapping.get(
+                'Model.FuretUI.Menu.Resource', menu)
+            resource = None
         elif resource:
-            pass
+            for type_ in ('set', 'form'):
+                resource_model = 'Model.FuretUI.Resource.%s' % type_
+                resource = self.registry.IO.Mapping.get(
+                    resource_model, resource)
+                if resource:
+                    break
         else:
-            pass
+            query = self.registry.FuretUI.Resource.Form.query()
+            query = query.filter_by(model=description['model'])
+            resource = query.one_or_none()
 
-        description['resource'] = resource
-        description['menu'] = menu
+        description['resource'] = resource.id if resource else None
+        description['menu'] = menu.id if menu else None
         description['fields'] = fields
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
@@ -539,14 +548,22 @@ class List(Declarations.Model.FuretUI.Resource):
         if eval(kwargs.get('no-link', 'False')):
             pass
         elif 'menu' in kwargs:
-            pass
+            menu = self.registry.IO.Mapping.get(
+                'Model.FuretUI.Menu.Resource', kwargs['menu'])
         elif 'resource' in kwargs:
-            pass
+            for type_ in ('set', 'form'):
+                resource_model = 'Model.FuretUI.Resource.%s' % type_
+                resource = self.registry.IO.Mapping.get(
+                    resource_model, kwargs['resource'])
+                if resource:
+                    break
         else:
-            pass
+            query = self.registry.FuretUI.Resource.Form.query()
+            query = query.filter_by(model=f['model'])
+            resource = query.one_or_none()
 
-        f['resource'] = resource
-        f['menu'] = menu
+        f['resource'] = resource.id if resource else None
+        f['menu'] = menu.id if menu else None
         fields2read.extend(['%s.%s' % (field['id'], x) for x in fields])
         return self.field_for_(f, [], **kwargs)
 
