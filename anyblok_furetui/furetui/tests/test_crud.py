@@ -233,7 +233,7 @@ class TestUpdate:
             {
                 "changes": {
                     "Model.FuretUI.Resource.List": {
-                        formated_record_id: {"title": title,}
+                        formated_record_id: {"title": title}
                     }
                 },
                 "model": "Model.FuretUI.Resource.List",
