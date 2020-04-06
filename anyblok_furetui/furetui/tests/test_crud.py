@@ -225,6 +225,41 @@ class TestRead:
 
 
 @pytest.mark.usefixtures("rollback_registry")
+class TestUpdate:
+    def test_update(self, webserver, rollback_registry, resource_list):
+        title = "test-update-list-resource"
+        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        formated_record_id = '[["id",{}]]'.format(resource_list.id)
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        params = json.dumps(
+            {
+                "changes": {
+                    "Model.FuretUI.Resource.List": {
+                        formated_record_id: {"title": title,}
+                    }
+                },
+                "model": "Model.FuretUI.Resource.List",
+                "pks": {"id": resource_list.id},
+            }
+        )
+        response = webserver.patch(path, params, headers)
+        assert response.status_code == 200
+        assert (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=title)
+            .one()
+            .id
+            == resource_list.id
+        )
+
+    def test_update_m2o(self):
+        pytest.fail("not implemented")
+
+    def test_update_o2m(self):
+        pytest.fail("not implemented")
+
+
+@pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
     def test_delete(self, webserver, rollback_registry, resource_list):
         path = Configuration.get("furetui_client_path", "/furet-ui/crud")
