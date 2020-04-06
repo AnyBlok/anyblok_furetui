@@ -1,3 +1,4 @@
+import json
 import pytest
 import urllib
 from anyblok.config import Configuration
@@ -24,6 +25,35 @@ def resource_tag2(rollback_registry, resource_list):
     return rollback_registry.FuretUI.Resource.Tags.insert(
         key="tag-2", label="Tag 2", list=resource_list
     )
+
+
+@pytest.mark.usefixtures("rollback_registry")
+class TestCreate:
+    def test_create(self, webserver, rollback_registry):
+        title = "test-create-blok-list-resource"
+        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        payload = json.dumps(
+            {
+                "changes": {
+                    "Model.FuretUI.Resource.List": {
+                        "new": {
+                            "fake_uuid": {
+                                "title": title,
+                                "model": "Model.System.Blok",
+                            }
+                        }
+                    }
+                },
+                "model": "Model.FuretUI.Resource.List",
+                "uuid": "fake_uuid",
+            }
+        )
+        response = webserver.post(path, payload, headers=headers)
+        assert response.status_code == 200
+        rollback_registry.FuretUI.Resource.List.query().filter_by(
+            title=title
+        ).count() == 1
 
 
 @pytest.mark.usefixtures("rollback_registry")
