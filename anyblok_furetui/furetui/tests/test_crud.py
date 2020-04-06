@@ -71,7 +71,10 @@ class TestRead:
         assert response.json == {
             "data": [
                 {
-                    "data": {"label": "Tag 1", "list": {"id": resource_list.id}},
+                    "data": {
+                        "label": "Tag 1",
+                        "list": {"id": resource_list.id},
+                    },
                     "model": "Model.FuretUI.Resource.Tags",
                     "pk": {"id": resource_tag1.id},
                     "type": "UPDATE_DATA",
@@ -88,7 +91,12 @@ class TestRead:
         }
 
     def test_o2m_field(
-        self, webserver, rollback_registry, resource_list, resource_tag1, resource_tag2
+        self,
+        webserver,
+        rollback_registry,
+        resource_list,
+        resource_tag1,
+        resource_tag2,
     ):
         path = Configuration.get("furetui_client_path", "/furet-ui/crud")
         params = urllib.parse.urlencode(
@@ -104,7 +112,10 @@ class TestRead:
             "data": [
                 {
                     "data": {
-                        "tags": [{"id": resource_tag1.id}, {"id": resource_tag2.id}],
+                        "tags": [
+                            {"id": resource_tag1.id},
+                            {"id": resource_tag2.id},
+                        ],
                         "title": "test-blok",
                     },
                     "model": "Model.FuretUI.Resource.List",
@@ -126,4 +137,58 @@ class TestRead:
             ],
             "pks": [{"id": resource_list.id}],
             "total": 1,
+        }
+
+    def test_limit_offset_order_exclude(self, webserver, rollback_registry):
+        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        params = urllib.parse.urlencode(
+            {
+                "model": "Model.System.Model",
+                "fields": "name,table",
+                "~filter[is_sql_model][eq]": False,
+                "filter[table][like]": "system_",
+                "order_by[name]": "asc",
+                "order_by[table]": "desc",
+                "limit": 2,
+                "offset": 2,
+            }
+        )
+        response = webserver.get(path, params)
+        assert response.status_code == 200
+        # Writing this test System SQL table are::
+        #
+        #  Model.System.Blok                      | system_blok
+        #  Model.System.Cache                     | system_cache
+        #  Model.System.Column                    | system_column
+        #  Model.System.Field                     | system_field
+        #  Model.System.Model                     | system_model
+        #  Model.System.Parameter                 | system_parameter
+        #  Model.System.RelationShip              | system_relationship
+        #  Model.System.Sequence                  | system_sequence
+        assert response.json == {
+            "data": [
+                {
+                    "data": {
+                        "name": "Model.System.Column",
+                        "table": "system_column",
+                    },
+                    "model": "Model.System.Model",
+                    "pk": {"name": "Model.System.Column"},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {
+                        "name": "Model.System.Field",
+                        "table": "system_field",
+                    },
+                    "model": "Model.System.Model",
+                    "pk": {"name": "Model.System.Field"},
+                    "type": "UPDATE_DATA",
+                },
+            ],
+            "pks": [
+                {"name": "Model.System.Column"},
+                {"name": "Model.System.Field"},
+            ],
+            "total": 8,
         }
