@@ -2,8 +2,6 @@ import json
 import pytest
 import urllib
 from anyblok.config import Configuration
-from anyblok.blok import BlokManager
-from os.path import join
 
 
 @pytest.fixture(scope="function")
