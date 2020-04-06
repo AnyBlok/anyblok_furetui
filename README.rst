@@ -23,12 +23,16 @@
     :scale: 100%
     :target: https://doc.anyblok.org/en/latest/?badge=latest
 
-AnyBlok
-=======
+AnyBlok FuretUI
+===============
 
 |furetui|
 
 FuretUI is a web client for AnyBlok.
+
+AnyBlok FuretUI is the glue between AnyBlok and FuretUI that expose your model
+as CRUD, implement required furetui HTTP interfaces which helps developer
+to make suite user interfaces to AnyBlok projects.
 
 anyblok_furetui is released under the terms of the `Mozilla Public License`.
 

@@ -99,7 +99,9 @@ class Template:
     def get_field_for_File(self, field, description, fields2read):
         return self.get_field_for_(field, 'File', description, fields2read)
 
-    def get_field_for_Many2One(self, field, description, fields2read):
+    def get_field_for_Many2One(  # noqa: C901
+        self, field, description, fields2read
+    ):
         Model = self.registry.get(description['model'])
         description = description.copy()
         display = field.attrib.get('display')
