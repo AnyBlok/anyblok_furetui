@@ -16,8 +16,3 @@ class TestWebClient:
         assert response.content_type == 'text/html'
         with open(path, 'rb') as fp:
             assert fp.read() == response.body
-
-    def test_get_global_init(self, webserver, rollback_registry):
-        response = webserver.get('/furet-ui/app/component/files')
-        assert response.status_code == 200
-        assert response.content_type == 'application/json'
