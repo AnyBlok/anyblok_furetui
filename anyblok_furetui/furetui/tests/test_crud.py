@@ -222,3 +222,23 @@ class TestRead:
             ],
             "total": 8,
         }
+
+
+@pytest.mark.usefixtures("rollback_registry")
+class TestDelete:
+    def test_delete(self, webserver, rollback_registry, resource_list):
+        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        params = urllib.parse.urlencode(
+            {
+                "model": "Model.FuretUI.Resource.List",
+                "pks": json.dumps({"id": resource_list.id}),
+            }
+        )
+        response = webserver.delete(path, params)
+        assert response.status_code == 200
+        assert (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=resource_list.title)
+            .count()
+            == 0
+        )
