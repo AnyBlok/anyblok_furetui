@@ -24,12 +24,14 @@ def import_module(reload=None):
     from . import space
     from . import resource
     from . import menus
+    from . import crud
     if reload is not None:
         reload(core)
         reload(furetui)
         reload(space)
         reload(resource)
         reload(menus)
+        reload(crud)
 
 
 class FuretUIBlok(Blok):

@@ -133,7 +133,7 @@ class Template:
         elif menu:
             menu = self.registry.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', menu)
-            resource = None
+            resource = menu.resource
         elif resource:
             for type_ in ('set', 'form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
@@ -550,6 +550,7 @@ class List(Declarations.Model.FuretUI.Resource):
         elif 'menu' in kwargs:
             menu = self.registry.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', kwargs['menu'])
+            resource = menu.resource
         elif 'resource' in kwargs:
             for type_ in ('set', 'form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
