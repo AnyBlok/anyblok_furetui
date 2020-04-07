@@ -208,7 +208,7 @@ class CRUD:
                 # TODO add a test for many2many (should be like One2Many)
                 remove_key.append(field)
                 for field_data in data[field]:
-                    sub_model_data ={
+                    sub_model_data = {
                         "model": fd[field]['model'],
                         "remote_name": fd[field]['remote_name'],
                     }
@@ -226,12 +226,17 @@ class CRUD:
         return cls.create_or_update(changes, model, uuid)
 
     @classmethod
-    def create_or_update(cls, changes, model, uuid, parent=None, parent_obj=None):
-        # TODO: manage somehow LINKED / UNLINKED / DELETED (only ADDED is managed)
+    def create_or_update(
+        cls, changes, model, uuid, parent=None, parent_obj=None
+    ):
+        # TODO: manage somehow LINKED / UNLINKED / DELETED
+        # today we assume only ADDED exist
         # TODO: manage new / vs patch
         Model = cls.registry.get(model)
         data = changes[model]["new"].pop(uuid, {})
-        sub_models = cls.format_data(Model, data, parent=parent, parent_obj=parent_obj)
+        sub_models = cls.format_data(
+            Model, data, parent=parent, parent_obj=parent_obj
+        )
         new_obj = Model.furetui_insert(**data)
         for child_model in sub_models:
             cls.create_or_update(
