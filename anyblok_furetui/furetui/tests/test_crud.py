@@ -250,12 +250,6 @@ class TestUpdate:
             == resource_list.id
         )
 
-    def test_update_m2o(self):
-        pytest.fail("not implemented")
-
-    def test_update_o2m(self):
-        pytest.fail("not implemented")
-
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
