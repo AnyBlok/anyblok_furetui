@@ -221,7 +221,7 @@ class CRUD:
 
     @classmethod
     def create_or_update(
-        cls, changes, model, uuid, parent=None, parent_obj=None
+        cls, changes, model, uuid
     ):
         # TODO: manage somehow LINKED / UNLINKED / DELETED
         # today we assume only ADDED exist
