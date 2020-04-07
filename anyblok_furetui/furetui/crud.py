@@ -1,5 +1,5 @@
 from anyblok.declarations import Declarations
-from sqlalchemy.orm import load_only, joinedload
+from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
 import re
 import json
@@ -147,12 +147,16 @@ class CRUD:
         query2 = qs.from_offset(query2)
         query2 = query2.options(
             load_only(*fields2read),
-            *[joinedload(field).load_only(*subfield)
+            *[(subqueryload(field).load_only(*subfield)
+               if fd[field]['type'] in ('One2Many', 'Many2Many')
+               else joinedload(field).load_only(*subfield))
               for field, subfield in subfields.items()]
         )
 
         data = []
         pks = []
+        from pprint import pprint
+        pprint(str(query2))
         for entry in query2:
             pk = entry.to_primary_keys()
             pks.append(pk)
