@@ -343,7 +343,9 @@ class TestUpdate:
             .one()
         )
         assert len(new_list.tags) == 3
-        assert sorted(new_list.tags.key) == sorted([tag_key_update_1, tag_key1, tag_key2])
+        assert sorted(new_list.tags.key) == sorted(
+            [tag_key_update_1, tag_key1, tag_key2]
+        )
 
 
 @pytest.mark.usefixtures("rollback_registry")

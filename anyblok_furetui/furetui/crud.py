@@ -226,13 +226,13 @@ class CRUD:
         # TODO: manage new / vs patch
         Model = cls.registry.get(model)
         data = {}
-        update = True
+        new = True
         # TODO: rename uuid or document that primary key should not use
         # a field called uuid
         if "uuid" in pks.keys():
             data = changes[model]["new"].pop(pks["uuid"], {})
-            update = False
         else:
+            new = False
             for key in changes[model].keys():
                 if key != "new" and dict(json.loads(key)) == pks:
                     data = changes[model].pop(key, {})
@@ -243,12 +243,16 @@ class CRUD:
         # if not data:
         #     return None
         linked_data = cls.format_data(Model, data)
-        if update:
+        if new:
+            new_obj = Model.furetui_insert(**data)
+        else:
             new_obj = Model.from_primary_keys(**pks)
             new_obj.furetui_update(**data)
-        else:
-            new_obj = Model.furetui_insert(**data)
+        cls.create_or_update_linked_data(new_obj, linked_data, changes)
+        return new_obj
 
+    @classmethod
+    def create_or_update_linked_data(cls, new_obj, linked_data, changes):
         for linked_field in linked_data:
             linked_model = cls.registry.get(linked_field["model"])
             linked_model_pks = set(linked_model.get_primary_keys())
@@ -269,8 +273,9 @@ class CRUD:
                         )
                     )
                 if state in ["DELETED"]:
-                    linked_model.from_primary_keys(**primary_key).furetui_delete()
-        return new_obj
+                    linked_model.from_primary_keys(
+                        **primary_key
+                    ).furetui_delete()
 
     @classmethod
     def update(cls, model, pks, changes):
