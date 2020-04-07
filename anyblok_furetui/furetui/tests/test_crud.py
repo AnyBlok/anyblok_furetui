@@ -299,12 +299,13 @@ class TestUpdate:
             == resource_list.id
         )
 
-    def test_update_o2m_added(
-        self, webserver, rollback_registry, resource_tag1
+    def test_update_o2m(
+        self, webserver, rollback_registry, resource_tag1, resource_tag2
     ):
+        tag_key_update_1 = "key1-update_o2m_updated"
         tag_key1 = "key1-update_o2m_added"
         tag_key2 = "key2-update_o2m_added"
-        formated_record_id = '[["id",{}]]'.format(resource_tag1.list.id)
+        assert len(resource_tag1.list.tags) == 2
         rollback_registry.FuretUI.CRUD.update(
             "Model.FuretUI.Resource.List",
             {"id": resource_tag1.list.id},
@@ -319,13 +320,18 @@ class TestUpdate:
                             "key": tag_key2,
                             "label": "Key created in o2m",
                         },
-                    }
+                    },
+                    '[["id",{}]]'.format(resource_tag1.id): {
+                        "key": tag_key_update_1,
+                    },
                 },
                 "Model.FuretUI.Resource.List": {
-                    formated_record_id: {
+                    '[["id",{}]]'.format(resource_tag1.list.id): {
                         "tags": [
                             {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag1"},
                             {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag2"},
+                            {"__x2m_state": "UPDATED", "id": resource_tag1.id},
+                            {"__x2m_state": "DELETED", "id": resource_tag2.id},
                         ],
                     }
                 },
@@ -337,7 +343,7 @@ class TestUpdate:
             .one()
         )
         assert len(new_list.tags) == 3
-        assert new_list.tags.key == [resource_tag1.key, tag_key1, tag_key2]
+        assert sorted(new_list.tags.key) == sorted([tag_key_update_1, tag_key1, tag_key2])
 
 
 @pytest.mark.usefixtures("rollback_registry")

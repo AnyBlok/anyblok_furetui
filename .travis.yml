@@ -33,6 +33,8 @@ install:
   - python setup.py develop
   # Waiting pyramid_blok branch on anyblok_pyramid to be merged
   - pip install -e git+https://github.com/AnyBlok/anyblok_pyramid@pyramid_blok#egg=anyblok-pyramid
+  # Waitint awnser on https://github.com/AnyBlok/AnyBlok/pull/140
+  - pip install -e git+https://github.com/petrus-v/AnyBlok@fix-polymorphic-get_primary_keys#egg=AnyBlok
 
 env:
   global:

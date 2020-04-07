@@ -234,24 +234,42 @@ class CRUD:
             update = False
         else:
             for key in changes[model].keys():
-                if dict(json.loads(key)) == pks:
-                    data = changes[model].pop(key)
+                if key != "new" and dict(json.loads(key)) == pks:
+                    data = changes[model].pop(key, {})
                     break
+        # TODO: not sure how to skip loops when 2 objects reference each other
+        # Keep in mind in case of updatating data in depth with 2 or 3 o2m.
+        # intermediate object may have no changes
+        # if not data:
+        #     return None
         linked_data = cls.format_data(Model, data)
         if update:
             new_obj = Model.from_primary_keys(**pks)
             new_obj.furetui_update(**data)
         else:
             new_obj = Model.furetui_insert(**data)
+
         for linked_field in linked_data:
+            linked_model = cls.registry.get(linked_field["model"])
+            linked_model_pks = set(linked_model.get_primary_keys())
             for linked_instance in linked_field["data"]:
-                getattr(new_obj, linked_field["field"]).append(
-                    cls.create_or_update(
-                        linked_field["model"],
-                        {"uuid": linked_instance["uuid"]},
-                        changes,
+                state = linked_instance.get("__x2m_state", None)
+                if state == "ADDED":
+                    primary_key = {"uuid": linked_instance["uuid"]}
+                else:
+                    primary_key = {}
+                    for key in linked_model_pks:
+                        primary_key[key] = linked_instance[key]
+                if state in ["ADDED", "UPDATED"]:
+                    getattr(new_obj, linked_field["field"]).append(
+                        cls.create_or_update(
+                            linked_field["model"],
+                            primary_key,
+                            changes,
+                        )
                     )
-                )
+                if state in ["DELETED"]:
+                    linked_model.from_primary_keys(**primary_key).furetui_delete()
         return new_obj
 
     @classmethod
