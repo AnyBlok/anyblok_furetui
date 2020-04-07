@@ -299,6 +299,46 @@ class TestUpdate:
             == resource_list.id
         )
 
+    def test_update_o2m_added(
+        self, webserver, rollback_registry, resource_tag1
+    ):
+        tag_key1 = "key1-update_o2m_added"
+        tag_key2 = "key2-update_o2m_added"
+        formated_record_id = '[["id",{}]]'.format(resource_tag1.list.id)
+        rollback_registry.FuretUI.CRUD.update(
+            "Model.FuretUI.Resource.List",
+            {"id": resource_tag1.list.id},
+            {
+                "Model.FuretUI.Resource.Tags": {
+                    "new": {
+                        "fake_uuid_tag1": {
+                            "key": tag_key1,
+                            "label": "Key created in o2m",
+                        },
+                        "fake_uuid_tag2": {
+                            "key": tag_key2,
+                            "label": "Key created in o2m",
+                        },
+                    }
+                },
+                "Model.FuretUI.Resource.List": {
+                    formated_record_id: {
+                        "tags": [
+                            {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag1"},
+                            {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag2"},
+                        ],
+                    }
+                },
+            },
+        )
+        new_list = (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=resource_tag1.list.title)
+            .one()
+        )
+        assert len(new_list.tags) == 3
+        assert new_list.tags.key == [resource_tag1.key, tag_key1, tag_key2]
+
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
