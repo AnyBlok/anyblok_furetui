@@ -53,7 +53,7 @@ class TestCreate:
             title=title
         ).count() == 1
 
-    def test_create_o2m(self, webserver, rollback_registry, resource_tag1):
+    def test_create_o2m(self, webserver, rollback_registry):
         tag_key1 = "key1-create-o2m"
         tag_key2 = "key2-create-o2m"
         list_title = "new-title"
