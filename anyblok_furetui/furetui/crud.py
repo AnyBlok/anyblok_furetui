@@ -196,21 +196,52 @@ class CRUD:
         }
 
     @classmethod
-    def format_data(cls, Model, data):
+    def format_data(cls, Model, data, parent=None, parent_obj=None):
         fd = Model.fields_description()
+        sub_models = []
+        remove_key = []
         for field in data:
             if fd[field]['type'] in ('Many2One', 'One2One'):
                 M2 = cls.registry.get(fd[field]['model'])
                 data[field] = M2.from_primary_keys(**data[field])
-
-            # TODO one2many and many2many
+            if fd[field]['type'] in ('One2Many'):
+                # TODO add a test for many2many (should be like One2Many)
+                remove_key.append(field)
+                for field_data in data[field]:
+                    sub_model_data ={
+                        "model": fd[field]['model'],
+                        "remote_name": fd[field]['remote_name'],
+                    }
+                    sub_model_data.update(field_data)
+                    sub_models.append(sub_model_data)
+        # Remove x2m fields
+        [data.pop(key) for key in remove_key]
+        if parent and parent_obj:
+            # TODO: manage somehow ADDED / LINKED / UNLINKED / DELETED
+            data[parent["remote_name"]] = parent_obj
+        return sub_models
 
     @classmethod
     def create(cls, model, uuid, changes):
+        return cls.create_or_update(changes, model, uuid)
+
+    @classmethod
+    def create_or_update(cls, changes, model, uuid, parent=None, parent_obj=None):
+        # TODO: manage somehow LINKED / UNLINKED / DELETED (only ADDED is managed)
+        # TODO: manage new / vs patch
         Model = cls.registry.get(model)
-        data = changes[model]['new'].pop(uuid, {})
-        cls.format_data(Model, data)
-        return Model.furetui_insert(**data)
+        data = changes[model]["new"].pop(uuid, {})
+        sub_models = cls.format_data(Model, data, parent=parent, parent_obj=parent_obj)
+        new_obj = Model.furetui_insert(**data)
+        for child_model in sub_models:
+            cls.create_or_update(
+                changes,
+                child_model["model"],
+                child_model["uuid"],
+                parent=child_model,
+                parent_obj=new_obj
+            )
+        return new_obj
 
     @classmethod
     def update(cls, model, pks, changes):

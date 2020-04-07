@@ -53,6 +53,55 @@ class TestCreate:
             title=title
         ).count() == 1
 
+    def test_create_o2m(self, webserver, rollback_registry, resource_tag1):
+        tag_key1 = "key1-create-o2m"
+        tag_key2 = "key2-create-o2m"
+        list_title = "new-title"
+        new_list_obj = rollback_registry.FuretUI.CRUD.create(
+            "Model.FuretUI.Resource.List",
+            "fake_uuid_list",
+            {
+                "Model.FuretUI.Resource.Tags": {
+                    "new": {
+                        "fake_uuid_tag1": {
+                            "key": tag_key1,
+                            "label": "Key created in o2m",
+                        },
+                        "fake_uuid_tag2": {
+                            "key": tag_key2,
+                            "label": "Key created in o2m",
+                        },
+                    }
+                },
+                "Model.FuretUI.Resource.List": {
+                    "new": {
+                        "fake_uuid_list": {
+                            "title": list_title,
+                            "model": "Model.System.Blok",
+                            "tags": [
+                                {
+                                    "__x2m_state": "ADDED",
+                                    "uuid": "fake_uuid_tag1",
+                                },
+                                {
+                                    "__x2m_state": "ADDED",
+                                    "uuid": "fake_uuid_tag2",
+                                },
+                            ],
+                        }
+                    }
+                },
+            },
+        )
+        new_list = (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=list_title)
+            .one()
+        )
+        assert new_list.id == new_list_obj.id
+        assert len(new_list.tags) == 2
+        assert new_list.tags.key == [tag_key1, tag_key2]
+
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestRead:
