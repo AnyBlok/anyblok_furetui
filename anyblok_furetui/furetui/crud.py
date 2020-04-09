@@ -155,8 +155,6 @@ class CRUD:
 
         data = []
         pks = []
-        from pprint import pprint
-        pprint(str(query2))
         for entry in query2:
             pk = entry.to_primary_keys()
             pks.append(pk)
