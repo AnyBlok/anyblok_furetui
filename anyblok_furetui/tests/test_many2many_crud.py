@@ -9,7 +9,6 @@ from anyblok.tests.conftest import (  # noqa F401
     bloks_loaded,
     base_loaded,
 )
-from anyblok.conftest import configuration_loaded  # noqa F401
 
 
 register = Declarations.register
