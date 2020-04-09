@@ -112,18 +112,16 @@ class FuretuiQueryString(QueryString):
 class CRUD:
 
     @classmethod
-    def read(cls, request):
-        # check user is disconnected
-        # check user has access rigth to see this resource
-        model = request.params['model']
-        Model = cls.registry.get(model)
-        fd = Model.fields_description()
-        fields_ = request.params['fields'].split(',')
+    def parse_fields(cls, qs_fields):
+        """Prepare fields for different use cases
+
+        returns:
+        """
         fields = []
         fields2read = []
         subfields = {}
 
-        for f in fields_:
+        for f in qs_fields.split(','):
             if '.' in f:
                 field, subfield = f.split('.')
                 fields.append(field)
@@ -134,8 +132,34 @@ class CRUD:
             else:
                 fields2read.append(f)
                 fields.append(f)
-
         fields = list(set(fields))
+        return fields, fields2read, subfields
+
+    @classmethod
+    def set_from_statment(cls, model, query, fields2read, subfields):
+        """Limit query object to requested fields
+        """
+        fd = model.fields_description()
+        return query.options(
+            load_only(*fields2read),
+            *[(subqueryload(field).load_only(*subfield)
+               if fd[field]['type'] in ('One2Many', 'Many2Many')
+               else joinedload(field).load_only(*subfield))
+              for field, subfield in subfields.items()]
+        )
+
+    @classmethod
+    def read(cls, request):
+        # check user is disconnected
+        # check user has access rigth to see this resource
+        model = request.params['model']
+        Model = cls.registry.get(model)
+        fd = Model.fields_description()
+
+        fields, fields2read, subfields = cls.parse_fields(
+            request.params['fields']
+        )
+
         # TODO complex case of relationship
         qs = FuretuiQueryString(request, Model)
         query = qs.get_query()
@@ -145,13 +169,8 @@ class CRUD:
         query2 = qs.from_order_by(query)
         query2 = qs.from_limit(query2)
         query2 = qs.from_offset(query2)
-        query2 = query2.options(
-            load_only(*fields2read),
-            *[(subqueryload(field).load_only(*subfield)
-               if fd[field]['type'] in ('One2Many', 'Many2Many')
-               else joinedload(field).load_only(*subfield))
-              for field, subfield in subfields.items()]
-        )
+
+        query2 = cls.set_from_statment(Model, query2, fields2read, subfields)
 
         data = []
         pks = []

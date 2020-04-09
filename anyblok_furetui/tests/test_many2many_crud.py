@@ -1,8 +1,11 @@
 import pytest
 
+from pyramid.request import Request
+from urllib.parse import urlencode
+
 from anyblok import Declarations
 from anyblok.column import Integer, String
-from anyblok.relationship import Many2Many
+from anyblok.relationship import Many2Many, Many2One
 from anyblok.tests.conftest import (  # noqa F401
     init_registry_with_bloks,
     reset_db,
@@ -17,9 +20,24 @@ Model = Declarations.Model
 
 def _complete_many2many(**kwargs):
     @register(Model)
+    class Building:
+        id = Integer(primary_key=True)
+        name = String()
+
+    @register(Model)
     class Address:
 
         id = Integer(primary_key=True)
+        main_building = Many2One(model=Model.Building)
+        buildings = Many2Many(
+            model=Model.Building,
+            join_table="join_addresses_buildings",
+            remote_columns="id",
+            local_columns="id",
+            m2m_remote_columns="b_id",
+            m2m_local_columns="a_id",
+            many2many="addresses",
+        )
         street = String()
         zip = String()
         city = String()
@@ -28,6 +46,7 @@ def _complete_many2many(**kwargs):
     class Person:
 
         name = String(primary_key=True)
+        main_address = Many2One(model=Model.Address)
         addresses = Many2Many(
             model=Model.Address,
             join_table="join_addresses_by_persons",
@@ -36,20 +55,6 @@ def _complete_many2many(**kwargs):
             m2m_remote_columns="a_id",
             m2m_local_columns="p_name",
             many2many="persons",
-        )
-
-    @register(Model)
-    class Building:
-        id = Integer(primary_key=True)
-        name = String()
-        addresses = Many2Many(
-            model=Model.Address,
-            join_table="join_addresses_building",
-            remote_columns="id",
-            local_columns="id",
-            m2m_remote_columns="a_id",
-            m2m_local_columns="b_id",
-            many2many="buildings",
         )
 
 
@@ -67,6 +72,59 @@ class TestMany2Many:
         transaction = registry_many2many.begin_nested()
         request.addfinalizer(transaction.rollback)
         return
+
+    @pytest.fixture()
+    def setup_data(self, registry_many2many):
+        registry = registry_many2many
+        self.building = registry.Building.insert(
+            name="Building that will be renamed"
+        )
+        self.delete_building = registry.Building.insert(name="DELETED BUILDING")
+        self.unchanged_building = registry.Building.insert(
+            name="UNCHANGED BUILDING"
+        )
+        self.link_building = registry.Building.insert(name="LINKED BUILDING")
+        self.unlink_building = registry.Building.insert(
+            name="UNLINKED BUILDING"
+        )
+
+        self.address = registry.Address.insert(
+            street="14-16 rue soleillet",
+            zip="75020",
+            city="Paris",
+            main_building=self.building,
+        )
+        self.address.buildings.extend(
+            [
+                self.building,
+                self.delete_building,
+                self.unchanged_building,
+                self.unlink_building,
+            ]
+        )
+
+        self.delete_address = registry.Address.insert(
+            city="DELETED", zip="89666"
+        )
+        self.unchanged_address = registry.Address.insert(
+            city="UNCHANGED", zip="89666"
+        )
+        self.link_address = registry.Address.insert(city="LINKED", zip="89666")
+        self.unlink_address = registry.Address.insert(
+            city="UNLINKED", zip="89666"
+        )
+
+        self.person = registry.Person.insert(
+            name="Jean-sébastien SUZANNE", main_address=self.address
+        )
+        self.person.addresses.extend(
+            [
+                self.address,
+                self.delete_address,
+                self.unchanged_address,
+                self.unlink_address,
+            ]
+        )
 
     def test_create_m2m(self, registry_many2many):
         registry = registry_many2many
@@ -133,100 +191,153 @@ class TestMany2Many:
         ][0]
         assert len(address_34820.buildings) == 1
 
-    def test_update_m2m(self, registry_many2many):
+    def test_read(self, registry_many2many, setup_data):
         registry = registry_many2many
-
-        building = registry.Building.insert(
-            name="Building that will be renamed"
+        read = registry.FuretUI.CRUD.read(
+            Request(
+                {
+                    "QUERY_STRING": urlencode(
+                        query={
+                            "model": "Model.Person",
+                            "fields": "name,main_address.city,"
+                            "main_address.zip,addresses.zip",
+                        }
+                    )
+                }
+            )
         )
-        delete_building = registry.Building.insert(name="DELETED BUILDING")
-        unchanged_building = registry.Building.insert(name="UNCHANGED BUILDING")
-        link_building = registry.Building.insert(name="LINKED BUILDING")
-        unlink_building = registry.Building.insert(name="UNLINKED BUILDING")
+        assert read == {
+            "data": [
+                {
+                    "data": {
+                        "addresses": [
+                            {"id": 1},
+                            {"id": 2},
+                            {"id": 3},
+                            {"id": 5},
+                        ],
+                        "main_address": {"id": 1},
+                        "name": "Jean-sébastien SUZANNE",
+                    },
+                    "model": "Model.Person",
+                    "pk": {"name": "Jean-sébastien SUZANNE"},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"city": "Paris", "zip": "75020"},
+                    "model": "Model.Address",
+                    "pk": {"id": 1},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"zip": "75020"},
+                    "model": "Model.Address",
+                    "pk": {"id": 1},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"zip": "89666"},
+                    "model": "Model.Address",
+                    "pk": {"id": 2},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"zip": "89666"},
+                    "model": "Model.Address",
+                    "pk": {"id": 3},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"zip": "89666"},
+                    "model": "Model.Address",
+                    "pk": {"id": 5},
+                    "type": "UPDATE_DATA",
+                },
+            ],
+            "pks": [{"name": "Jean-sébastien SUZANNE"}],
+            "total": 1,
+        }
 
-        address = registry.Address.insert(
-            street="14-16 rue soleillet", zip="75020", city="Paris"
-        )
-        address.buildings.extend(
-            [building, delete_building, unchanged_building, unlink_building]
-        )
-
-        delete_address = registry.Address.insert(city="DELETED")
-        unchanged_address = registry.Address.insert(city="UNCHANGED")
-        link_address = registry.Address.insert(city="LINKED")
-        unlink_address = registry.Address.insert(city="UNLINKED")
-
-        person = registry.Person.insert(name="Jean-sébastien SUZANNE")
-        person.addresses.extend(
-            [address, delete_address, unchanged_address, unlink_address]
-        )
+    def test_update_m2m(self, registry_many2many, setup_data):
+        registry = registry_many2many
         registry.FuretUI.CRUD.update(
             "Model.Person",
-            {"name": person.name},
+            {"name": self.person.name},
             {
                 "Model.Person": {
-                    '[["name","{}"]]'.format(person.name): {
+                    '[["name","{}"]]'.format(self.person.name): {
                         "addresses": [
                             {
                                 "__x2m_state": "ADDED",
                                 "uuid": "fake_uuid_address",
                             },
-                            {"__x2m_state": "UPDATED", "id": address.id},
-                            {"__x2m_state": "DELETED", "id": delete_address.id},
+                            {"__x2m_state": "UPDATED", "id": self.address.id},
+                            {
+                                "__x2m_state": "DELETED",
+                                "id": self.delete_address.id,
+                            },
                             {
                                 "__x2m_state": "UNLINKED",
-                                "id": unlink_address.id,
+                                "id": self.unlink_address.id,
                             },
-                            {"__x2m_state": "LINKED", "id": link_address.id},
-                            {"id": unchanged_address.id},
+                            {
+                                "__x2m_state": "LINKED",
+                                "id": self.link_address.id,
+                            },
+                            {"id": self.unchanged_address.id},
                         ],
                     },
                 },
                 "Model.Address": {
                     "new": {"fake_uuid_address": {"city": "ADDED"}},
-                    '[["id",{}]]'.format(address.id): {
+                    '[["id",{}]]'.format(self.address.id): {
                         "city": "UPDATED",
                         "buildings": [
                             {
                                 "__x2m_state": "ADDED",
                                 "uuid": "fake_uuid_building",
                             },
-                            {"__x2m_state": "UPDATED", "id": building.id},
+                            {"__x2m_state": "UPDATED", "id": self.building.id},
                             {
                                 "__x2m_state": "DELETED",
-                                "id": delete_building.id,
+                                "id": self.delete_building.id,
                             },
                             {
                                 "__x2m_state": "UNLINKED",
-                                "id": unlink_building.id,
+                                "id": self.unlink_building.id,
                             },
-                            {"__x2m_state": "LINKED", "id": link_building.id},
-                            {"id": unchanged_building.id},
+                            {
+                                "__x2m_state": "LINKED",
+                                "id": self.link_building.id,
+                            },
+                            {"id": self.unchanged_building.id},
                         ],
                     },
                 },
                 "Model.Building": {
                     "new": {"fake_uuid_building": {"name": "ADDED BUILDING"}},
-                    '[["id",{}]]'.format(building.id): {
+                    '[["id",{}]]'.format(self.building.id): {
                         "name": "UPDATED BUILDING",
                     },
                 },
             },
         )
-        assert sorted(person.addresses.city) == [
+        assert sorted(self.person.addresses.city) == [
             "ADDED",
             "LINKED",
             "UNCHANGED",
             "UPDATED",
         ]
-        assert registry.Address.query().get(delete_address.id) is None
-        assert registry.Address.query().get(unlink_address.id) is not None
-        address.refresh()
-        assert sorted(address.buildings.name) == [
+        assert registry.Address.query().get(self.delete_address.id) is None
+        assert registry.Address.query().get(self.unlink_address.id) is not None
+        self.address.refresh()
+        assert sorted(self.address.buildings.name) == [
             "ADDED BUILDING",
             "LINKED BUILDING",
             "UNCHANGED BUILDING",
             "UPDATED BUILDING",
         ]
-        assert registry.Building.query().get(delete_building.id) is None
-        assert registry.Building.query().get(unlink_building.id) is not None
+        assert registry.Building.query().get(self.delete_building.id) is None
+        assert (
+            registry.Building.query().get(self.unlink_building.id) is not None
+        )

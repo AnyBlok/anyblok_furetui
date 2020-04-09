@@ -143,6 +143,20 @@ class TestCreate:
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestRead:
+    def test_parse_fields(self, rollback_registry):
+        (
+            fields,
+            fields2read,
+            subfields,
+        ) = rollback_registry.FuretUI.CRUD.parse_fields(
+            "name,main_address.city,main_address.zip,addresses.zip"
+        )
+        assert (sorted(fields), sorted(fields2read), subfields) == (
+            ["addresses", "main_address", "name"],
+            ["name"],
+            {"addresses": ["zip"], "main_address": ["city", "zip"]},
+        )
+
     def test_model_field(self, webserver, rollback_registry):
         path = Configuration.get("furetui_client_path", "/furet-ui/crud")
         params = urllib.parse.urlencode(
