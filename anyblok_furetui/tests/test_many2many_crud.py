@@ -206,17 +206,18 @@ class TestMany2Many:
                 }
             )
         )
+
         assert read == {
             "data": [
                 {
                     "data": {
                         "addresses": [
-                            {"id": 1},
-                            {"id": 2},
-                            {"id": 3},
-                            {"id": 5},
+                            {"id": self.address.id},
+                            {"id": self.delete_address.id},
+                            {"id": self.unchanged_address.id},
+                            {"id": self.unlink_address.id},
                         ],
-                        "main_address": {"id": 1},
+                        "main_address": {"id": self.address.id},
                         "name": "Jean-sébastien SUZANNE",
                     },
                     "model": "Model.Person",
@@ -226,31 +227,31 @@ class TestMany2Many:
                 {
                     "data": {"city": "Paris", "zip": "75020"},
                     "model": "Model.Address",
-                    "pk": {"id": 1},
+                    "pk": {"id": self.address.id},
                     "type": "UPDATE_DATA",
                 },
                 {
                     "data": {"zip": "75020"},
                     "model": "Model.Address",
-                    "pk": {"id": 1},
+                    "pk": {"id": self.address.id},
                     "type": "UPDATE_DATA",
                 },
                 {
                     "data": {"zip": "89666"},
                     "model": "Model.Address",
-                    "pk": {"id": 2},
+                    "pk": {"id": self.delete_address.id},
                     "type": "UPDATE_DATA",
                 },
                 {
                     "data": {"zip": "89666"},
                     "model": "Model.Address",
-                    "pk": {"id": 3},
+                    "pk": {"id": self.unchanged_address.id},
                     "type": "UPDATE_DATA",
                 },
                 {
                     "data": {"zip": "89666"},
                     "model": "Model.Address",
-                    "pk": {"id": 5},
+                    "pk": {"id": self.unlink_address.id},
                     "type": "UPDATE_DATA",
                 },
             ],
