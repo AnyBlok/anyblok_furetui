@@ -56,6 +56,7 @@ class TestMany2Many:
 
     def test_create_m2m(self, registry_many2many):
         registry = registry_many2many
+        link_address = registry.Address.insert(zip="45270")
         person = registry.FuretUI.CRUD.create(
             "Model.Person",
             "fake_uuid_person",
@@ -72,6 +73,10 @@ class TestMany2Many:
                                 {
                                     "__x2m_state": "ADDED",
                                     "uuid": "fake_uuid_address2",
+                                },
+                                {
+                                    "__x2m_state": "LINKED",
+                                    "id": link_address.id,
                                 },
                             ],
                         },
@@ -95,7 +100,11 @@ class TestMany2Many:
         )
 
         assert person.name == "Pierre Verkest"
-        assert sorted(person.addresses.zip) == ["01390", "34820"]
+        assert sorted(person.addresses.zip) == [
+            "01390",
+            "34820",
+            link_address.zip,
+        ]
 
     def test_update_m2m(self, registry_many2many):
         registry = registry_many2many
@@ -105,8 +114,12 @@ class TestMany2Many:
         )
         delete_address = registry.Address.insert(city="DELETED")
         unchanged_address = registry.Address.insert(city="UNCHANGED")
+        link_address = registry.Address.insert(city="LINKED")
+        unlink_address = registry.Address.insert(city="UNLINKED")
         person = registry.Person.insert(name="Jean-sébastien SUZANNE")
-        person.addresses.extend([address, delete_address, unchanged_address])
+        person.addresses.extend(
+            [address, delete_address, unchanged_address, unlink_address]
+        )
 
         registry.FuretUI.CRUD.update(
             "Model.Person",
@@ -121,6 +134,11 @@ class TestMany2Many:
                             },
                             {"__x2m_state": "UPDATED", "id": address.id},
                             {"__x2m_state": "DELETED", "id": delete_address.id},
+                            {
+                                "__x2m_state": "UNLINKED",
+                                "id": unlink_address.id,
+                            },
+                            {"__x2m_state": "LINKED", "id": link_address.id},
                             {"id": unchanged_address.id},
                         ],
                     },
@@ -133,7 +151,9 @@ class TestMany2Many:
         )
         assert sorted(person.addresses.city) == [
             "ADDED",
+            "LINKED",
             "UNCHANGED",
             "UPDATED",
         ]
         assert registry.Address.query().get(delete_address.id) is None
+        assert registry.Address.query().get(unlink_address.id) is not None

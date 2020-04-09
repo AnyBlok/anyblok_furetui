@@ -220,9 +220,6 @@ class CRUD:
 
     @classmethod
     def create_or_update(cls, model, pks, changes):
-        # TODO: manage somehow LINKED / UNLINKED / UPDATED / DELETED
-        # today we assume only ADDED exist
-        # TODO: manage new / vs patch
         Model = cls.registry.get(model)
         data = {}
         new = True
@@ -275,6 +272,18 @@ class CRUD:
                     linked_model.from_primary_keys(
                         **primary_key
                     ).furetui_delete()
+                if state in ["LINKED"]:
+                    getattr(new_obj, linked_field["field"]).append(
+                        linked_model.from_primary_keys(
+                            **primary_key
+                        )
+                    )
+                if state in ["UNLINKED"]:
+                    getattr(new_obj, linked_field["field"]).remove(
+                        linked_model.from_primary_keys(
+                            **primary_key
+                        )
+                    )
 
     @classmethod
     def update(cls, model, pks, changes):
