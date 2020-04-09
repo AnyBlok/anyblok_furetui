@@ -25,6 +25,20 @@ def resource_tag2(rollback_registry, resource_list):
     )
 
 
+@pytest.fixture(scope="function")
+def resource_tag3(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-3", label="Tag 3", list=resource_list
+    )
+
+
+@pytest.fixture(scope="function")
+def resource_tag4(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-4", label="Tag 4", list=resource_list
+    )
+
+
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
     def test_create(self, webserver, rollback_registry):
@@ -300,12 +314,18 @@ class TestUpdate:
         )
 
     def test_update_o2m(
-        self, webserver, rollback_registry, resource_tag1, resource_tag2
+        self,
+        webserver,
+        rollback_registry,
+        resource_tag1,
+        resource_tag2,
+        resource_tag3,
+        resource_tag4,
     ):
         tag_key_update_1 = "key1-update_o2m_updated"
         tag_key1 = "key1-update_o2m_added"
         tag_key2 = "key2-update_o2m_added"
-        assert len(resource_tag1.list.tags) == 2
+
         rollback_registry.FuretUI.CRUD.update(
             "Model.FuretUI.Resource.List",
             {"id": resource_tag1.list.id},
@@ -332,6 +352,7 @@ class TestUpdate:
                             {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag2"},
                             {"__x2m_state": "UPDATED", "id": resource_tag1.id},
                             {"__x2m_state": "DELETED", "id": resource_tag2.id},
+                            {"id": resource_tag3.id},
                         ],
                     }
                 },
@@ -342,9 +363,15 @@ class TestUpdate:
             .filter_by(title=resource_tag1.list.title)
             .one()
         )
-        assert len(new_list.tags) == 3
+        assert len(new_list.tags) == 5
         assert sorted(new_list.tags.key) == sorted(
-            [tag_key_update_1, tag_key1, tag_key2]
+            [
+                tag_key_update_1,
+                tag_key1,
+                tag_key2,
+                resource_tag3.key,
+                resource_tag4.key,
+            ]
         )
 
 
