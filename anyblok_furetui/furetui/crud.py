@@ -203,8 +203,7 @@ class CRUD:
             if fd[field]['type'] in ('Many2One', 'One2One'):
                 M2 = cls.registry.get(fd[field]['model'])
                 data[field] = M2.from_primary_keys(**data[field])
-            if fd[field]['type'] in ('One2Many'):
-                # TODO add a test for many2many (should be like One2Many)
+            if fd[field]['type'] in ('One2Many', 'Many2Many'):
                 linked_data.append({
                     "field": field,
                     "model": fd[field]['model'],
