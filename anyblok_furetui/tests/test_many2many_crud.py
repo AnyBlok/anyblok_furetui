@@ -4,7 +4,7 @@ from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2Many
 from anyblok.tests.conftest import (  # noqa F401
-    init_registry,
+    init_registry_with_bloks,
     reset_db,
     bloks_loaded,
     base_loaded,
@@ -43,7 +43,7 @@ def _complete_many2many(**kwargs):
 @pytest.fixture(scope="class")
 def registry_many2many(request, bloks_loaded):  # noqa F811
     reset_db()
-    registry = init_registry(_complete_many2many)
+    registry = init_registry_with_bloks(["furetui"], _complete_many2many)
     request.addfinalizer(registry.close)
     return registry
 
