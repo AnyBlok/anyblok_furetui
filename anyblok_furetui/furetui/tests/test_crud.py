@@ -25,6 +25,34 @@ def resource_tag2(rollback_registry, resource_list):
     )
 
 
+@pytest.fixture(scope="function")
+def resource_tag3(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-3", label="Tag 3", list=resource_list
+    )
+
+
+@pytest.fixture(scope="function")
+def resource_tag4(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-4", label="Tag 4", list=resource_list
+    )
+
+
+@pytest.fixture(scope="function")
+def resource_tag5(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-5", label="Tag 5", list=resource_list
+    )
+
+
+@pytest.fixture(scope="function")
+def resource_tag_to_link(rollback_registry, resource_list):
+    return rollback_registry.FuretUI.Resource.Tags.insert(
+        key="tag-6", label="Tag 6"
+    )
+
+
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
     def test_create(self, webserver, rollback_registry):
@@ -52,6 +80,65 @@ class TestCreate:
         rollback_registry.FuretUI.Resource.List.query().filter_by(
             title=title
         ).count() == 1
+
+    def test_create_o2m(
+        self, webserver, rollback_registry, resource_tag_to_link
+    ):
+        tag_key1 = "key1-create-o2m"
+        tag_key2 = "key2-create-o2m"
+        list_title = "new-title"
+        new_list_obj = rollback_registry.FuretUI.CRUD.create(
+            "Model.FuretUI.Resource.List",
+            "fake_uuid_list",
+            {
+                "Model.FuretUI.Resource.Tags": {
+                    "new": {
+                        "fake_uuid_tag1": {
+                            "key": tag_key1,
+                            "label": "Key created in o2m",
+                        },
+                        "fake_uuid_tag2": {
+                            "key": tag_key2,
+                            "label": "Key created in o2m",
+                        },
+                    }
+                },
+                "Model.FuretUI.Resource.List": {
+                    "new": {
+                        "fake_uuid_list": {
+                            "title": list_title,
+                            "model": "Model.System.Blok",
+                            "tags": [
+                                {
+                                    "__x2m_state": "ADDED",
+                                    "uuid": "fake_uuid_tag1",
+                                },
+                                {
+                                    "__x2m_state": "ADDED",
+                                    "uuid": "fake_uuid_tag2",
+                                },
+                                {
+                                    "__x2m_state": "LINKED",
+                                    "id": resource_tag_to_link.id,
+                                },
+                            ],
+                        }
+                    }
+                },
+            },
+        )
+        new_list = (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=list_title)
+            .one()
+        )
+        assert new_list.id == new_list_obj.id
+        assert len(new_list.tags) == 3
+        assert new_list.tags.key == [
+            tag_key1,
+            tag_key2,
+            resource_tag_to_link.key,
+        ]
 
 
 @pytest.mark.usefixtures("rollback_registry")
@@ -248,6 +335,87 @@ class TestUpdate:
             .one()
             .id
             == resource_list.id
+        )
+
+    def test_update_o2m(
+        self,
+        webserver,
+        rollback_registry,
+        resource_tag1,
+        resource_tag2,
+        resource_tag3,
+        resource_tag4,
+        resource_tag5,
+        resource_tag_to_link,
+    ):
+        tag_key_update_1 = "key1-update_o2m_updated"
+        tag_key1 = "key1-update_o2m_added"
+        tag_key2 = "key2-update_o2m_added"
+
+        rollback_registry.FuretUI.CRUD.update(
+            "Model.FuretUI.Resource.List",
+            {"id": resource_tag1.list.id},
+            {
+                "Model.FuretUI.Resource.Tags": {
+                    "new": {
+                        "fake_uuid_tag1": {
+                            "key": tag_key1,
+                            "label": "Key created in o2m",
+                        },
+                        "fake_uuid_tag2": {
+                            "key": tag_key2,
+                            "label": "Key created in o2m",
+                        },
+                    },
+                    '[["id",{}]]'.format(resource_tag1.id): {
+                        "key": tag_key_update_1,
+                    },
+                },
+                "Model.FuretUI.Resource.List": {
+                    '[["id",{}]]'.format(resource_tag1.list.id): {
+                        "tags": [
+                            {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag1"},
+                            {"__x2m_state": "ADDED", "uuid": "fake_uuid_tag2"},
+                            {"__x2m_state": "UPDATED", "id": resource_tag1.id},
+                            {"__x2m_state": "DELETED", "id": resource_tag2.id},
+                            {"__x2m_state": "UNLINKED", "id": resource_tag5.id},
+                            {
+                                "__x2m_state": "LINKED",
+                                "id": resource_tag_to_link.id,
+                            },
+                            {"id": resource_tag3.id},
+                        ],
+                    }
+                },
+            },
+        )
+        new_list = (
+            rollback_registry.FuretUI.Resource.List.query()
+            .filter_by(title=resource_tag1.list.title)
+            .one()
+        )
+        assert len(new_list.tags) == 6
+        assert sorted(new_list.tags.key) == sorted(
+            [
+                tag_key_update_1,
+                tag_key1,
+                tag_key2,
+                resource_tag3.key,
+                resource_tag4.key,
+                resource_tag_to_link.key,
+            ]
+        )
+        assert (
+            rollback_registry.FuretUI.Resource.Tags.query().get(
+                resource_tag2.id
+            )
+            is None
+        )
+        assert (
+            rollback_registry.FuretUI.Resource.Tags.query().get(
+                resource_tag5.id
+            )
+            is not None
         )
 
 

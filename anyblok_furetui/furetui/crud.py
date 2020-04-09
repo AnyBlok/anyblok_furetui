@@ -198,33 +198,96 @@ class CRUD:
     @classmethod
     def format_data(cls, Model, data):
         fd = Model.fields_description()
+        linked_data = []
         for field in data:
             if fd[field]['type'] in ('Many2One', 'One2One'):
                 M2 = cls.registry.get(fd[field]['model'])
                 data[field] = M2.from_primary_keys(**data[field])
-
-            # TODO one2many and many2many
+            if fd[field]['type'] in ('One2Many', 'Many2Many'):
+                linked_data.append({
+                    "field": field,
+                    "model": fd[field]['model'],
+                    "data": data[field],
+                    "instances": [],
+                })
+        # Remove x2m fields
+        [data.pop(key["field"]) for key in linked_data]
+        return linked_data
 
     @classmethod
     def create(cls, model, uuid, changes):
+        return cls.create_or_update(model, {"uuid": uuid}, changes)
+
+    @classmethod
+    def create_or_update(cls, model, pks, changes):
         Model = cls.registry.get(model)
-        data = changes[model]['new'].pop(uuid, {})
-        cls.format_data(Model, data)
-        return Model.furetui_insert(**data)
+        data = {}
+        new = True
+        # TODO: rename uuid or document that primary key should not use
+        # a field called uuid
+        if "uuid" in pks.keys():
+            data = changes[model]["new"].pop(pks["uuid"], {})
+        else:
+            new = False
+            for key in changes[model].keys():
+                if key != "new" and dict(json.loads(key)) == pks:
+                    data = changes[model].pop(key, {})
+                    break
+        # TODO: not sure how to skip loops when 2 objects reference each other
+        # Keep in mind in case of updatating data in depth with 2 or 3 o2m.
+        # intermediate object may have no changes
+        # if not data:
+        #     return None
+        linked_data = cls.format_data(Model, data)
+        if new:
+            new_obj = Model.furetui_insert(**data)
+        else:
+            new_obj = Model.from_primary_keys(**pks)
+            new_obj.furetui_update(**data)
+        cls.create_or_update_linked_data(new_obj, linked_data, changes)
+        return new_obj
+
+    @classmethod
+    def create_or_update_linked_data(cls, new_obj, linked_data, changes):
+        for linked_field in linked_data:
+            linked_model = cls.registry.get(linked_field["model"])
+            linked_model_pks = set(linked_model.get_primary_keys())
+            for linked_instance in linked_field["data"]:
+                state = linked_instance.get("__x2m_state", None)
+                if state == "ADDED":
+                    primary_key = {"uuid": linked_instance["uuid"]}
+                else:
+                    primary_key = {}
+                    for key in linked_model_pks:
+                        primary_key[key] = linked_instance[key]
+                if state in ["ADDED", "UPDATED"]:
+                    getattr(new_obj, linked_field["field"]).append(
+                        cls.create_or_update(
+                            linked_field["model"],
+                            primary_key,
+                            changes,
+                        )
+                    )
+                if state in ["DELETED"]:
+                    linked_model.from_primary_keys(
+                        **primary_key
+                    ).furetui_delete()
+                if state in ["LINKED"]:
+                    getattr(new_obj, linked_field["field"]).append(
+                        linked_model.from_primary_keys(
+                            **primary_key
+                        )
+                    )
+                if state in ["UNLINKED"]:
+                    getattr(new_obj, linked_field["field"]).remove(
+                        linked_model.from_primary_keys(
+                            **primary_key
+                        )
+                    )
 
     @classmethod
     def update(cls, model, pks, changes):
-        Model = cls.registry.get(model)
-        data = {}
-        for key in changes[model].keys():
-            if dict(json.loads(key)) == pks:
-                data = changes[model].pop(key)
-                break
-
-        cls.format_data(Model, data)
-        obj = Model.from_primary_keys(**pks)
-        obj.furetui_update(**data)
-        return obj
+        return cls.create_or_update(model, pks, changes)
 
     @classmethod
     def delete(cls, model, pks):

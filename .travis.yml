@@ -3,7 +3,6 @@ sudo: true
 
 python:
   - "3.6"
-  - "3.6"
   - "3.7"
   - "3.8-dev"
   - "3.9-dev"
@@ -33,6 +32,8 @@ install:
   - python setup.py develop
   # Waiting pyramid_blok branch on anyblok_pyramid to be merged
   - pip install -e git+https://github.com/AnyBlok/anyblok_pyramid@pyramid_blok#egg=anyblok-pyramid
+  # Waiting awnser next release AnyBlok >= 0.22.6
+  - pip install -e git+https://github.com/Anyblok/AnyBlok@master#egg=AnyBlok
 
 env:
   global:
@@ -42,7 +43,9 @@ env:
 
 script:
   - flake8 anyblok_furetui
+  - py.test --cov-report=term --cov=anyblok_furetui anyblok_furetui/tests
+  - dropdb travis_ci_test
   - anyblok_createdb --install-bloks furetui
-  - py.test --cov-report=term --cov=anyblok_furetui anyblok_furetui
+  - py.test --cov-report=term --cov=anyblok_furetui --cov-append anyblok_furetui/furetui
 
 after_success: coveralls --data_file=.coverage --config_file=.coveragerc
