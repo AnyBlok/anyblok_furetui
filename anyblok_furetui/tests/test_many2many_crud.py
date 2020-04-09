@@ -104,12 +104,12 @@ class TestMany2Many:
         )
 
         self.delete_address = registry.Address.insert(
-            city="DELETED", zip="89666"
+            city="DELETED", zip="89664"
         )
         self.unchanged_address = registry.Address.insert(
-            city="UNCHANGED", zip="89666"
+            city="UNCHANGED", zip="89665"
         )
-        self.link_address = registry.Address.insert(city="LINKED", zip="89666")
+        self.link_address = registry.Address.insert(city="LINKED", zip="89667")
         self.unlink_address = registry.Address.insert(
             city="UNLINKED", zip="89666"
         )
@@ -191,6 +191,27 @@ class TestMany2Many:
         ][0]
         assert len(address_34820.buildings) == 1
 
+    def test_parse_fields(self, registry_many2many):
+        registry = registry_many2many
+        assert registry.FuretUI.CRUD.parse_fields(
+            (
+                "name,main_address.city,main_address.zip,addresses.zip,"
+                "main_address.buildings.name,addresses.buildings.name,"
+                "main_address.main_building.name"
+            )
+        ) == {
+            "__fields": ["name"],
+            "addresses": {
+                "__fields": ["zip"],
+                "buildings": {"__fields": ["name"]},
+            },
+            "main_address": {
+                "__fields": ["city", "zip"],
+                "main_building": {"__fields": ["name"]},
+                "buildings": {"__fields": ["name"]},
+            },
+        }
+
     def test_read(self, registry_many2many, setup_data):
         registry = registry_many2many
         read = registry.FuretUI.CRUD.read(
@@ -200,7 +221,8 @@ class TestMany2Many:
                         query={
                             "model": "Model.Person",
                             "fields": "name,main_address.city,"
-                            "main_address.zip,addresses.zip",
+                            "main_address.zip,addresses.zip,"
+                            "main_address.main_building.name",
                         }
                     )
                 }
@@ -225,9 +247,19 @@ class TestMany2Many:
                     "type": "UPDATE_DATA",
                 },
                 {
-                    "data": {"city": "Paris", "zip": "75020"},
+                    "data": {
+                        "city": "Paris",
+                        "zip": "75020",
+                        "main_building": {"id": self.building.id},
+                    },
                     "model": "Model.Address",
                     "pk": {"id": self.address.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"name": "Building that will be renamed"},
+                    "model": "Model.Building",
+                    "pk": {"id": self.building.id},
                     "type": "UPDATE_DATA",
                 },
                 {
@@ -237,13 +269,13 @@ class TestMany2Many:
                     "type": "UPDATE_DATA",
                 },
                 {
-                    "data": {"zip": "89666"},
+                    "data": {"zip": "89664"},
                     "model": "Model.Address",
                     "pk": {"id": self.delete_address.id},
                     "type": "UPDATE_DATA",
                 },
                 {
-                    "data": {"zip": "89666"},
+                    "data": {"zip": "89665"},
                     "model": "Model.Address",
                     "pk": {"id": self.unchanged_address.id},
                     "type": "UPDATE_DATA",

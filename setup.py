@@ -19,6 +19,7 @@ requires = [
     'lxml',
     'python-magic',
     'simplejson',
+    'SQLAlchemy>=1.3.6'
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

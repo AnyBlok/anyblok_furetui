@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from anyblok.declarations import Declarations
 from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
@@ -117,51 +119,49 @@ class CRUD:
 
         returns:
         """
-        fields = []
-        fields2read = []
-        subfields = {}
-
-        for f in qs_fields.split(','):
-            if '.' in f:
-                field, subfield = f.split('.')
-                fields.append(field)
-                if field not in subfields:
-                    subfields[field] = []
-
-                subfields[field].append(subfield)
+        def add_field(data, field):
+            f = field.split(".", 1)
+            if len(f) == 1:
+                data["__fields"].append(f[0])
             else:
-                fields2read.append(f)
-                fields.append(f)
-        fields = list(set(fields))
-        return fields, fields2read, subfields
+                if f[0] not in data:
+                    data[f[0]] = {"__fields": []}
+                add_field(data[f[0]], f[1])
+
+        fields = {"__fields": []}
+        for field in qs_fields.split(','):
+            add_field(fields, field)
+        return fields
 
     @classmethod
-    def set_from_statment(cls, model, query, fields2read, subfields):
-        """Limit query object to requested fields
+    def add_options(cls, fields, model_name):
+        """Limit query object to requested fields on any joins
         """
+        model = cls.registry.get(model_name)
         fd = model.fields_description()
-        return query.options(
-            load_only(*fields2read),
-            *[(subqueryload(field).load_only(*subfield)
-               if fd[field]['type'] in ('One2Many', 'Many2Many')
-               else joinedload(field).load_only(*subfield))
-              for field, subfield in subfields.items()]
-        )
+        load = load_only(*fields.pop("__fields"))
+        joins = []
+        for field, data in fields.items():
+            load_method = joinedload
+            if fd[field]['type'] in ('One2Many', 'Many2Many'):
+                load_method = subqueryload
+            joins.append(
+                load_method(field).options(
+                    *cls.add_options(data, fd[field]["model"])
+                )
+            )
+        return [load, *joins]
 
     @classmethod
     def read(cls, request):
         # check user is disconnected
         # check user has access rigth to see this resource
         model = request.params['model']
-        Model = cls.registry.get(model)
-        fd = Model.fields_description()
 
-        fields, fields2read, subfields = cls.parse_fields(
-            request.params['fields']
-        )
+        fields = cls.parse_fields(request.params['fields'])
 
         # TODO complex case of relationship
-        qs = FuretuiQueryString(request, Model)
+        qs = FuretuiQueryString(request, cls.registry.get(model))
         query = qs.get_query()
         query = qs.from_filter_by(query)
         query = qs.from_tags(query)
@@ -170,39 +170,44 @@ class CRUD:
         query2 = qs.from_limit(query2)
         query2 = qs.from_offset(query2)
 
-        query2 = cls.set_from_statment(Model, query2, fields2read, subfields)
+        query2 = query2.options(*cls.add_options(deepcopy(fields), model))
 
         data = []
         pks = []
         from pprint import pprint
         pprint(str(query2))
-        for entry in query2:
-            pk = entry.to_primary_keys()
-            pks.append(pk)
+
+        def append_result(fields, model_name, entry):
+            model = cls.registry.get(model_name)
+            fd = model.fields_description()
+            current_fields = fields.pop("__fields")
+            current_fields.extend(fields.keys())
             data.append({
                 'type': 'UPDATE_DATA',
-                'model': model,
-                'pk': pk,
-                'data': entry.to_dict(*fields),
+                'model': model_name,
+                'pk': entry.to_primary_keys(),
+                'data': entry.to_dict(*current_fields),
             })
-            for field, subfield in subfields.items():
-                entry_ = getattr(entry, field)
-                if entry_:
+            for field, subfield in fields.items():
+                children_entries = getattr(entry, field)
+                if children_entries:
                     if fd[field]['type'] in ('Many2One', 'One2One'):
-                        data.append({
-                            'type': 'UPDATE_DATA',
-                            'model': fd[field]['model'],
-                            'pk': entry_.to_primary_keys(),
-                            'data': entry_.to_dict(*subfield),
-                        })
+                        append_result(
+                            fields[field],
+                            fd[field]['model'],
+                            children_entries  # it's a child here (not children)
+                        )
                     else:
-                        for entry__ in entry_:
-                            data.append({
-                                'type': 'UPDATE_DATA',
-                                'model': fd[field]['model'],
-                                'pk': entry__.to_primary_keys(),
-                                'data': entry__.to_dict(*subfield),
-                            })
+                        for child_entry in children_entries:
+                            append_result(
+                                deepcopy(fields[field]),
+                                fd[field]['model'],
+                                child_entry
+                            )
+
+        for entry in query2:
+            pks.append(entry.to_primary_keys())
+            append_result(deepcopy(fields), model, entry)
 
         # query.count do a sub query, we do not want it, because mysql
         # has a terrible support of subqueries
