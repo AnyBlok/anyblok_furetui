@@ -136,6 +136,47 @@ class TestMany2Many:
         assert person.name == "Pierre Verkest"
         assert sorted(person.addresses.zip) == ["01390", "34820"]
 
+    def test_update_m2m(self, registry_many2many):
+        registry = registry_many2many
+
+        address = registry.Address.insert(
+            street="14-16 rue soleillet", zip="75020", city="Paris"
+        )
+        delete_address = registry.Address.insert(city="DELETED")
+        unchanged_address = registry.Address.insert(city="UNCHANGED")
+        person = registry.Person.insert(name="Jean-sébastien SUZANNE")
+        person.addresses.extend([address, delete_address, unchanged_address])
+
+        registry.FuretUI.CRUD.update(
+            "Model.Person",
+            {"name": person.name},
+            {
+                "Model.Person": {
+                    '[["name","{}"]]'.format(person.name): {
+                        "addresses": [
+                            {
+                                "__x2m_state": "ADDED",
+                                "uuid": "fake_uuid_address",
+                            },
+                            {"__x2m_state": "UPDATED", "id": address.id},
+                            {"__x2m_state": "DELETED", "id": delete_address.id},
+                            {"id": unchanged_address.id},
+                        ],
+                    },
+                },
+                "Model.Address": {
+                    "new": {"fake_uuid_address": {"city": "ADDED"}},
+                    '[["id",{}]]'.format(address.id): {"city": "UPDATED"},
+                },
+            },
+        )
+        assert sorted(person.addresses.city) == [
+            "ADDED",
+            "UNCHANGED",
+            "UPDATED",
+        ]
+        assert registry.Address.query().get(delete_address.id) is None
+
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
