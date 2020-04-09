@@ -291,6 +291,96 @@ class TestMany2Many:
             "total": 1,
         }
 
+    def test_read_chaind_m2m(self, registry_many2many, setup_data):
+        registry = registry_many2many
+        read = registry.FuretUI.CRUD.read(
+            Request(
+                {
+                    "QUERY_STRING": urlencode(
+                        query={
+                            "model": "Model.Person",
+                            "fields": "addresses.buildings.name",
+                        }
+                    )
+                }
+            )
+        )
+
+        assert read == {
+            "data": [
+                {
+                    "data": {
+                        "addresses": [
+                            {"id": self.address.id},
+                            {"id": self.delete_address.id},
+                            {"id": self.unchanged_address.id},
+                            {"id": self.unlink_address.id},
+                        ]
+                    },
+                    "model": "Model.Person",
+                    "pk": {"name": "Jean-sébastien SUZANNE"},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {
+                        "buildings": [
+                            {"id": self.building.id},
+                            {"id": self.delete_building.id},
+                            {"id": self.unchanged_building.id},
+                            {"id": self.unlink_building.id},
+                        ]
+                    },
+                    "model": "Model.Address",
+                    "pk": {"id": self.address.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"name": "Building that will be renamed"},
+                    "model": "Model.Building",
+                    "pk": {"id": self.building.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"name": "DELETED BUILDING"},
+                    "model": "Model.Building",
+                    "pk": {"id": self.delete_building.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"name": "UNCHANGED BUILDING"},
+                    "model": "Model.Building",
+                    "pk": {"id": self.unchanged_building.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"name": "UNLINKED BUILDING"},
+                    "model": "Model.Building",
+                    "pk": {"id": self.unlink_building.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"buildings": []},
+                    "model": "Model.Address",
+                    "pk": {"id": self.delete_address.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"buildings": []},
+                    "model": "Model.Address",
+                    "pk": {"id": self.unchanged_address.id},
+                    "type": "UPDATE_DATA",
+                },
+                {
+                    "data": {"buildings": []},
+                    "model": "Model.Address",
+                    "pk": {"id": self.unlink_address.id},
+                    "type": "UPDATE_DATA",
+                },
+            ],
+            "pks": [{"name": "Jean-sébastien SUZANNE"}],
+            "total": 1,
+        }
+
     def test_update_m2m(self, registry_many2many, setup_data):
         registry = registry_many2many
         registry.FuretUI.CRUD.update(
