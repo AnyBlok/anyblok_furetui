@@ -174,8 +174,6 @@ class CRUD:
 
         data = []
         pks = []
-        from pprint import pprint
-        pprint(str(query2))
 
         def append_result(fields, model_name, entry):
             model = cls.registry.get(model_name)
@@ -192,18 +190,13 @@ class CRUD:
                 children_entries = getattr(entry, field)
                 if children_entries:
                     if fd[field]['type'] in ('Many2One', 'One2One'):
+                        children_entries = [children_entries]
+                    for child_entry in children_entries:
                         append_result(
-                            fields[field],
+                            deepcopy(fields[field]),
                             fd[field]['model'],
-                            children_entries  # it's a child here (not children)
+                            child_entry
                         )
-                    else:
-                        for child_entry in children_entries:
-                            append_result(
-                                deepcopy(fields[field]),
-                                fd[field]['model'],
-                                child_entry
-                            )
 
         for entry in query2:
             pks.append(entry.to_primary_keys())
