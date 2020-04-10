@@ -180,8 +180,6 @@ class Template:
         if resource:
             description['resource'] = resource.id
 
-        fields = self.registry.get(model).get_primary_keys()
-        fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, 'One2Many', description, [])
 
     def get_field_for_DateTime(self, field, description, fields2read):
