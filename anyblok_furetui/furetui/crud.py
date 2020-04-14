@@ -286,9 +286,10 @@ class CRUD:
                         )
                     )
                 if state in ["DELETED"]:
-                    linked_model.from_primary_keys(
-                        **primary_key
-                    ).furetui_delete()
+                    linked_obj = linked_model.from_primary_keys(
+                        **primary_key)
+                    if linked_obj:
+                        linked_obj.furetui_delete()
                 if state in ["LINKED"]:
                     getattr(new_obj, linked_field["field"]).append(
                         linked_model.from_primary_keys(
