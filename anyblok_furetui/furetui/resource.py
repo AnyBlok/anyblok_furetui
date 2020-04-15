@@ -254,11 +254,7 @@ class Template:
     def replace_fields(self, template, fields_description, fields2read):
         fields = template.findall('.//field')
         for el in fields:
-            try:
-                fd = deepcopy(fields_description[el.attrib.get('name')])
-            except KeyError:
-                fd = {'type': '', 'label': '', 'id': el.attrib['name']}
-
+            fd = deepcopy(fields_description[el.attrib.get('name')])
             _type = el.attrib.get('widget', fd['type'])
             if _type == 'FakeColumn':
                 continue
@@ -489,12 +485,13 @@ class List(Declarations.Model.FuretUI.Resource):
             'label': kwargs.get('label', field['label']),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
+            'sticky': False,
             'numeric': (
                 True if widget in ('Integer', 'Float', 'Decimal') else False),
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
-                    'hidden'):
+                    'hidden', 'sticky'):
             if key in kwargs:
                 value = kwargs[key]
                 if value == '':
