@@ -10,19 +10,18 @@ fr = {
                 'about': 'A propos',
             },
         },
-        'page': {
-            'header': {
-                'search': 'Rechercher',
-                'notFound': 'Aucun résultat',
-                'next': '',
-                'previous': '',
-            },
-            'list': 'Retour',
+        'header': {
+            'search': 'Rechercher',
+            'notFound': 'Aucun résultat',
+            'previous': 'Précédant',
+            'next': 'Suivant',
+            'return': 'Retour',
             'new': 'Créer',
             'edit': 'Modifier',
             'save': 'Sauver',
-            'clear': 'Annuler',
+            'cancel': 'Annuler',
             'delete': 'Supprimer',
+            'browse': 'Parcourir',
         },
         'fields': {
             'notFound': 'Aucun résultat',
