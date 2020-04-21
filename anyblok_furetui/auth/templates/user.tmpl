@@ -1,0 +1,16 @@
+<templates>
+  <template id="PyramidUserList">
+    <field name="login" sortable />
+    <field name="active" widget="Boolean" sortable />
+    <field name="roles" />
+  </template>
+  <template id="PyramidUserForm">
+    <header>
+      <h1><strong>User : </strong>{{data.login}}</h1>
+    </header>
+    <div class="columns">
+      <div class="column"><field name="login"/></div>
+    </div>
+    <field name="roles" />
+  </template>
+</templates>

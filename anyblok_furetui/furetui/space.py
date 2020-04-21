@@ -38,12 +38,13 @@ class Space:
             mre = query.first()
 
         query = []
-        if mre.order_by:
-            query.append('order=%s' % mre.order_by)
-        if mre.tags:
-            query.append('tags=%s' % mre.tags)
-        if mre.filters:
-            query.append('filters=%s' % json.dumps(mre.filters))
+        if mre:
+            if mre.order_by:
+                query.append('order=%s' % mre.order_by)
+            if mre.tags:
+                query.append('tags=%s' % mre.tags)
+            if mre.filters:
+                query.append('filters=%s' % json.dumps(mre.filters))
 
         return '/space/%s/menu/%d/resource/%d?%s' % (
             self.code, mre.id if mre else 0, mre.resource.id if mre else 0,

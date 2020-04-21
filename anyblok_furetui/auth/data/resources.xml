@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record external_id="resource_pyramid_user" model="Model.FuretUI.Resource.Set">
+    <field name="can_delete">0</field>
+    <field name="list" external_id="resource_pyramid_user_list" model="Model.FuretUI.Resource.List">
+      <field name="model">Model.Pyramid.User</field>
+      <field name="title">Users</field>
+      <field name="template">PyramidUserList</field>
+      <field name="filters">
+        <record external_id="resource_filter_pyramid_login">
+          <field name="key">login</field>
+          <field name="label">resource.pyramid.user.login</field>
+        </record>
+      </field>
+    </field>
+    <field name="form" external_id="resource_pyramid_user_form" model="Model.FuretUI.Resource.Form">
+      <field name="model">Model.Pyramid.User</field>
+      <field name="template">PyramidUserForm</field>
+    </field>
+  </record>
+  <record external_id="resource_pyramid_role" model="Model.FuretUI.Resource.Set">
+    <field name="can_delete">0</field>
+    <field name="list" external_id="resource_pyramid_role_list" model="Model.FuretUI.Resource.List">
+      <field name="model">Model.Pyramid.Role</field>
+      <field name="title">Roles</field>
+      <field name="template">PyramidRoleList</field>
+      <field name="filters">
+        <record external_id="resource_filter_pyramid_name">
+          <field name="key">name</field>
+          <field name="label">resource.pyramid.role.name</field>
+        </record>
+      </field>
+    </field>
+    <field name="form" external_id="resource_pyramid_role_form" model="Model.FuretUI.Resource.Form">
+      <field name="model">Model.Pyramid.Role</field>
+      <field name="template">PyramidRoleForm</field>
+    </field>
+  </record>
+</records>

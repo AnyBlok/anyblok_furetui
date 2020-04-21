@@ -156,7 +156,7 @@ class Template:
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, 'Many2One', description, [])
 
-    def get_field_for_One2Many(self, field, description, fields2read):
+    def get_field_for_x2Many(self, field, relation, description, fields2read):
         description = description.copy()
         model = description['model']
         resource = field.attrib.get('resource-external_id')
@@ -182,7 +182,13 @@ class Template:
 
         fields = self.registry.get(model).get_primary_keys()
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
-        return self.get_field_for_(field, 'One2Many', description, [])
+        return self.get_field_for_(field, relation, description, [])
+
+    def get_field_for_One2Many(self, field, description, fields2read):
+        return self.get_field_for_x2Many(field, 'One2Many', description, [])
+
+    def get_field_for_Many2Many(self, field, description, fields2read):
+        return self.get_field_for_x2Many(field, 'Many2Many', description, [])
 
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
