@@ -14,6 +14,23 @@ from datetime import datetime, date, timedelta
 from uuid import UUID
 from decimal import Decimal
 
+python_pycountry_type = None
+try:
+    import pycountry
+    if not pycountry.countries._is_loaded:
+        pycountry.countries._load()
+
+    python_pycountry_type = pycountry.countries.data_class
+except ImportError:
+    pass
+
+
+def country_adapter(country, request):
+    if country is None:
+        return None
+
+    return country.alpha_3
+
 
 def json_data_adapter(config):
     json_renderer = JSON()
@@ -23,5 +40,7 @@ def json_data_adapter(config):
     json_renderer.add_adapter(UUID, uuid_adapter)
     json_renderer.add_adapter(bytes, bytes_adapter)
     json_renderer.add_adapter(Decimal, decimal_adapter)
+    json_renderer.add_adapter(python_pycountry_type, country_adapter)
+
     config.add_renderer('json', json_renderer)
     config.add_renderer('pyramid_rpc:jsonrpc', json_renderer)
