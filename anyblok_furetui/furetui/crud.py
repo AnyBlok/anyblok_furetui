@@ -114,23 +114,27 @@ class FuretuiQueryString(QueryString):
 class CRUD:
 
     @classmethod
-    def parse_fields(cls, qs_fields):
+    def parse_fields(cls, qs_fields, model):
         """Prepare fields for different use cases
 
         returns:
         """
-        def add_field(data, field):
+        def add_field(data, field, model):
             f = field.split(".", 1)
+            fd = cls.registry.get(model).fields_description()
+            print(fd)
             if len(f) == 1:
-                data["__fields"].append(f[0])
+                if fd[field]['type'] not in ('Function', 'Many2One', 'One2One',
+                                             'One2Many', 'Many2Many'):
+                    data["__fields"].append(f[0])
             else:
                 if f[0] not in data:
                     data[f[0]] = {"__fields": []}
-                add_field(data[f[0]], f[1])
+                add_field(data[f[0]], f[1], fd[f[0]]['model'])
 
         fields = {"__fields": []}
         for field in qs_fields.split(','):
-            add_field(fields, field)
+            add_field(fields, field, model)
         return fields
 
     @classmethod
@@ -158,7 +162,7 @@ class CRUD:
         # check user has access rigth to see this resource
         model = request.params['model']
 
-        fields = cls.parse_fields(request.params['fields'])
+        fields = cls.parse_fields(request.params['fields'], model)
 
         # TODO complex case of relationship
         qs = FuretuiQueryString(request, cls.registry.get(model))
@@ -242,7 +246,7 @@ class CRUD:
         new = True
         # TODO: rename uuid or document that primary key should not use
         # a field called uuid
-        if "uuid" in pks.keys():
+        if "uuid" in pks.keys() and 'uuid' not in Model.get_primary_keys():
             data = changes[model]["new"].pop(pks["uuid"], {})
         else:
             new = False
