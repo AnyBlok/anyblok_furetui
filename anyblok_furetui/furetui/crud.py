@@ -122,7 +122,6 @@ class CRUD:
         def add_field(data, field, model):
             f = field.split(".", 1)
             fd = cls.registry.get(model).fields_description()
-            print(fd)
             if len(f) == 1:
                 if fd[field]['type'] not in ('Function', 'Many2One', 'One2One',
                                              'One2Many', 'Many2Many'):

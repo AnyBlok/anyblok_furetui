@@ -114,11 +114,11 @@ class FuretUI:
         locales = {'en'}
         if not authenticated_userid:
             locale = Configuration.get('furetui_default_locale', 'en')
-            locales.add(locale)
         else:
             locale = Configuration.get('furetui_default_locale', 'en')
             res.extend(cls.get_user_informations(authenticated_userid))
 
+        locales.add(locale)
         res.extend([
             {'type': 'SET_LOCALE', 'locale': locale},
             {'type': 'UPDATE_LOCALES', 'locales': [

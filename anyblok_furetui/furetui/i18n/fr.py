@@ -10,6 +10,10 @@ fr = {
                 'about': 'A propos',
             },
         },
+        'spaces': {
+            'title': 'Espace fonctionnel',
+            'search': 'Filtrer',
+        },
         'header': {
             'search': 'Rechercher',
             'notFound': 'Aucun résultat',
