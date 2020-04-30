@@ -197,9 +197,9 @@ class TestMany2Many:
             (
                 "name,main_address.city,main_address.zip,addresses.zip,"
                 "main_address.buildings.name,addresses.buildings.name,"
-                "main_address.main_building.name",
-                'Model.Person'
-            )
+                "main_address.main_building.name"
+            ),
+            'Model.Person'
         ) == {
             "__fields": ["name"],
             "addresses": {
