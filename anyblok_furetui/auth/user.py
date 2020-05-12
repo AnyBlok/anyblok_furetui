@@ -22,4 +22,4 @@ class User:
 
     @classmethod
     def fexpr_active(cls):
-        return cls.registry.Pyramid.CredentialStore.login
+        return cls.registry.Pyramid.CredentialStore.login == cls.login
