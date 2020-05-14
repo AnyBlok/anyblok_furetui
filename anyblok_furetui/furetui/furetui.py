@@ -126,3 +126,7 @@ class FuretUI:
                 for l in locales]}
         ])
         return res
+
+    @classmethod
+    def check_security(cls, request):
+        pass
