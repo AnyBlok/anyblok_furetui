@@ -1,7 +1,6 @@
 import json
 import pytest
 import urllib
-from anyblok.config import Configuration
 
 
 @pytest.fixture(scope="function")
@@ -56,15 +55,23 @@ def resource_tag_to_link(rollback_registry, resource_list):
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
 
-    def test_create(self, webserver, rollback_registry):
-        title = "test-create-blok-list-resource"
-        path = "/furet-ui/resource/0/crud"
+    @pytest.fixture(autouse=True)
+    def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
             '/furet-ui/login', {'login': 'test', 'password': 'test'},
             status=200)
+
+        def logout():
+            webserver.post_json('/furet-ui/logout', status=200)
+
+        request.addfinalizer(logout)
+
+    def test_create(self, webserver, rollback_registry):
+        title = "test-create-blok-list-resource"
+        path = "/furet-ui/resource/0/crud"
         headers = {"Content-Type": "application/json; charset=utf-8"}
         payload = json.dumps(
             {
@@ -90,6 +97,7 @@ class TestCreate:
 
     def test_unauthenticated_create(self, webserver, rollback_registry):
         title = "test-create-blok-list-resource"
+        webserver.post_json('/furet-ui/logout', status=200)
         path = "/furet-ui/resource/0/crud"
         headers = {"Content-Type": "application/json; charset=utf-8"}
         payload = json.dumps(
@@ -108,7 +116,7 @@ class TestCreate:
                 "uuid": "fake_uuid",
             }
         )
-        webserver.post(path, payload, headers=headers, status=500)
+        webserver.post(path, payload, headers=headers, status=405)
 
     def test_create_o2m(
         self, rollback_registry, resource_tag_to_link
@@ -332,16 +340,25 @@ class TestRead:
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestUpdate:
-    def test_update(self, webserver, rollback_registry, resource_list):
-        title = "test-update-list-resource"
-        path = "/furet-ui/resource/0/crud"
-        formated_record_id = '[["id",{}]]'.format(resource_list.id)
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
             '/furet-ui/login', {'login': 'test', 'password': 'test'},
             status=200)
+
+        def logout():
+            webserver.post_json('/furet-ui/logout', status=200)
+
+        request.addfinalizer(logout)
+
+    def test_update(self, webserver, rollback_registry, resource_list):
+        title = "test-update-list-resource"
+        path = "/furet-ui/resource/0/crud"
+        formated_record_id = '[["id",{}]]'.format(resource_list.id)
         headers = {"Content-Type": "application/json; charset=utf-8"}
         params = json.dumps(
             {
@@ -367,8 +384,8 @@ class TestUpdate:
     def test_unauthenticated_update(self, webserver, rollback_registry,
                                     resource_list):
         title = "test-update-list-resource"
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        webserver.post_json('/furet-ui/logout', status=200)
+        path = "/furet-ui/resource/0/crud"
         formated_record_id = '[["id",{}]]'.format(resource_list.id)
         headers = {"Content-Type": "application/json; charset=utf-8"}
         params = json.dumps(
@@ -468,14 +485,23 @@ class TestUpdate:
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
-    def test_delete(self, webserver, rollback_registry, resource_list):
-        path = "/furet-ui/resource/0/crud"
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
             '/furet-ui/login', {'login': 'test', 'password': 'test'},
             status=200)
+
+        def logout():
+            webserver.post_json('/furet-ui/logout', status=200)
+
+        request.addfinalizer(logout)
+
+    def test_delete(self, webserver, rollback_registry, resource_list):
+        path = "/furet-ui/resource/0/crud"
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.List",
@@ -494,10 +520,11 @@ class TestDelete:
     def test_unauhenticated_delete(self, webserver, rollback_registry,
                                    resource_list):
         path = "/furet-ui/resource/0/crud"
+        webserver.post_json('/furet-ui/logout', status=200)
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.List",
                 "pks": json.dumps({"id": resource_list.id}),
             }
         )
-        webserver.delete(path, params, status=500)
+        webserver.delete(path, params, status=405)
