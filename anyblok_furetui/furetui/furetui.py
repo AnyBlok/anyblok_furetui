@@ -122,8 +122,9 @@ class FuretUI:
         res.extend([
             {'type': 'SET_LOCALE', 'locale': locale},
             {'type': 'UPDATE_LOCALES', 'locales': [
-                {'locale': l, 'messages': cls.registry.furetui_i18n.get(l, {})}
-                for l in locales]}
+                {'locale': locale,
+                 'messages': cls.registry.furetui_i18n.get(locale, {})}
+                for locale in locales]}
         ])
         return res
 
