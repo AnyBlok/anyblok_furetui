@@ -55,10 +55,16 @@ def resource_tag_to_link(rollback_registry, resource_list):
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
+
     def test_create(self, webserver, rollback_registry):
         title = "test-create-blok-list-resource"
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        path = "/furet-ui/resource/0/crud"
+        rollback_registry.Pyramid.User.insert(login='test')
+        rollback_registry.Pyramid.CredentialStore.insert(
+            login='test', password='test')
+        webserver.post_json(
+            '/furet-ui/login', {'login': 'test', 'password': 'test'},
+            status=200)
         headers = {"Content-Type": "application/json; charset=utf-8"}
         payload = json.dumps(
             {
@@ -82,8 +88,30 @@ class TestCreate:
             title=title
         ).count() == 1
 
+    def test_unauthenticated_create(self, webserver, rollback_registry):
+        title = "test-create-blok-list-resource"
+        path = "/furet-ui/resource/0/crud"
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        payload = json.dumps(
+            {
+                "changes": {
+                    "Model.FuretUI.Resource.List": {
+                        "new": {
+                            "fake_uuid": {
+                                "title": title,
+                                "model": "Model.System.Blok",
+                            }
+                        }
+                    }
+                },
+                "model": "Model.FuretUI.Resource.List",
+                "uuid": "fake_uuid",
+            }
+        )
+        webserver.post(path, payload, headers=headers, status=500)
+
     def test_create_o2m(
-        self, webserver, rollback_registry, resource_tag_to_link
+        self, rollback_registry, resource_tag_to_link
     ):
         tag_key1 = "key1-create-o2m"
         tag_key2 = "key2-create-o2m"
@@ -144,13 +172,39 @@ class TestCreate:
 
 @pytest.mark.usefixtures("rollback_registry")
 class TestRead:
-    def test_model_field(self, webserver, rollback_registry):
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, rollback_registry, webserver):
+        rollback_registry.Pyramid.User.insert(login='test')
+        rollback_registry.Pyramid.CredentialStore.insert(
+            login='test', password='test')
+        webserver.post_json(
+            '/furet-ui/login', {'login': 'test', 'password': 'test'},
+            status=200)
+
+        def logout():
+            webserver.post_json('/furet-ui/logout', status=200)
+
+        request.addfinalizer(logout)
+
+    def test_unauthenticated(self, webserver, rollback_registry):
+        path = "/furet-ui/resource/0/crud"
+        webserver.post_json('/furet-ui/logout', status=200)
         params = urllib.parse.urlencode(
             {
-                "model": "Model.System.Blok",
-                "fields": "name,author",
+                "context[model]": "Model.System.Blok",
+                "context[fields]": "name,author",
+                "filter[name][eq]": "anyblok-core",
+            }
+        )
+        webserver.get(path, params, status=405)
+
+    def test_model_field(self, webserver, rollback_registry):
+        path = "/furet-ui/resource/0/crud"
+        params = urllib.parse.urlencode(
+            {
+                "context[model]": "Model.System.Blok",
+                "context[fields]": "name,author",
                 "filter[name][eq]": "anyblok-core",
             }
         )
@@ -172,42 +226,6 @@ class TestRead:
             "total": 1,
         }
 
-    def test_m2o_field(
-        self, webserver, rollback_registry, resource_list, resource_tag1
-    ):
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
-        params = urllib.parse.urlencode(
-            {
-                "model": "Model.FuretUI.Resource.Tags",
-                "fields": "label,list.title",
-                "filter[key][eq]": "tag-1",
-            }
-        )
-        response = webserver.get(path, params)
-        assert response.status_code == 200
-        assert response.json == {
-            "data": [
-                {
-                    "data": {
-                        "label": "Tag 1",
-                        "list": {"id": resource_list.id},
-                    },
-                    "model": "Model.FuretUI.Resource.Tags",
-                    "pk": {"id": resource_tag1.id},
-                    "type": "UPDATE_DATA",
-                },
-                {
-                    "data": {"title": "test-blok"},
-                    "model": "Model.FuretUI.Resource.List",
-                    "pk": {"id": resource_list.id},
-                    "type": "UPDATE_DATA",
-                },
-            ],
-            "pks": [{"id": resource_tag1.id}],
-            "total": 1,
-        }
-
     def test_o2m_field(
         self,
         webserver,
@@ -216,12 +234,11 @@ class TestRead:
         resource_tag1,
         resource_tag2,
     ):
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        path = "/furet-ui/resource/0/crud"
         params = urllib.parse.urlencode(
             {
-                "model": "Model.FuretUI.Resource.List",
-                "fields": "title,tags.label",
+                "context[model]": "Model.FuretUI.Resource.List",
+                "context[fields]": "title,tags.label",
                 "filter[title][eq]": "test-blok",
             }
         )
@@ -259,12 +276,11 @@ class TestRead:
         }
 
     def test_limit_offset_order_exclude(self, webserver, rollback_registry):
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        path = "/furet-ui/resource/0/crud"
         params = urllib.parse.urlencode(
             {
-                "model": "Model.System.Model",
-                "fields": "name,table",
+                "context[model]": "Model.System.Model",
+                "context[fields]": "name,table",
                 "~filter[is_sql_model][eq]": False,
                 "filter[table][like]": "system_",
                 "order_by[name]": "asc",
@@ -318,9 +334,14 @@ class TestRead:
 class TestUpdate:
     def test_update(self, webserver, rollback_registry, resource_list):
         title = "test-update-list-resource"
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        path = "/furet-ui/resource/0/crud"
         formated_record_id = '[["id",{}]]'.format(resource_list.id)
+        rollback_registry.Pyramid.User.insert(login='test')
+        rollback_registry.Pyramid.CredentialStore.insert(
+            login='test', password='test')
+        webserver.post_json(
+            '/furet-ui/login', {'login': 'test', 'password': 'test'},
+            status=200)
         headers = {"Content-Type": "application/json; charset=utf-8"}
         params = json.dumps(
             {
@@ -342,6 +363,26 @@ class TestUpdate:
             .id
             == resource_list.id
         )
+
+    def test_unauthenticated_update(self, webserver, rollback_registry,
+                                    resource_list):
+        title = "test-update-list-resource"
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
+        formated_record_id = '[["id",{}]]'.format(resource_list.id)
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        params = json.dumps(
+            {
+                "changes": {
+                    "Model.FuretUI.Resource.List": {
+                        formated_record_id: {"title": title}
+                    }
+                },
+                "model": "Model.FuretUI.Resource.List",
+                "pks": {"id": resource_list.id},
+            }
+        )
+        webserver.patch(path, params, headers, status=405)
 
     def test_update_o2m(
         self,
@@ -428,8 +469,13 @@ class TestUpdate:
 @pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
     def test_delete(self, webserver, rollback_registry, resource_list):
-        path = Configuration.get(
-            "furetui_client_path", "/furet-ui/resource/0/crud")
+        path = "/furet-ui/resource/0/crud"
+        rollback_registry.Pyramid.User.insert(login='test')
+        rollback_registry.Pyramid.CredentialStore.insert(
+            login='test', password='test')
+        webserver.post_json(
+            '/furet-ui/login', {'login': 'test', 'password': 'test'},
+            status=200)
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.List",
@@ -444,3 +490,14 @@ class TestDelete:
             .count()
             == 0
         )
+
+    def test_unauhenticated_delete(self, webserver, rollback_registry,
+                                   resource_list):
+        path = "/furet-ui/resource/0/crud"
+        params = urllib.parse.urlencode(
+            {
+                "model": "Model.FuretUI.Resource.List",
+                "pks": json.dumps({"id": resource_list.id}),
+            }
+        )
+        webserver.delete(path, params, status=500)

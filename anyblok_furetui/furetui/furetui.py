@@ -129,4 +129,4 @@ class FuretUI:
 
     @classmethod
     def check_security(cls, request):
-        pass
+        return True

@@ -15,12 +15,12 @@ def authorized_user(request, *a, **kw):
         userId = request.authenticated_userid
         if not userId:
             request.errors.add('body', 'userid', 'The user id does not exist')
-            request.errors.status = 403
+            request.errors.status = 405
 
         elif not registry.Pyramid.check_user_exists(userId):
             request.errors.add('body', 'userid', 'The user id does not exist')
-            request.errors.status = 403
+            request.errors.status = 405
 
-        if registry.FuretUI.check_security(request):
+        if not registry.FuretUI.check_security(request):
             request.errors.add('body', 'userid', 'The user is not allow')
-            request.errors.status = 403
+            request.errors.status = 405

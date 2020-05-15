@@ -34,8 +34,15 @@ class FuretUI:
 
     @classmethod
     def check_security(cls, request):
-        super(FuretUI, cls).check_security(request)
-        addr = ip_address(request.client_addr)
-        logger.debug('Check ip: %r', addr)
-        if cls.IPS and addr not in cls.IPS:
-            raise Exception('%r is not an allowed ip' % addr)
+        res = super(FuretUI, cls).check_security(request)
+        if not res:
+            return False
+
+        if request.client_addr:  # cause of unittest
+            addr = ip_address(request.client_addr)
+            logger.debug('Check ip: %r', addr)
+            if cls.IPS and addr not in cls.IPS:
+                logger.info('%r is not an allowed ip', addr)
+                return False
+
+        return True
