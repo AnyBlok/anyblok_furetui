@@ -25,7 +25,7 @@ install:
   - pip install WebTest
   # Waiting awnser next release AnyBlok >= 0.22.6
   - pip install -e git+https://github.com/Anyblok/AnyBlok@master#egg=AnyBlok
-  - pip -e .
+  - pip install -e .
 
 env:
   global:
