@@ -57,7 +57,8 @@ def resource_tag_to_link(rollback_registry, resource_list):
 class TestCreate:
     def test_create(self, webserver, rollback_registry):
         title = "test-create-blok-list-resource"
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         headers = {"Content-Type": "application/json; charset=utf-8"}
         payload = json.dumps(
             {
@@ -144,7 +145,8 @@ class TestCreate:
 @pytest.mark.usefixtures("rollback_registry")
 class TestRead:
     def test_model_field(self, webserver, rollback_registry):
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         params = urllib.parse.urlencode(
             {
                 "model": "Model.System.Blok",
@@ -173,7 +175,8 @@ class TestRead:
     def test_m2o_field(
         self, webserver, rollback_registry, resource_list, resource_tag1
     ):
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.Tags",
@@ -213,7 +216,8 @@ class TestRead:
         resource_tag1,
         resource_tag2,
     ):
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.List",
@@ -255,7 +259,8 @@ class TestRead:
         }
 
     def test_limit_offset_order_exclude(self, webserver, rollback_registry):
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         params = urllib.parse.urlencode(
             {
                 "model": "Model.System.Model",
@@ -313,7 +318,8 @@ class TestRead:
 class TestUpdate:
     def test_update(self, webserver, rollback_registry, resource_list):
         title = "test-update-list-resource"
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         formated_record_id = '[["id",{}]]'.format(resource_list.id)
         headers = {"Content-Type": "application/json; charset=utf-8"}
         params = json.dumps(
@@ -422,7 +428,8 @@ class TestUpdate:
 @pytest.mark.usefixtures("rollback_registry")
 class TestDelete:
     def test_delete(self, webserver, rollback_registry, resource_list):
-        path = Configuration.get("furetui_client_path", "/furet-ui/crud")
+        path = Configuration.get(
+            "furetui_client_path", "/furet-ui/resource/0/crud")
         params = urllib.parse.urlencode(
             {
                 "model": "Model.FuretUI.Resource.List",
