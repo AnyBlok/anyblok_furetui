@@ -680,7 +680,6 @@ class List(Declarations.Model.FuretUI.Resource):
             'headers': headers,
             'fields': fields2read,
         }]
-        print(' ==> ', res)
         return res
 
 

@@ -7,20 +7,21 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.blok import Blok
-from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
-from .i18n import fr, en
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 def import_module(reload=None):
-    from . import pyramid
-    from . import user
+    logger.info('Import module reload=%r', True if reload else False)
+    from . import furetui
     if reload is not None:
-        reload(pyramid)
-        reload(user)
+        reload(furetui)
 
 
-class FuretUIAuthBlok(Blok, BlokImporter):
+class FuretUIFilterIPBlok(Blok):
+    """Setup FuretUI for AnyBlok"""
     version = version
     author = 'Suzanne Jean-Sébastien'
     logo = 'static/images/logo.png'
@@ -29,22 +30,11 @@ class FuretUIAuthBlok(Blok, BlokImporter):
         'anyblok-core',
         'pyramid',
         'furetui',
-        'anyblok-io-xml',
-        'auth',
-        'auth-password',
-        'authorization',
     ]
 
-    furetui = {
-        'i18n': {
-            'en': en,
-            'fr': fr,
-        },
-        'templates': [
-            'templates/user.tmpl',
-            'templates/role.tmpl',
-        ],
-    }
+    def load(self):
+        self.registry.FuretUI.define_authorized_ips()
+
 
     @classmethod
     def import_declaration_module(cls):
@@ -53,8 +43,3 @@ class FuretUIAuthBlok(Blok, BlokImporter):
     @classmethod
     def reload_declaration_module(cls, reload):
         import_module(reload=reload)
-
-    def update(self, latest):
-        self.import_file_xml('Model.FuretUI.Space', 'data', 'spaces.xml')
-        self.import_file_xml('Model.FuretUI.Resource', 'data', 'resources.xml')
-        self.import_file_xml('Model.FuretUI.Menu', 'data', 'menus.xml')
