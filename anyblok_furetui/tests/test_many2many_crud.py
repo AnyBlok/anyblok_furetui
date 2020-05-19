@@ -198,7 +198,8 @@ class TestMany2Many:
                 "name,main_address.city,main_address.zip,addresses.zip,"
                 "main_address.buildings.name,addresses.buildings.name,"
                 "main_address.main_building.name"
-            )
+            ),
+            'Model.Person'
         ) == {
             "__fields": ["name"],
             "addresses": {
@@ -219,8 +220,8 @@ class TestMany2Many:
                 {
                     "QUERY_STRING": urlencode(
                         query={
-                            "model": "Model.Person",
-                            "fields": "name,main_address.city,"
+                            "context[model]": "Model.Person",
+                            "context[fields]": "name,main_address.city,"
                             "main_address.zip,addresses.zip,"
                             "main_address.main_building.name",
                         }
@@ -298,8 +299,8 @@ class TestMany2Many:
                 {
                     "QUERY_STRING": urlencode(
                         query={
-                            "model": "Model.Person",
-                            "fields": "addresses.buildings.name",
+                            "context[model]": "Model.Person",
+                            "context[fields]": "addresses.buildings.name",
                         }
                     )
                 }

@@ -1,12 +1,13 @@
-from pyramid.httpexceptions import HTTPUnauthorized
 from anyblok_pyramid import current_blok
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
+from anyblok_furetui.security import authorized_user
 
 
 spaces = Service(name='spaces',
                  path='/furet-ui/spaces',
                  description='List spaces',
+                 validators=(authorized_user,),
                  cors_origins=('*',),
                  cors_credentials=True,
                  installed_blok=current_blok())
@@ -16,12 +17,7 @@ spaces = Service(name='spaces',
 def get_spaces(request):
     with saved_errors_in_request(request):
         userId = request.authenticated_userid
-        if not userId:
-            raise HTTPUnauthorized(comment='user not log in')
-
         registry = request.anyblok.registry
-
-        registry.Pyramid.check_user_exists(userId)
         Space = registry.FuretUI.Space
         query = Space.get_for_user(userId)
         res = [{
@@ -46,6 +42,7 @@ def get_spaces(request):
 space = Service(name='space',
                 path='/furet-ui/space/{code}',
                 description='Space information',
+                validators=(authorized_user,),
                 cors_origins=('*',),
                 cors_credentials=True,
                 installed_blok=current_blok())
@@ -57,11 +54,7 @@ def get_space(request):
     # check user has access right
     with saved_errors_in_request(request):
         userId = request.authenticated_userid
-        if not userId:
-            raise HTTPUnauthorized(comment='user not log in')
-
         registry = request.anyblok.registry
-        registry.Pyramid.check_user_exists(userId)
         code = request.matchdict['code']
         space = registry.FuretUI.Space.query().get(code)
         res = []

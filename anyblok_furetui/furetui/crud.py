@@ -3,134 +3,33 @@ from copy import deepcopy
 from anyblok.declarations import Declarations
 from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
-import re
 import json
-
-
-def parse_key_with_two_elements(filter_):
-    pattern = ".*\\[(.*)\\]\\[(.*)\\]"
-    return re.match(pattern, filter_).groups()
-
-
-def parse_key_with_one_element(filter_):
-    pattern = ".*\\[(.*)\\]"
-    return re.match(pattern, filter_).groups()[0]
-
-
-def deserialize_querystring(params=None):
-    """
-    Given a querystring parameters dict, returns a new dict that will be used
-    to build query filters.
-    The logic is to keep everything but transform some key, values to build
-    database queries.
-    Item whose key starts with 'filter[*' will be parsed to a key, operator,
-    value dict (filter_by).
-    Item whose key starts with 'order_by[*' will be parse to a key, operator
-    dict(order_by).
-    'limit' and 'offset' are kept as is.
-    All other keys are added to 'filter_by' with 'eq' as default operator.
-
-    # TODO: Use marshmallow pre-validation feature
-    # TODO: Evaluate 'webargs' python module to see if it can helps
-
-    :param params: A dict that represent a querystring (request.params)
-    :type params: dict
-    :return: A suitable dict for building a filtering query
-    :rtype: dict
-    """
-    filter_by = []
-    order_by = []
-    tags = []
-    context = {}
-    limit = None
-    offset = 0
-    for param in params.items():
-        k, v = param
-        # TODO  better regex or something?
-        if k.startswith("filter["):
-            # Filtering (include)
-            key, op = parse_key_with_two_elements(k)
-            filter_by.append(dict(key=key, op=op, value=v, mode="include"))
-        elif k.startswith("~filter["):
-            # Filtering (exclude)
-            # TODO check for errors into string pattern
-            key, op = parse_key_with_two_elements(k)
-            filter_by.append(dict(key=key, op=op, value=v, mode="exclude"))
-        elif k.startswith("context["):
-            key = parse_key_with_one_element(k)
-            context[key] = v
-        elif k == "tag":
-            tags.append(v)
-        elif k == "tags":
-            tags.extend(v.split(','))
-        elif k.startswith("order_by["):
-            # Ordering
-            key = parse_key_with_one_element(k)
-            order_by.append(dict(key=key, op=v))
-        elif k == 'limit':
-            # TODO check to allow positive integer only if value
-            limit = int(v) if v else None
-        elif k == 'offset':
-            # TODO check to allow positive integer only
-            offset = int(v)
-
-    return dict(filter_by=filter_by, order_by=order_by, limit=limit,
-                offset=offset, tags=tags, context=context)
-
-
-class FuretuiQueryString(QueryString):
-    """Parse the validated querystring from the request to generate a
-    SQLAlchemy query
-
-    :param request: validated request from pyramid
-    :param Model: AnyBlok Model, use to create the query
-    :param adapter: Adapter to help to generate query on some filter of tags
-    """
-    def __init__(self, request, Model):
-        self.request = request
-        self.adapter = Model.get_furetui_adapter()
-        self.Model = Model
-        if request.params is not None:
-            parsed_params = deserialize_querystring(request.params)
-            self.filter_by = parsed_params.get('filter_by', [])
-            self.tags = parsed_params.get('tags')
-            self.order_by = parsed_params.get('order_by', [])
-            self.context = parsed_params.get('context', {})
-            self.limit = parsed_params.get('limit')
-            if self.limit and isinstance(self.limit, str):
-                self.limit = int(self.limit)
-
-            self.offset = parsed_params.get('offset')
-            if self.offset and isinstance(self.offset, str):
-                self.offset = int(self.offset)
-
-    def get_query(self):
-        query = self.Model.query()
-        # TODO update query in function of user
-        return query
 
 
 @Declarations.register(Declarations.Model.FuretUI)
 class CRUD:
 
     @classmethod
-    def parse_fields(cls, qs_fields):
+    def parse_fields(cls, qs_fields, model):
         """Prepare fields for different use cases
 
         returns:
         """
-        def add_field(data, field):
+        def add_field(data, field, model):
             f = field.split(".", 1)
+            fd = cls.registry.get(model).fields_description()
             if len(f) == 1:
-                data["__fields"].append(f[0])
+                if fd[field]['type'] not in ('Function', 'Many2One', 'One2One',
+                                             'One2Many', 'Many2Many'):
+                    data["__fields"].append(f[0])
             else:
                 if f[0] not in data:
                     data[f[0]] = {"__fields": []}
-                add_field(data[f[0]], f[1])
+                add_field(data[f[0]], f[1], fd[f[0]]['model'])
 
         fields = {"__fields": []}
         for field in qs_fields.split(','):
-            add_field(fields, field)
+            add_field(fields, field, model)
         return fields
 
     @classmethod
@@ -156,13 +55,12 @@ class CRUD:
     def read(cls, request):
         # check user is disconnected
         # check user has access rigth to see this resource
-        model = request.params['model']
-
-        fields = cls.parse_fields(request.params['fields'])
+        model = request.params['context[model]']
+        fields = cls.parse_fields(request.params['context[fields]'], model)
 
         # TODO complex case of relationship
-        qs = FuretuiQueryString(request, cls.registry.get(model))
-        query = qs.get_query()
+        qs = QueryString(request, cls.registry.get(model))
+        query = qs.Model.query()
         query = qs.from_filter_by(query)
         query = qs.from_tags(query)
 
@@ -242,7 +140,7 @@ class CRUD:
         new = True
         # TODO: rename uuid or document that primary key should not use
         # a field called uuid
-        if "uuid" in pks.keys():
+        if "uuid" in pks.keys() and 'uuid' not in Model.get_primary_keys():
             data = changes[model]["new"].pop(pks["uuid"], {})
         else:
             new = False

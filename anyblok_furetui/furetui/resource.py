@@ -156,7 +156,7 @@ class Template:
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, 'Many2One', description, [])
 
-    def get_field_for_One2Many(self, field, description, fields2read):
+    def get_field_for_x2Many(self, field, relation, description, fields2read):
         description = description.copy()
         model = description['model']
         resource = field.attrib.get('resource-external_id')
@@ -180,7 +180,15 @@ class Template:
         if resource:
             description['resource'] = resource.id
 
-        return self.get_field_for_(field, 'One2Many', description, [])
+        fields = self.registry.get(model).get_primary_keys()
+        fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
+        return self.get_field_for_(field, relation, description, [])
+
+    def get_field_for_One2Many(self, field, description, fields2read):
+        return self.get_field_for_x2Many(field, 'One2Many', description, [])
+
+    def get_field_for_Many2Many(self, field, description, fields2read):
+        return self.get_field_for_x2Many(field, 'Many2Many', description, [])
 
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
@@ -619,10 +627,13 @@ class List(Declarations.Model.FuretUI.Resource):
         fd = Model.fields_description()
         headers = []
         fields2read = []
-        fields2read.extend(Model.get_primary_keys())
+        pks = Model.get_primary_keys()
+        fields2read.extend(pks)
+        buttons = []
         if self.template:
             template = self.registry.FuretUI.get_template(
                 self.template, tostring=False)
+            # FIXME button in header
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
                 field = fd[attributes.pop('name')]
@@ -634,6 +645,12 @@ class List(Declarations.Model.FuretUI.Resource):
                 else:
                     headers.append(self.field_for_(
                         field, fields2read, **attributes))
+
+            for button in template.findall('.//buttons/button'):
+                attributes = deepcopy(button.attrib)
+                attributes['pks'] = pks
+                buttons.append(attributes)
+
         else:
             fields = list(fd.keys())
             fields.sort()
@@ -658,13 +675,11 @@ class List(Declarations.Model.FuretUI.Resource):
                 list=self),
             'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
                 list=self),
-            # 'sort': [],  # TODO
-            # 'buttons': [],  # TODO
+            'buttons': buttons,
             # 'on_selected_buttons': [],  # TODO
             'headers': headers,
             'fields': fields2read,
         }]
-        print(res)
         return res
 
 

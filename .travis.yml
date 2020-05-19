@@ -4,7 +4,7 @@ sudo: true
 python:
   - "3.6"
   - "3.7"
-  - "3.8-dev"
+  - "3.8"
   - "3.9-dev"
   - "nightly"
 
@@ -15,25 +15,17 @@ services:
   - postgresql
 
 install:
-  - pip install -U pip
-  # only eggs: do an erreur with wheel
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then pip install python_editor texttable PyYAML simplejson; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 'nightly' ]]; then pip install python_editor texttable PyYAML simplejson; fi
+  - pip install -U pip wheel
   # only wheel
   - pip install -U flake8 pytest pytest-cov
-  - pip install wheel
   - pip install psycopg2
-  - pip install anyblok
-  - pip install marshmallow --pre
   - pip install coverage
   - pip install python-coveralls
   - pip install flake8 pytest pytest-cov
   - pip install WebTest
-  - python setup.py develop
-  # Waiting pyramid_blok branch on anyblok_pyramid to be merged
-  - pip install -e git+https://github.com/AnyBlok/anyblok_pyramid@pyramid_blok#egg=anyblok-pyramid
   # Waiting awnser next release AnyBlok >= 0.22.6
   - pip install -e git+https://github.com/Anyblok/AnyBlok@master#egg=AnyBlok
+  - pip install -e .
 
 env:
   global:
@@ -45,7 +37,7 @@ script:
   - flake8 anyblok_furetui
   - py.test --cov-report=term --cov=anyblok_furetui anyblok_furetui/tests
   - dropdb travis_ci_test
-  - anyblok_createdb --install-bloks furetui
+  - anyblok_createdb --install-bloks furetui-auth furetui-filter-ip
   - py.test --cov-report=term --cov=anyblok_furetui --cov-append anyblok_furetui/furetui
 
 after_success: coveralls --data_file=.coverage --config_file=.coveragerc

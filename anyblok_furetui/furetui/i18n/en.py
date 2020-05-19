@@ -10,6 +10,10 @@ en = {
                 'about': 'About',
             },
         },
+        'spaces': {
+            'title': 'Space',
+            'search': 'Filter',
+        },
         'header': {
           'search': 'Search',
           'new': 'New',
