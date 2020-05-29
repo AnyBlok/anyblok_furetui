@@ -23,6 +23,7 @@ fr = {
             'new': 'Créer',
             'edit': 'Modifier',
             'save': 'Sauver',
+            'apply': 'Appliquer',
             'cancel': 'Annuler',
             'delete': 'Supprimer',
             'browse': 'Parcourir',
