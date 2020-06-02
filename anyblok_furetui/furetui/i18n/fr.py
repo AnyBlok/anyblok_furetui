@@ -27,6 +27,12 @@ fr = {
             'cancel': 'Annuler',
             'delete': 'Supprimer',
             'browse': 'Parcourir',
+            'total': 'Total',
+            'created': 'Créé',
+            'updated': 'Modifié',
+            'deleted': 'Supprimé',
+            'linked': 'lié',
+            'unlinked': 'délié',
         },
         'fields': {
             'notFound': 'Aucun résultat',
