@@ -59,7 +59,9 @@ class CRUD:
         fields = cls.parse_fields(request.params['context[fields]'], model)
 
         # TODO complex case of relationship
-        qs = QueryString(request, cls.registry.get(model))
+        Model = cls.registry.get(model)
+        adapter = Model.get_furetui_adapter()
+        qs = QueryString(request, Model, adapter=adapter)
         query = qs.Model.query()
         query = qs.from_filter_by(query)
         query = qs.from_tags(query)
