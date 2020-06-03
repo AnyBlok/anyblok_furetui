@@ -19,7 +19,7 @@ class CRUD:
             f = field.split(".", 1)
             fd = cls.registry.get(model).fields_description()
             if len(f) == 1:
-                if fd[field]['type'] not in ('Function', 'Many2One', 'One2One',
+                if fd[field]['type'] not in ('Many2One', 'One2One',
                                              'One2Many', 'Many2Many'):
                     data["__fields"].append(f[0])
             else:
@@ -38,7 +38,11 @@ class CRUD:
         """
         model = cls.registry.get(model_name)
         fd = model.fields_description()
-        load = load_only(*fields.pop("__fields"))
+        load = load_only(*[
+            f
+            for f in fields.pop("__fields")
+            if fd[f]['type'] != 'Function'
+        ])
         joins = []
         for field, data in fields.items():
             load_method = joinedload
