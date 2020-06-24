@@ -6,9 +6,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+from enum import Enum
 from anyblok_pyramid.adapter import (
     datetime_adapter, timedelta_adapter_factory, date_adapter,
-    uuid_adapter, bytes_adapter, decimal_adapter)
+    uuid_adapter, bytes_adapter, decimal_adapter, enum_adapter)
 from pyramid.renderers import JSON
 from datetime import datetime, date, timedelta
 from uuid import UUID
@@ -35,6 +36,7 @@ def country_adapter(country, request):
 def json_data_adapter(config):
     json_renderer = JSON()
     json_renderer.add_adapter(datetime, datetime_adapter)
+    json_renderer.add_adapter(Enum, enum_adapter)
     json_renderer.add_adapter(timedelta, timedelta_adapter_factory())
     json_renderer.add_adapter(date, date_adapter)
     json_renderer.add_adapter(UUID, uuid_adapter)
