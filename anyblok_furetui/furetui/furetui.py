@@ -124,7 +124,8 @@ class FuretUI:
             {'type': 'UPDATE_LOCALES', 'locales': [
                 {'locale': locale,
                  'messages': cls.registry.furetui_i18n.get(locale, {})}
-                for locale in locales]}
+                for locale in locales]},
+            {'type': 'SET_LOGIN_PAGE', 'login_page': Configuration.get('furetui_login_page', 'password')}
         ])
         return res
 
