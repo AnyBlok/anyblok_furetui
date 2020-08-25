@@ -9,6 +9,8 @@ from pyramid.response import FileResponse
 from os.path import join
 from cornice import Service
 from logging import getLogger
+from urllib.parse import urlparse
+from anyblok_pyramid.bloks.pyramid import oidc
 
 
 logger = getLogger(__name__)
@@ -51,8 +53,11 @@ init = Service(name='init_furet_ui',
 
 @init.get()
 def get_global_init(request):
-    return request.anyblok.registry.FuretUI.get_initialize(
+    res = request.anyblok.registry.FuretUI.get_initialize(
         request.authenticated_userid)
+    if request.session.get("init_redirect_uri"):
+        res.append({'type': 'UPDATE_ROUTE', 'path': request.session.get("init_redirect_uri")})
+    return res
 
 
 login = Service(name='login_furet_ui',
@@ -105,3 +110,49 @@ def post_logout(request):
     registry = request.anyblok.registry
     FuretUI = registry.FuretUI
     return Response(json_body=FuretUI.get_logout(), headers=forget(request))
+
+
+
+oidc_login = Service(name='oidc_login_furet_ui',
+    path='/furet-ui/oidc/login',
+    installed_blok=current_blok()
+)
+
+
+@oidc_login.post()
+def oic_login(request):
+    request.session.update({"redirect": request.json_body.get('redirect')})
+    location = oidc.prepare_auth_url(request)
+    return location
+
+
+oidc_callback = Service(name='oidc_login_callback_furet_ui',
+    path='/furet-ui/oidc/callback',
+    installed_blok=current_blok()
+)
+
+
+
+@oidc_callback.get()
+def oic_callback(request):
+    # get redirection before before connection as session is invalidate
+    # once user is successfully logged
+    redirect = request.session.get("redirect")
+    _, headers = oidc.log_user(request)
+    if headers is None:
+        # TODO find a way to display a nice error message to enduser
+        # probably using session
+        return
+
+    request.session.update(
+        {
+            "init_redirect_uri": redirect if redirect else request.anyblok.registry.FuretUI.get_default_path(request.authenticated_userid)
+        }
+    )
+    return HTTPFound(
+        location=urlparse(
+            request.environ.get("HTTP_X_FORWARDED_HOST"),
+            scheme=request.environ.get("HTTP_X_FORWARDED_PROTO")
+        ).geturl(),
+        headers=headers
+    )
