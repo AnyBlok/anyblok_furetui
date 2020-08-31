@@ -10,7 +10,10 @@ from os.path import join
 from cornice import Service
 from logging import getLogger
 from urllib.parse import urlparse
-from anyblok_pyramid.bloks.pyramid import oidc
+try:
+    from anyblok_pyramid.bloks.pyramid import oidc
+except ImportError:
+    oidc = None
 
 
 logger = getLogger(__name__)
@@ -56,7 +59,8 @@ def get_global_init(request):
     res = request.anyblok.registry.FuretUI.get_initialize(
         request.authenticated_userid)
     if request.session.get("init_redirect_uri"):
-        res.append({'type': 'UPDATE_ROUTE', 'path': request.session.get("init_redirect_uri")})
+        res.append({'type': 'UPDATE_ROUTE',
+                    'path': request.session.get("init_redirect_uri")})
     return res
 
 
@@ -112,8 +116,8 @@ def post_logout(request):
     return Response(json_body=FuretUI.get_logout(), headers=forget(request))
 
 
-
-oidc_login = Service(name='oidc_login_furet_ui',
+oidc_login = Service(
+    name='oidc_login_furet_ui',
     path='/furet-ui/oidc/login',
     installed_blok=current_blok()
 )
@@ -121,32 +125,42 @@ oidc_login = Service(name='oidc_login_furet_ui',
 
 @oidc_login.post()
 def oic_login(request):
+    if oidc is None:
+        raise ImportError('pyoidc is not installed')
+
     request.session.update({"redirect": request.json_body.get('redirect')})
     location = oidc.prepare_auth_url(request)
     return location
 
 
-oidc_callback = Service(name='oidc_login_callback_furet_ui',
+oidc_callback = Service(
+    name='oidc_login_callback_furet_ui',
     path='/furet-ui/oidc/callback',
     installed_blok=current_blok()
 )
 
 
-
 @oidc_callback.get()
 def oic_callback(request):
+    if oidc is None:
+        raise ImportError('pyoidc is not installed')
+
     # get redirection before before connection as session is invalidate
     # once user is successfully logged
     redirect = request.session.get("redirect")
     _, headers = oidc.log_user(request)
     if headers is None:
         # TODO find a way to display a nice error message to enduser
-        # probably using session
+        # probably using session
         return
 
     request.session.update(
         {
-            "init_redirect_uri": redirect if redirect else request.anyblok.registry.FuretUI.get_default_path(request.authenticated_userid)
+            "init_redirect_uri": (
+                redirect if redirect else
+                request.anyblok.registry.FuretUI.get_default_path(
+                    request.authenticated_userid)
+            ),
         }
     )
     return HTTPFound(

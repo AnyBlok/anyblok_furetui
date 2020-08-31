@@ -477,10 +477,12 @@ class Custom(Declarations.Model.FuretUI.Resource):
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class List(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
-                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+                 foreign_key=Declarations.Model.FuretUI.Resource.use(
+                     'id').options(ondelete='cascade'))
     title = String()
     model = String(nullable=False,
-                   foreign_key=Declarations.Model.System.Model.use('name'))
+                   foreign_key=Declarations.Model.System.Model.use(
+                       'name').options(ondelete='cascade'))
     template = String()
 
     def field_for_(cls, field, fields2read, **kwargs):
@@ -739,8 +741,10 @@ class Form(
     Declarations.Mixin.Template
 ):
     id = Integer(primary_key=True,
-                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
-    model = String(foreign_key=Declarations.Model.System.Model.use('name'),
+                 foreign_key=Declarations.Model.FuretUI.Resource.use(
+                    'id').options(ondelete='cascade'))
+    model = String(foreign_key=Declarations.Model.System.Model.use(
+                    'name').options(ondelete='cascade'),
                    nullable=False)
     template = String()
     is_polymorphic = Boolean(default=False)
