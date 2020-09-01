@@ -45,4 +45,5 @@ def json_data_adapter(config):
     json_renderer.add_adapter(python_pycountry_type, country_adapter)
 
     config.add_renderer('json', json_renderer)
+    config.add_renderer('cornicejson', json_renderer)
     config.add_renderer('pyramid_rpc:jsonrpc', json_renderer)

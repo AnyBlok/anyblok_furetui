@@ -137,7 +137,8 @@ class CRUD:
 
     @classmethod
     def create(cls, model, uuid, changes):
-        return cls.create_or_update(model, {"uuid": uuid}, changes)
+        res = cls.create_or_update(model, {"uuid": uuid}, changes)
+        return res
 
     @classmethod
     def create_or_update(cls, model, pks, changes):
@@ -147,6 +148,11 @@ class CRUD:
         # TODO: rename uuid or document that primary key should not use
         # a field called uuid
         if "uuid" in pks.keys() and 'uuid' not in Model.get_primary_keys():
+            data = changes[model]["new"].pop(pks["uuid"], {})
+        elif (
+            "uuid" in pks.keys() and
+            pks['uuid'] in changes[model].get('new', {})
+        ):
             data = changes[model]["new"].pop(pks["uuid"], {})
         else:
             new = False

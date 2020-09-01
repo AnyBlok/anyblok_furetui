@@ -25,7 +25,6 @@ def crud_create(request):
 
     with saved_errors_in_request(request):
         obj = registry.FuretUI.CRUD.create(model, uuid, changes)
-        # create_or_update(registry, changes, firstmodel=model)
         return {
             'pks': obj.to_primary_keys(),
         }
