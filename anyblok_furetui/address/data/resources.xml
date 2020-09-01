@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record external_id="resource_address" model="Model.FuretUI.Resource.Set">
+    <field name="can_delete">0</field>
+    <field name="list" external_id="resource_address_list" model="Model.FuretUI.Resource.List">
+      <field name="model">Model.Address</field>
+      <field name="title">Addresses</field>
+      <field name="template">AddressList</field>
+      <field name="filters">
+        <record external_id="resource_filter_address_last_name">
+          <field name="key">last_name</field>
+          <field name="label">resource.delivery.shipement.last_name</field>
+        </record>
+        <record external_id="resource_filter_address_first_name">
+          <field name="key">first_name</field>
+          <field name="label">resource.delivery.shipement.first_name</field>
+        </record>
+      </field>
+    </field>
+    <field name="form" external_id="resource_address_form" model="Model.FuretUI.Resource.Form">
+      <field name="model">Model.Address</field>
+      <field name="template">AddressForm</field>
+    </field>
+  </record>
+</records>

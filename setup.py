@@ -66,6 +66,7 @@ setup(
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
             'furetui-auth=anyblok_furetui.auth:FuretUIAuthBlok',
+            'furetui-address=anyblok_furetui.address:FuretUIAddressBlok',
             'furetui-filter-ip=anyblok_furetui.ip:FuretUIFilterIPBlok',
         ],
     },
