@@ -37,6 +37,7 @@ def import_module(reload=None):
 class FuretUIBlok(Blok):
     """Setup FuretUI for AnyBlok"""
     version = version
+    priority = 1
     author = 'Suzanne Jean-Sébastien'
     logo = 'static/images/logo.png'
 

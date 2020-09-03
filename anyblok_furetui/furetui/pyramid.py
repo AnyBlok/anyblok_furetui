@@ -7,6 +7,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from enum import Enum
+from cornice.renderer import CorniceRenderer
 from anyblok_pyramid.adapter import (
     datetime_adapter, timedelta_adapter_factory, date_adapter,
     uuid_adapter, bytes_adapter, decimal_adapter, enum_adapter)
@@ -33,17 +34,28 @@ def country_adapter(country, request):
     return country.alpha_3
 
 
+def add_adapters(obj):
+    obj.add_adapter(datetime, datetime_adapter)
+    obj.add_adapter(Enum, enum_adapter)
+    obj.add_adapter(timedelta, timedelta_adapter_factory())
+    obj.add_adapter(date, date_adapter)
+    obj.add_adapter(UUID, uuid_adapter)
+    obj.add_adapter(bytes, bytes_adapter)
+    obj.add_adapter(Decimal, decimal_adapter)
+    obj.add_adapter(python_pycountry_type, country_adapter)
+
+
+class FuretUIRender(CorniceRenderer):
+
+    def __init__(self, *args, **kwargs):
+        super(FuretUIRender, self).__init__(*args, **kwargs)
+        add_adapters(self)
+
+
 def json_data_adapter(config):
     json_renderer = JSON()
-    json_renderer.add_adapter(datetime, datetime_adapter)
-    json_renderer.add_adapter(Enum, enum_adapter)
-    json_renderer.add_adapter(timedelta, timedelta_adapter_factory())
-    json_renderer.add_adapter(date, date_adapter)
-    json_renderer.add_adapter(UUID, uuid_adapter)
-    json_renderer.add_adapter(bytes, bytes_adapter)
-    json_renderer.add_adapter(Decimal, decimal_adapter)
-    json_renderer.add_adapter(python_pycountry_type, country_adapter)
+    add_adapters(json_renderer)
 
     config.add_renderer('json', json_renderer)
-    config.add_renderer('cornicejson', json_renderer)
+    config.add_renderer('cornicejson', FuretUIRender())
     config.add_renderer('pyramid_rpc:jsonrpc', json_renderer)

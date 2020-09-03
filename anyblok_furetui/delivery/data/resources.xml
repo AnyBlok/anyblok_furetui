@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record external_id="resource_delivery_shipment" model="Model.FuretUI.Resource.Set">
+    <field name="can_create">0</field>
+    <field name="can_update">0</field>
+    <field name="can_delete">0</field>
+    <field name="list" external_id="resource_delivery_shipment_list" model="Model.FuretUI.Resource.List">
+      <field name="model">Model.Delivery.Shipment</field>
+      <field name="title">Shipments</field>
+      <field name="template">DeliveryShipmentList</field>
+      <field name="filters">
+        <record external_id="resource_filter_delivery_shipment_delivery">
+          <field name="key">reason</field>
+          <field name="label">resource.delivery.shipement.reason</field>
+        </record>
+        <record external_id="resource_filter_delivery_shipment_tracking_number">
+          <field name="key">tracking_number</field>
+          <field name="label">resource.delivery.shipement.tracking_number</field>
+        </record>
+        <record external_id="resource_filter_delivery_shipment_uuid">
+          <field name="key">uuid</field>
+          <field name="op">in</field>
+          <field name="label">resource.delivery.shipement.uuid</field>
+        </record>
+      </field>
+    </field>
+    <field name="form" external_id="resource_delivery_shipment_form" model="Model.FuretUI.Resource.Form">
+      <field name="model">Model.Delivery.Shipment</field>
+      <field name="template">DeliveryShipmentForm</field>
+    </field>
+  </record>
+</records>
