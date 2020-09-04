@@ -9,6 +9,8 @@
 fr = {
     'resource': {
         'address': {
+            'last_name': 'Last name',
+            'first_name': 'First name',
         },
     },
 }

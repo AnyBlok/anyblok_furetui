@@ -8,7 +8,12 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 fr = {
     'resource': {
-        'shipment': {
+        'delivery': {
+            'shipment': {
+                'uuid': 'UUID',
+                'reason': 'Raison',
+                'tracking_number': 'Numéro de suivi',
+            },
         },
     },
 }

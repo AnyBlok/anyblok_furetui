@@ -11,16 +11,16 @@
       <field name="filters">
         <record external_id="resource_filter_delivery_shipment_delivery">
           <field name="key">reason</field>
-          <field name="label">resource.delivery.shipement.reason</field>
+          <field name="label">resource.delivery.shipment.reason</field>
         </record>
         <record external_id="resource_filter_delivery_shipment_tracking_number">
           <field name="key">tracking_number</field>
-          <field name="label">resource.delivery.shipement.tracking_number</field>
+          <field name="label">resource.delivery.shipment.tracking_number</field>
         </record>
         <record external_id="resource_filter_delivery_shipment_uuid">
           <field name="key">uuid</field>
           <field name="op">in</field>
-          <field name="label">resource.delivery.shipement.uuid</field>
+          <field name="label">resource.delivery.shipment.uuid</field>
         </record>
       </field>
     </field>

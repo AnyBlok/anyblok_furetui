@@ -8,7 +8,12 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 en = {
     'resource': {
-        'shipment': {
+        'delivery': {
+            'shipment': {
+                'uuid': 'UUID',
+                'reason': 'Reason',
+                'tracking_number': 'Tracking number',
+            },
         },
     },
 }

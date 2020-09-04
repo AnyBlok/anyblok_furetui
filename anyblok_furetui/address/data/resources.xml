@@ -9,11 +9,11 @@
       <field name="filters">
         <record external_id="resource_filter_address_last_name">
           <field name="key">last_name</field>
-          <field name="label">resource.delivery.shipement.last_name</field>
+          <field name="label">resource.address.last_name</field>
         </record>
         <record external_id="resource_filter_address_first_name">
           <field name="key">first_name</field>
-          <field name="label">resource.delivery.shipement.first_name</field>
+          <field name="label">resource.address.first_name</field>
         </record>
       </field>
     </field>
