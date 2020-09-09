@@ -3,6 +3,7 @@ from copy import deepcopy
 from anyblok.declarations import Declarations
 from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
+from anyblok.mapper import ModelAttribute
 import json
 
 
@@ -130,6 +131,7 @@ class CRUD:
                     "model": fd[field]['model'],
                     "data": data[field],
                     "remote_name": fd[field]['remote_name'],
+                    "remote_columns": fd[field]['remote_columns'],
                     "type": fd[field]['type'],
                 })
         # Remove x2m fields
@@ -179,11 +181,20 @@ class CRUD:
     def create_or_update_linked_data(cls, new_obj, linked_field,
                                      primary_key, changes):
         if linked_field['type'] == 'One2Many':
+            m2o = {}
+            if linked_field['remote_name']:
+                m2o[linked_field['remote_name']] = new_obj
+            else:
+                for column in linked_field['remote_columns']:
+                    mapper = ModelAttribute(linked_field['model'], column)
+                    m2o[column] = getattr(
+                        new_obj, mapper.get_fk_column(cls.registry))
+
             cls.create_or_update(
                 linked_field["model"],
                 primary_key,
                 changes,
-                **{linked_field['remote_name']: new_obj}
+                **m2o
             )
         else:
             getattr(new_obj, linked_field["field"]).append(
