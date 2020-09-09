@@ -3,6 +3,7 @@ from copy import deepcopy
 from anyblok.declarations import Declarations
 from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
+from anyblok.mapper import ModelAttribute
 import json
 
 
@@ -129,7 +130,9 @@ class CRUD:
                     "field": field,
                     "model": fd[field]['model'],
                     "data": data[field],
-                    "instances": [],
+                    "remote_name": fd[field]['remote_name'],
+                    "remote_columns": fd[field]['remote_columns'],
+                    "type": fd[field]['type'],
                 })
         # Remove x2m fields
         [data.pop(key["field"]) for key in linked_data]
@@ -141,7 +144,7 @@ class CRUD:
         return res
 
     @classmethod
-    def create_or_update(cls, model, pks, changes):
+    def create_or_update(cls, model, pks, changes, **remote):
         Model = cls.registry.get(model)
         data = {}
         new = True
@@ -167,15 +170,43 @@ class CRUD:
         #     return None
         linked_data = cls.format_data(Model, data)
         if new:
-            new_obj = Model.furetui_insert(**data)
+            new_obj = Model.furetui_insert(**data, **remote)
         else:
             new_obj = Model.from_primary_keys(**pks)
             new_obj.furetui_update(**data)
-        cls.create_or_update_linked_data(new_obj, linked_data, changes)
+        cls.resolve_linked_data(new_obj, linked_data, changes)
         return new_obj
 
     @classmethod
-    def create_or_update_linked_data(cls, new_obj, linked_data, changes):
+    def create_or_update_linked_data(cls, new_obj, linked_field,
+                                     primary_key, changes):
+        if linked_field['type'] == 'One2Many':
+            m2o = {}
+            if linked_field['remote_name']:
+                m2o[linked_field['remote_name']] = new_obj
+            else:
+                for column in linked_field['remote_columns']:
+                    mapper = ModelAttribute(linked_field['model'], column)
+                    m2o[column] = getattr(
+                        new_obj, mapper.get_fk_column(cls.registry))
+
+            cls.create_or_update(
+                linked_field["model"],
+                primary_key,
+                changes,
+                **m2o
+            )
+        else:
+            getattr(new_obj, linked_field["field"]).append(
+                cls.create_or_update(
+                    linked_field["model"],
+                    primary_key,
+                    changes,
+                )
+            )
+
+    @classmethod
+    def resolve_linked_data(cls, new_obj, linked_data, changes):
         for linked_field in linked_data:
             linked_model = cls.registry.get(linked_field["model"])
             linked_model_pks = set(linked_model.get_primary_keys())
@@ -188,25 +219,20 @@ class CRUD:
                     for key in linked_model_pks:
                         primary_key[key] = linked_instance[key]
                 if state in ["ADDED", "UPDATED"]:
-                    getattr(new_obj, linked_field["field"]).append(
-                        cls.create_or_update(
-                            linked_field["model"],
-                            primary_key,
-                            changes,
-                        )
-                    )
-                if state in ["DELETED"]:
+                    cls.create_or_update_linked_data(
+                        new_obj, linked_field, primary_key, changes)
+                elif state in ["DELETED"]:
                     linked_obj = linked_model.from_primary_keys(
                         **primary_key)
                     if linked_obj:
                         linked_obj.furetui_delete()
-                if state in ["LINKED"]:
+                elif state in ["LINKED"]:
                     getattr(new_obj, linked_field["field"]).append(
                         linked_model.from_primary_keys(
                             **primary_key
                         )
                     )
-                if state in ["UNLINKED"]:
+                elif state in ["UNLINKED"]:
                     getattr(new_obj, linked_field["field"]).remove(
                         linked_model.from_primary_keys(
                             **primary_key
