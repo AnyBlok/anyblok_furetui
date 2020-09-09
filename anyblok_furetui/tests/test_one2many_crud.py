@@ -53,28 +53,11 @@ def one2many_and_many2one(**kwargs):
     class Order:
         uuid = Integer(primary_key=True)
         name = String()
-
-    @register(Model)
-    class Line:
-
-        uuid = Integer(primary_key=True)
-        order_id = Integer(foreign_key=Model.Order.use('uuid'))
-        name = String()
-
-    @register(Model)
-    class Order:
-        lines = One2Many(model=Model.Line,
+        lines = One2Many(model='Model.Line',
                          remote_columns="order_id",
                          primaryjoin=primaryjoin,
                          many2one="order")
 
-
-def one2many(**kwargs):  # noqa F811
-    @register(Model)
-    class Order:
-        uuid = Integer(primary_key=True)
-        name = String()
-
     @register(Model)
     class Line:
 
@@ -82,11 +65,22 @@ def one2many(**kwargs):  # noqa F811
         order_id = Integer(foreign_key=Model.Order.use('uuid'))
         name = String()
 
+
+def one2many(**kwargs):
     @register(Model)
     class Order:
-        lines = One2Many(model=Model.Line,
+        uuid = Integer(primary_key=True)
+        name = String()
+        lines = One2Many(model='Model.Line',
                          remote_columns="order_id",
                          primaryjoin=primaryjoin)
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order_id = Integer(foreign_key=Model.Order.use('uuid'))
+        name = String()
 
 
 def one2many_with_required_fk(**kwargs):  # noqa F811
@@ -94,6 +88,9 @@ def one2many_with_required_fk(**kwargs):  # noqa F811
     class Order:
         uuid = Integer(primary_key=True)
         name = String()
+        lines = One2Many(model='Model.Line',
+                         remote_columns="order_id",
+                         primaryjoin=primaryjoin)
 
     @register(Model)
     class Line:
@@ -102,12 +99,6 @@ def one2many_with_required_fk(**kwargs):  # noqa F811
         order_id = Integer(foreign_key=Model.Order.use('uuid'),
                            nullable=False)
         name = String()
-
-    @register(Model)
-    class Order:
-        lines = One2Many(model=Model.Line,
-                         remote_columns="order_id",
-                         primaryjoin=primaryjoin)
 
 
 @pytest.fixture(
