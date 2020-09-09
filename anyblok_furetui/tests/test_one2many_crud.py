@@ -89,6 +89,27 @@ def one2many(**kwargs):  # noqa F811
                          primaryjoin=primaryjoin)
 
 
+def one2many_with_required_fk(**kwargs):  # noqa F811
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String()
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order_id = Integer(foreign_key=Model.Order.use('uuid'),
+                           nullable=False)
+        name = String()
+
+    @register(Model)
+    class Order:
+        lines = One2Many(model=Model.Line,
+                         remote_columns="order_id",
+                         primaryjoin=primaryjoin)
+
+
 @pytest.fixture(
     scope="class",
     params=[
@@ -96,6 +117,7 @@ def one2many(**kwargs):  # noqa F811
         required_many2one_with_one2many,
         one2many_and_many2one,
         one2many,
+        one2many_with_required_fk,
     ]
 )
 def registry_one2many(request, bloks_loaded):  # noqa F811
