@@ -2,7 +2,7 @@ import pytest
 
 from anyblok import Declarations
 from anyblok.column import Integer, String
-from anyblok.relationship import Many2One
+from anyblok.relationship import Many2One, One2Many
 from anyblok.tests.conftest import (  # noqa F401
     init_registry_with_bloks,
     reset_db,
@@ -14,8 +14,25 @@ from anyblok.tests.conftest import (  # noqa F401
 register = Declarations.register
 Model = Declarations.Model
 
+primaryjoin = "ModelOrder.uuid == ModelLine.order_id"
 
-def _complete_one2many(**kwargs):
+
+def many2one_with_one2many(**kwargs):
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String()
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order = Many2One(model=Model.Order,
+                         one2many="lines")
+        name = String()
+
+
+def required_many2one_with_one2many(**kwargs):
     @register(Model)
     class Order:
         uuid = Integer(primary_key=True)
@@ -31,10 +48,59 @@ def _complete_one2many(**kwargs):
         name = String()
 
 
-@pytest.fixture(scope="class")
+def one2many_and_many2one(**kwargs):
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String()
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order_id = Integer(foreign_key=Model.Order.use('uuid'))
+        name = String()
+
+    @register(Model)
+    class Order:
+        lines = One2Many(model=Model.Line,
+                         remote_columns="order_id",
+                         primaryjoin=primaryjoin,
+                         many2one="order")
+
+
+def one2many(**kwargs):  # noqa F811
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String()
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order_id = Integer(foreign_key=Model.Order.use('uuid'))
+        name = String()
+
+    @register(Model)
+    class Order:
+        lines = One2Many(model=Model.Line,
+                         remote_columns="order_id",
+                         primaryjoin=primaryjoin)
+
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        many2one_with_one2many,
+        required_many2one_with_one2many,
+        one2many_and_many2one,
+        one2many,
+    ]
+)
 def registry_one2many(request, bloks_loaded):  # noqa F811
     reset_db()
-    registry = init_registry_with_bloks(["furetui"], _complete_one2many)
+    registry = init_registry_with_bloks(["furetui"], request.param)
     request.addfinalizer(registry.close)
     return registry
 
