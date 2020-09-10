@@ -17,12 +17,18 @@ call = Service(name='call',
 def call_classmethod(request):
     registry = request.anyblok.registry
     params = request.matchdict
-    data = request.json_body
+    body = request.json_body
+    pks = body.get('pks', {})
+    data = body.get('data', {})
     # TODO call security hooks
 
     with saved_errors_in_request(request):
         Model = registry.get(params['model'])
-        res = getattr(Model, params['call'])(**data)
+        obj = Model
+        if pks:
+            obj = Model.from_primary_keys(**pks)
+
+        res = getattr(obj, params['call'])(**data)
         if res is None:
             return []
 

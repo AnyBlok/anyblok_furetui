@@ -242,20 +242,26 @@ class Template:
     #     description['readonly'] = True
     #     return cls.get_field_for_(field, 'String', description, fields2read)
 
-    # def replace_button_in_function_of_view(cls, button):
-    #     pass
+    def replace_buttons(self, template, fields_description, fields2read):
+        buttons = template.findall('.//button')
+        for el in buttons:
+            el.tag = 'furet-ui-form-button'
+            self.add_template_bind(el)
+            config = {
+                'label': el.attrib['label'],
+                'call': el.attrib['call'],
+                'class': el.attrib.get('class', '').split(),
+            }
+            for key in ('readonly', 'hidden'):
+                value = el.attrib.get(key, '0')
+                if value == '':
+                    value = '1'
+                elif key == value:
+                    value = '1'
 
-    # def replace_buttons(cls, template, fields_description):
-    #     buttons = template.findall('.//button')
-    #     for el in buttons:
-    #         el.tag = 'furet-ui-%s-button' % (cls.mode_name.lower())
-    #         cls.add_template_bind(el)
-    #         el.set('{%s}viewId' % el.nsmap['v-bind'], 'viewId')
-    #         el.set('{%s}model' % el.nsmap['v-bind'], 'model')
-    #         el.set('{%s}options' % el.nsmap['v-bind'],
-    #                el.attrib.get('data-options', '{}'))
-    #         el.set('buttonId', el.attrib.get('data-method', ''))
-    #         cls.replace_button_in_function_of_view(el)
+                config[key] = value
+
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = json.dumps(config)
 
     def replace_fields(self, template, fields_description, fields2read):
         fields = template.findall('.//field')
@@ -380,7 +386,7 @@ class Template:
         self.replace_tabs(template, fields2read)
         self.replace_tab(template, fields2read)
         self.replace_fields(template, fields_description, fields2read)
-    #     cls.replace_buttons(template, fields_description)
+        self.replace_buttons(template, fields_description, fields2read)
 
     def encode_to_furetui(self, template, fields, fields2read):
         Model = self.registry.get(self.model)
@@ -753,7 +759,6 @@ class Form(
     def get_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
         Model = self.registry.get(self.model)
-        buttons = []
         fd = Model.fields_description()
         if self.template:
             template = self.registry.FuretUI.get_template(
@@ -790,7 +795,6 @@ class Form(
         res.update({
             'body_template': self.encode_to_furetui(
                 template, fields, fields2read),
-            'buttons': buttons,
             'fields': list(set(fields2read)),
         })
         return [res]
