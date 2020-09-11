@@ -3,6 +3,7 @@ import pytest
 from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2One, One2Many
+from sqlalchemy import ForeignKeyConstraint
 from anyblok.tests.conftest import (  # noqa F401
     init_registry_with_bloks,
     reset_db,
@@ -37,6 +38,22 @@ def required_many2one_with_one2many(**kwargs):
     class Order:
         uuid = Integer(primary_key=True)
         name = String()
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order = Many2One(model=Model.Order,
+                         nullable=False,
+                         one2many="lines")
+        name = String()
+
+
+def required_many2one_with_one2many_multi_primary_key(**kwargs):
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String(primary_key=True)
 
     @register(Model)
     class Line:
@@ -101,14 +118,47 @@ def one2many_with_required_fk(**kwargs):  # noqa F811
         name = String()
 
 
+def one2many_with_required_fk_and_multi_primary_key(**kwargs):  # noqa F811
+    primaryjoin = (
+        "ModelOrder.uuid == ModelLine.order_id and "
+        "ModelOrder.name == ModelLine.order_name"
+    )
+
+    @register(Model)
+    class Order:
+        uuid = Integer(primary_key=True)
+        name = String(primary_key=True)
+        lines = One2Many(model='Model.Line',
+                         remote_columns=["order_id", "order_name"],
+                         primaryjoin=primaryjoin)
+
+    @register(Model)
+    class Line:
+
+        uuid = Integer(primary_key=True)
+        order_id = Integer(nullable=False)
+        order_name = String(nullable=False)
+        name = String()
+
+        @classmethod
+        def define_table_args(cls):
+            table_args = super(Line, cls).define_table_args()
+            Order = cls.registry.Order
+            return table_args + (ForeignKeyConstraint(
+                [cls.order_id, cls.order_name], [Order.uuid, Order.name],
+                ondelete="CASCADE"),)
+
+
 @pytest.fixture(
     scope="class",
     params=[
         many2one_with_one2many,
         required_many2one_with_one2many,
+        required_many2one_with_one2many_multi_primary_key,
         one2many_and_many2one,
         one2many,
         one2many_with_required_fk,
+        one2many_with_required_fk_and_multi_primary_key,
     ]
 )
 def registry_one2many(request, bloks_loaded):  # noqa F811
