@@ -17,13 +17,12 @@ crud = Service(name='crud',
 
 @crud.post()
 def crud_create(request):
-    registry = request.anyblok.registry
-    data = request.json_body
-    model = data['model']
-    uuid = data['uuid']
-    changes = deepcopy(data['changes'])
-
     with saved_errors_in_request(request):
+        registry = request.anyblok.registry
+        data = request.json_body
+        model = data['model']
+        uuid = data['uuid']
+        changes = deepcopy(data['changes'])
         obj = registry.FuretUI.CRUD.create(model, uuid, changes)
         return {
             'pks': obj.to_primary_keys(),
@@ -38,13 +37,13 @@ def crud_read(request):
 
 @crud.patch()
 def crud_update(request):
-    registry = request.anyblok.registry
-    data = request.json_body
-    model = data['model']
-    pks = data['pks']
-    changes = deepcopy(data['changes'])
-
     with saved_errors_in_request(request):
+        registry = request.anyblok.registry
+        data = request.json_body
+        model = data['model']
+        pks = data['pks']
+        changes = deepcopy(data['changes'])
+
         obj = registry.FuretUI.CRUD.update(model, pks, changes)
         # create_or_update(registry, changes, firstmodel=model)
         return {
@@ -54,12 +53,12 @@ def crud_update(request):
 
 @crud.delete()
 def crud_delete(request):
-    registry = request.anyblok.registry
-    data = request.params
-    model = data['model']
-    pks = dict(json.loads(data['pks']))
-
     with saved_errors_in_request(request):
+        registry = request.anyblok.registry
+        data = request.params
+        model = data['model']
+        pks = dict(json.loads(data['pks']))
+
         registry.FuretUI.CRUD.delete(model, pks)
         return {
             'pks': pks,
