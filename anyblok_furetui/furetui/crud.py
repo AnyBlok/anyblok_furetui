@@ -1,9 +1,8 @@
 from copy import deepcopy
 
-from anyblok.declarations import Declarations
+from anyblok.declarations import Declarations, classmethod_cache
 from sqlalchemy.orm import load_only, joinedload, subqueryload
 from anyblok_pyramid_rest_api.querystring import QueryString
-from anyblok.mapper import ModelAttribute
 import json
 
 
@@ -177,6 +176,13 @@ class CRUD:
         cls.resolve_linked_data(new_obj, linked_data, changes)
         return new_obj
 
+    @classmethod_cache()
+    def get_linked_column(cls, model, column):
+        Model = cls.registry.get(model)
+        col = [x for x in Model.__mapper__.columns if x.name == column][0]
+        fk = list(col.foreign_keys)[0]
+        return fk.column.name
+
     @classmethod
     def create_or_update_linked_data(cls, new_obj, linked_field,
                                      primary_key, changes):
@@ -186,9 +192,8 @@ class CRUD:
                 m2o[linked_field['remote_name']] = new_obj
             else:
                 for column in linked_field['remote_columns']:
-                    mapper = ModelAttribute(linked_field['model'], column)
-                    m2o[column] = getattr(
-                        new_obj, mapper.get_fk_column(cls.registry))
+                    m2o[column] = getattr(new_obj, cls.get_linked_column(
+                        linked_field['model'], column))
 
             cls.create_or_update(
                 linked_field["model"],
