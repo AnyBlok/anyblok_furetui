@@ -250,7 +250,7 @@ class Template:
             config = {
                 'label': el.attrib['label'],
                 'call': el.attrib['call'],
-                'open_resource': el.attrib['open-resource'],
+                'open_resource': el.attrib.get('open-resource'),
                 'class': el.attrib.get('class', '').split(),
             }
             for key in ('readonly', 'hidden'):
