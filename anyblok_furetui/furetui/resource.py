@@ -37,7 +37,7 @@ class Template:
         }
 
         for key in ('readonly', 'writable', 'hidden'):
-            value = field.attrib.get(key, '0')
+            value = description.get(key, field.attrib.get(key, '0'))
             if value == '':
                 value = '1'
             elif key == value:
@@ -65,6 +65,17 @@ class Template:
                 self.model][description['id']].size,
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
+        })
+        return self.get_field_for_(field, 'String', description, fields2read)
+
+    def get_field_for_Sequence(self, field, description, fields2read):
+        Model = self.registry.get(self.model)
+        description.update({
+            'maxlength': Model.registry.loaded_namespaces_first_step[
+                self.model][description['id']].size,
+            'placeholder': field.attrib.get('placeholder', ''),
+            'icon': field.attrib.get('icon', ''),
+            'readonly': '1',
         })
         return self.get_field_for_(field, 'String', description, fields2read)
 
@@ -526,6 +537,11 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return res
 
+    def field_for_Sequence(self, field, fields2read, **kwargs):
+        f = field.copy()
+        f['type'] = 'String'
+        return self.field_for_(f, fields2read, **kwargs)
+
     def field_for_BigInteger(self, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'Integer'
@@ -754,7 +770,6 @@ class Form(
                     'name').options(ondelete='cascade'),
                    nullable=False)
     template = String()
-    is_polymorphic = Boolean(default=False)
     polymorphic_columns = String()
     # TODO field Selection RO / RW / WO
 
@@ -812,9 +827,9 @@ class Form(
             'forms': forms,
         })
         res.append(definition)
-        for form in self.child:
+        for form in self.forms:
             forms.append({
-                'waiting_value': form.waiting_value,
+                'waiting_value': form.polymorphic_values,
                 'resource_id': form.resource.id,
             })
             res.extend(form.resource.get_definitions(**kwargs))
@@ -825,7 +840,7 @@ class Form(
         return self.registry.get(self.model).get_primary_keys()
 
     def get_definitions(self, **kwargs):
-        if self.is_polymorphic:
+        if self.polymorphic_columns:
             if not self.polymorphic_columns:
                 raise Exception(
                     'No polymorphic_columns defined for %r' % self)
@@ -839,8 +854,8 @@ class Form(
 class PolymorphicForm():
     id = Integer(primary_key=True)
     parent = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
-                      one2many="child")
-    waiting_value = Json(nullable=False)
+                      one2many="forms")
+    polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
 
 
