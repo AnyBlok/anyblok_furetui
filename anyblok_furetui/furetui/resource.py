@@ -10,7 +10,7 @@ import json
 from copy import deepcopy
 from lxml import etree, html
 from anyblok.declarations import Declarations
-from anyblok.column import Integer, String, Boolean, Selection
+from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
 from uuid import uuid1
@@ -37,7 +37,7 @@ class Template:
         }
 
         for key in ('readonly', 'writable', 'hidden'):
-            value = field.attrib.get(key, '0')
+            value = description.get(key, field.attrib.get(key, '0'))
             if value == '':
                 value = '1'
             elif key == value:
@@ -65,6 +65,17 @@ class Template:
                 self.model][description['id']].size,
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
+        })
+        return self.get_field_for_(field, 'String', description, fields2read)
+
+    def get_field_for_Sequence(self, field, description, fields2read):
+        Model = self.registry.get(self.model)
+        description.update({
+            'maxlength': Model.registry.loaded_namespaces_first_step[
+                self.model][description['id']].size,
+            'placeholder': field.attrib.get('placeholder', ''),
+            'icon': field.attrib.get('icon', ''),
+            'readonly': '1',
         })
         return self.get_field_for_(field, 'String', description, fields2read)
 
@@ -526,6 +537,11 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return res
 
+    def field_for_Sequence(self, field, fields2read, **kwargs):
+        f = field.copy()
+        f['type'] = 'String'
+        return self.field_for_(f, fields2read, **kwargs)
+
     def field_for_BigInteger(self, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'Integer'
@@ -754,10 +770,10 @@ class Form(
                     'name').options(ondelete='cascade'),
                    nullable=False)
     template = String()
-    is_polymorphic = Boolean(default=False)
+    polymorphic_columns = String()
     # TODO field Selection RO / RW / WO
 
-    def get_definitions(self, **kwargs):
+    def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
@@ -800,18 +816,46 @@ class Form(
         })
         return [res]
 
+    def get_polymorphic_definitions(self, **kwargs):
+        res = []
+        forms = []
+
+        definition = self.to_dict('id', 'model')
+        definition.update({
+            'fields': self.polymorphic_columns.split(','),
+            'type': 'polymorphicform',
+            'forms': forms,
+        })
+        res.append(definition)
+        for form in self.forms:
+            forms.append({
+                'waiting_value': form.polymorphic_values,
+                'resource_id': form.resource.id,
+            })
+            res.extend(form.resource.get_definitions(**kwargs))
+
+        return res
+
     def get_primary_keys_for(self):
         return self.registry.get(self.model).get_primary_keys()
+
+    def get_definitions(self, **kwargs):
+        if self.polymorphic_columns:
+            if not self.polymorphic_columns:
+                raise Exception(
+                    'No polymorphic_columns defined for %r' % self)
+
+            return self.get_polymorphic_definitions(**kwargs)
+
+        return self.get_classical_definitions(**kwargs)
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class PolymorphicForm():
+    id = Integer(primary_key=True)
     parent = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
-                      primary_key=True, one2many="child")
-    model = String(primary_key=True,
-                   foreign_key=Declarations.Model.System.Model.use('name'))
-    # Add another field type string and removes model because model
-    # is already on resource
+                      one2many="forms")
+    polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
 
 
