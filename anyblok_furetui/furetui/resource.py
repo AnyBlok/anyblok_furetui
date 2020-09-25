@@ -97,6 +97,21 @@ class Template:
             description[key] = value
         return self.get_field_for_(field, 'Password', description, fields2read)
 
+    def get_field_for_BarCode(self, field, description, fields2read):
+        Model = self.registry.get(self.model)
+        description.update({
+            'maxlength': Model.registry.loaded_namespaces_first_step[
+                self.model][description['id']].size,
+            'placeholder': field.attrib.get('placeholder', ''),
+            'icon': field.attrib.get('icon', ''),
+        })
+        options = description['options'] = {}
+        for key in field.attrib:
+            if key.startswith('barcode-'):
+                options[key[8:]] = field.attrib[key]
+
+        return self.get_field_for_(field, 'BarCode', description, fields2read)
+
     def get_field_for_Integer(self, field, description, fields2read):
         description.update({
             'min': field.attrib.get('min'),
@@ -537,6 +552,15 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return res
 
+    def field_for_BarCode(self, field, fields2read, **kwargs):
+        f = field.copy()
+        f['options'] = options = {}
+        for key in kwargs:
+            if key.startswith('barcode-'):
+                options[key[8:]] = kwargs[key]
+
+        return self.field_for_(f, fields2read, **kwargs)
+
     def field_for_Sequence(self, field, fields2read, **kwargs):
         f = field.copy()
         f['type'] = 'String'
@@ -627,6 +651,21 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_Selection(self, field, fields2read, **kwargs):
         f = field.copy()
         for key in ('selections', 'colors'):
+            if key in kwargs:
+                f[key] = eval(kwargs[key], {}, {})
+                del kwargs[key]
+
+            if key not in f:
+                f[key] = {}
+
+            if isinstance(f[key], list):
+                f[key] = dict(f[key])
+
+        return self.field_for_(f, fields2read, **kwargs)
+
+    def field_for_StatusBar(self, field, fields2read, **kwargs):
+        f = field.copy()
+        for key in ('selections',):
             if key in kwargs:
                 f[key] = eval(kwargs[key], {}, {})
                 del kwargs[key]
