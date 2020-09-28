@@ -98,10 +98,7 @@ class Template:
         return self.get_field_for_(field, 'Password', description, fields2read)
 
     def get_field_for_BarCode(self, field, description, fields2read):
-        Model = self.registry.get(self.model)
         description.update({
-            'maxlength': Model.registry.loaded_namespaces_first_step[
-                self.model][description['id']].size,
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
         })
