@@ -259,6 +259,10 @@ class Template:
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
 
+        for key in ('done-states', 'dangerous-states'):
+            description[key] = [
+                x.strip() for x in field.attrib.get(key, '').split(',')]
+
         return self.get_field_for_(field, 'StatusBar', description, fields2read)
 
     # def get_field_for_UUID(cls, field, description, fields2read):
@@ -672,6 +676,10 @@ class List(Declarations.Model.FuretUI.Resource):
 
             if isinstance(f[key], list):
                 f[key] = dict(f[key])
+
+        for key in ('done-states', 'dangerous-states'):
+            f[key] = [
+                x.strip() for x in kwargs.get(key, '').split(',')]
 
         return self.field_for_(f, fields2read, **kwargs)
 
