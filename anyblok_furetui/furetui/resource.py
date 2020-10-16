@@ -514,7 +514,7 @@ class List(Declarations.Model.FuretUI.Resource):
                  foreign_key=Declarations.Model.FuretUI.Resource.use(
                      'id').options(ondelete='cascade'))
     title = String()
-    model = String(nullable=False,
+    model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use(
                        'name').options(ondelete='cascade'))
     template = String()
@@ -756,7 +756,7 @@ class List(Declarations.Model.FuretUI.Resource):
 class Thumbnail(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
-    model = String(nullable=False,
+    model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use('name'))
     template = String(nullable=False)
     # TODO criteria of filter
@@ -812,7 +812,7 @@ class Form(
                     'id').options(ondelete='cascade'))
     model = String(foreign_key=Declarations.Model.System.Model.use(
                     'name').options(ondelete='cascade'),
-                   nullable=False)
+                   nullable=False, size=256)
     template = String()
     polymorphic_columns = String()
     # TODO field Selection RO / RW / WO
