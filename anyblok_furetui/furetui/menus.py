@@ -136,3 +136,4 @@ class Call(
         nullable=False, size=256,
         foreign_key=Declarations.Model.System.Model.use(
             'name').options(ondelete='cascade'))
+    method = String(nullable=False, size=256)
