@@ -6,7 +6,7 @@
     <field name="space" external_id="space_settings"/>
     <field name="icon_code">user</field>
     <field name="icon_type">fa</field>
-    <field name="resources">
+    <field name="children">
       <record external_id="menu_setting_auth_user" model="Model.FuretUI.Menu.Resource">
         <field name="order">10</field>
         <field name="default">True</field>

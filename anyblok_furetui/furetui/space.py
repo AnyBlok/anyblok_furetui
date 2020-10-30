@@ -7,7 +7,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import json
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 from anyblok.declarations import Declarations
 from anyblok.column import String, Integer
 
@@ -23,24 +23,66 @@ class Space:
     icon_type = String()
 
     def get_path(self):
-        MRe = self.registry.FuretUI.Menu.Resource
-        MRo = self.registry.FuretUI.Menu.Root
-        query = MRe.query()
-        # link with this space
-        query = query.join(MRe.root)
-        query = query.filter(MRo.space == self)
-        # order
-        query = query.order_by(MRo.order.asc())
-        query = query.order_by(MRe.order.asc()).order_by(MRe.id.asc())
+        query = text("""
+            with recursive menu_tree as (
+                select
+                    fm.id,
+                    fm.order,
+                    0 as parent_order,
+                    fm.menu_type,
+                    fm.parent_id,
+                    fmr.label,
+                    false as default
+                from
+                    furetui_menu fm
+                    join furetui_menu_root fmr on fmr.id = fm.id
+                where
+                     fmr.space_code=:space_code
+
+                union all
+
+                select
+                    child.id,
+                    child.order,
+                    (parent.parent_order + parent.order) as parent_order,
+                    child.menu_type,
+                    child.parent_id,
+                    coalesce(node.label, resource.label) as label,
+                    coalesce(resource.default, false) as default
+                from
+                    furetui_menu as child
+                    left outer join furetui_menu_node as node
+                        on node.id = child.id
+                    left outer join furetui_menu_resource resource
+                        on resource.id = child.id
+                    join menu_tree as parent on parent.id = child.parent_id
+                )
+                select
+                     id
+                from
+                    menu_tree
+                where
+                     menu_type = 'Model.FuretUI.Menu.Resource'
+                     and "default" is :default
+                order by
+                     parent_order asc,
+                     "order" asc,
+                     id asc
+                limit 1;
+        """)
+
         # take the first default found
-        mre = query.filter(MRe.default.is_(True)).first()
-        if mre is None:
-            mre = query.first()
+        res = self.registry.execute(
+            query.bindparams(space_code=self.code, default=True)).fetchone()
+        if res is None:
+            res = self.registry.execute(query.bindparams(
+                space_code=self.code, default=False)).fetchone()
 
         query = []
-        if mre:
+        if res:
+            mre = self.registry.FuretUI.Menu.query().get(res[0])
             if mre.order_by:
-                query.append('order=%s' % mre.order_by)
+                query.append('orders=%s' % mre.order_by)
             if mre.tags:
                 query.append('tags=%s' % mre.tags)
             if mre.filters:
@@ -59,32 +101,5 @@ class Space:
         return query
 
     def get_menus(self, authenticated_userid):
-        menus = []
-        MRe = self.registry.FuretUI.Menu.Resource
-        MRo = self.registry.FuretUI.Menu.Root
-        mros = MRo.query().filter(MRo.space == self)
-        mros = mros.order_by(MRo.order.asc())
-        for mro in mros:
-            mres = MRe.query().filter(MRe.root == mro)
-            mres = mres.order_by(MRe.order.asc()).order_by(MRe.id.asc())
-            mres = mres.all()
-            if not mres:
-                continue
-
-            mres = [{'resource': mre.resource.id,
-                     **mre.to_dict('id', 'order', 'label', 'icon_code',
-                                   'icon_type', 'tags', 'order_by', 'filters')}
-                    for mre in mres
-                    if mre.check_acl(authenticated_userid)]
-
-            if not mres:
-                continue
-
-            if mro.label:
-                menus.append(
-                    {'children': mres, **mro.to_dict(
-                        'id', 'order', 'label', 'icon_code', 'icon_type')})
-            else:
-                menus.extend(mres)
-
-        return menus
+        return self.registry.FuretUI.Menu.get_menus_from(
+            authenticated_userid, space=self)
