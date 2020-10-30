@@ -100,54 +100,6 @@ class Space:
             cls.role.in_(roles), cls.role.is_(None), cls.role == ''))
         return query
 
-    def rec_get_children_menus(self, children, authenticated_userid):
-        res = []
-        for child in children:
-            if child.check_acl(authenticated_userid):
-                children = []
-                definition = child.to_dict(
-                    'id', 'order', 'label', 'icon_code', 'icon_type')
-
-                if child.menu_type == 'Model.FuretUI.Menu.Node':
-                    children = self.rec_get_children_menus(
-                        child.children, authenticated_userid)
-                elif child.menu_type == 'Model.FuretUI.Menu.Resource':
-                    definition['resource'] = child.resource.id
-                    definition.update(child.to_dict(
-                        'tags', 'order_by', 'filters'))
-                elif child.menu_type == 'Model.FuretUI.Menu.Url':
-                    definition.update(child.to_dict('url'))
-                elif child.menu_type == 'Model.FuretUI.Menu.Call':
-                    definition.update(child.to_dict('model', 'method'))
-
-                res.append({'children': children, **definition})
-
-        return res
-
     def get_menus(self, authenticated_userid):
-        menus = []
-        Menu = self.registry.FuretUI.Menu
-        MRo = self.registry.FuretUI.Menu.Root
-        mros = MRo.query().filter(MRo.space == self)
-        mros = mros.order_by(MRo.order.asc())
-        for mro in mros:
-            mres = Menu.query().filter(Menu.parent_id == mro.id)
-            mres = mres.order_by(Menu.order.asc()).order_by(Menu.id.asc())
-            mres = mres.all()
-            if not mres:
-                continue
-
-            mres = self.rec_get_children_menus(
-                mro.children, authenticated_userid)
-
-            if not mres:
-                continue
-
-            if mro.label:
-                menus.append(
-                    {'children': mres, **mro.to_dict(
-                        'id', 'order', 'label', 'icon_code', 'icon_type')})
-            else:
-                menus.extend(mres)
-
-        return menus
+        return self.registry.FuretUI.Menu.get_menus_from(
+            authenticated_userid, space=self)

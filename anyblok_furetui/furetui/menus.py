@@ -42,6 +42,70 @@ class Menu:
     def check_acl(self, authenticated_userid):
         return True
 
+    @classmethod
+    def rec_get_children_menus(cls, children, authenticated_userid,
+                               resource=None):
+        res = []
+        for child in children:
+            if child.check_acl(authenticated_userid):
+                children = []
+                definition = child.to_dict(
+                    'id', 'order', 'label', 'icon_code', 'icon_type')
+
+                if child.menu_type == 'Model.FuretUI.Menu.Node':
+                    children = cls.rec_get_children_menus(
+                        child.children, authenticated_userid, resource=resource)
+                elif child.menu_type == 'Model.FuretUI.Menu.Resource':
+                    definition['resource'] = child.resource.id
+                    definition.update(child.to_dict(
+                        'tags', 'order_by', 'filters'))
+                elif child.menu_type == 'Model.FuretUI.Menu.Url':
+                    definition.update(child.to_dict('url'))
+                elif child.menu_type == 'Model.FuretUI.Menu.Call':
+                    if resource:
+                        definition['resource'] = resource.id
+
+                    definition.update(child.to_dict('model', 'method'))
+
+                res.append({'children': children, **definition})
+
+        return res
+
+    @classmethod
+    def get_menus_from(cls, authenticated_userid, space=None, resource=None):
+        menus = []
+        Menu = cls.registry.FuretUI.Menu
+        MRo = cls.registry.FuretUI.Menu.Root
+        mros = MRo.query()
+
+        if space is not None:
+            mros = mros.filter(MRo.space == space)
+        elif resource is not None:
+            mros = mros.filter(MRo.resource == resource)
+
+        mros = mros.order_by(MRo.order.asc())
+        for mro in mros:
+            mres = Menu.query().filter(Menu.parent_id == mro.id)
+            mres = mres.order_by(Menu.order.asc()).order_by(Menu.id.asc())
+            mres = mres.all()
+            if not mres:
+                continue
+
+            mres = cls.rec_get_children_menus(
+                mro.children, authenticated_userid, resource=resource)
+
+            if not mres:
+                continue
+
+            if mro.label:
+                menus.append(
+                    {'children': mres, **mro.to_dict(
+                        'id', 'order', 'label', 'icon_code', 'icon_type')})
+            else:
+                menus.extend(mres)
+
+        return menus
+
 
 @Declarations.register(Declarations.Mixin)
 class FuretUIMenuChildren:
