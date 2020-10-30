@@ -17,6 +17,7 @@ requires = [
     'anyblok_pyramid_beaker',
     'anyblok_pyramid_rest_api',
     'lxml',
+    'furl',
     'python-magic',
     'simplejson',
     'SQLAlchemy>=1.3.6'
