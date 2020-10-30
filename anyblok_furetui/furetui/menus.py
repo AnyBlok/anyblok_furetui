@@ -62,8 +62,7 @@ class Menu:
                 elif child.menu_type == 'Model.FuretUI.Menu.Url':
                     definition.update(child.to_dict('url'))
                 elif child.menu_type == 'Model.FuretUI.Menu.Call':
-                    if resource:
-                        definition['resource'] = resource.id
+                    definition['resource'] = resource.id if resource else None
 
                     definition.update(child.to_dict('model', 'method'))
 
