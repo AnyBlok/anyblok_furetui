@@ -473,29 +473,9 @@ class Resource:
         return self.registry.Pyramid.check_acl(
             authenticated_userid, self.code, type_)
 
-    def get_menus(self):
-        menus = []
-        MRe = self.registry.FuretUI.Menu.Resource
-        MRo = self.registry.FuretUI.Menu.Root
-        mros = MRo.query().filter(MRo.resource == self)
-        mros = mros.order_by(MRo.order.desc())
-        for mro in mros:
-            mres = MRe.query().filter(MRe.root == mro)
-            mres = mres.order_by(MRe.order.desc()).order_by(MRe.id.asc())
-            mres = mres.all()
-            if not mres:
-                continue
-
-            mres = [{'resource': mre.resource.id,
-                     **mre.to_dict('id', 'order', 'label')}
-                    for mre in mres]
-            if mro.label:
-                menus.append(
-                    {'children': mres, **mro.to_dict('id', 'order', 'label')})
-            else:
-                menus.extend(mres)
-
-        return menus
+    def get_menus(self, authenticated_userid):
+        return self.registry.FuretUI.Menu.get_menus_from(
+            authenticated_userid, resource=self)
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -514,7 +494,7 @@ class List(Declarations.Model.FuretUI.Resource):
                  foreign_key=Declarations.Model.FuretUI.Resource.use(
                      'id').options(ondelete='cascade'))
     title = String()
-    model = String(nullable=False,
+    model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use(
                        'name').options(ondelete='cascade'))
     template = String()
@@ -756,7 +736,7 @@ class List(Declarations.Model.FuretUI.Resource):
 class Thumbnail(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
-    model = String(nullable=False,
+    model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use('name'))
     template = String(nullable=False)
     # TODO criteria of filter
@@ -812,7 +792,7 @@ class Form(
                     'id').options(ondelete='cascade'))
     model = String(foreign_key=Declarations.Model.System.Model.use(
                     'name').options(ondelete='cascade'),
-                   nullable=False)
+                   nullable=False, size=256)
     template = String()
     polymorphic_columns = String()
     # TODO field Selection RO / RW / WO
