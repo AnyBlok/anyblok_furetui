@@ -20,6 +20,7 @@ def call_classmethod(request):
     body = request.json_body
     pks = body.get('pks', {})
     data = body.get('data', {})
+    data['authenticated_userid'] = request.authenticated_userid
     # TODO call security hooks
 
     with saved_errors_in_request(request):
