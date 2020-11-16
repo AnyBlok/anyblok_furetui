@@ -1,7 +1,7 @@
 import pytest
 from anyblok import Declarations
 from anyblok.config import get_db_name
-from anyblok_furetui import furet_ui_call
+from anyblok_furetui import exposed_method
 from anyblok.column import String
 from anyblok.tests.conftest import (  # noqa F401
     init_registry_with_bloks,
@@ -21,23 +21,23 @@ def add_core_in_registry():
     @register(Core)
     class Base:
 
-        @furet_ui_call(is_classmethod=True)
+        @exposed_method(is_classmethod=True)
         def on_classmethod(cls, param=None):
             pass
 
-        @furet_ui_call(is_classmethod=False)
+        @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
             pass
 
-        @furet_ui_call(request='request')
+        @exposed_method(request='request')
         def with_request(cls, request, param=None):
             pass
 
-        @furet_ui_call(authenticated_userid='user')
+        @exposed_method(authenticated_userid='user')
         def with_authenticated_userid(cls, user, param=None):
             pass
 
-        @furet_ui_call(resource='resource')
+        @exposed_method(resource='resource')
         def with_resource(cls, resource, param=None):
             pass
 
@@ -47,23 +47,23 @@ def add_mixin_in_registry():
     @register(Mixin)
     class MixinTest:
 
-        @furet_ui_call(is_classmethod=True)
+        @exposed_method(is_classmethod=True)
         def on_classmethod(cls, param=None):
             pass
 
-        @furet_ui_call(is_classmethod=False)
+        @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
             pass
 
-        @furet_ui_call(request='request')
+        @exposed_method(request='request')
         def with_request(cls, request, param=None):
             pass
 
-        @furet_ui_call(authenticated_userid='user')
+        @exposed_method(authenticated_userid='user')
         def with_authenticated_userid(cls, user, param=None):
             pass
 
-        @furet_ui_call(resource='resource')
+        @exposed_method(resource='resource')
         def with_resource(cls, resource, param=None):
             pass
 
@@ -73,24 +73,24 @@ def add_model_in_registry():
     @register(Model)
     class Test:
 
-        @furet_ui_call(is_classmethod=True)
+        @exposed_method(is_classmethod=True)
         def on_classmethod(cls, param=None):
             return super(cls, Test).on_classmethod(param=param)
 
-        @furet_ui_call(is_classmethod=False)
+        @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
             return super(self, Test).on_method(param=param)
 
-        @furet_ui_call(request='request')
+        @exposed_method(request='request')
         def with_request(cls, request, param=None):
             return super(cls, Test).with_request(request, param=param)
 
-        @furet_ui_call(authenticated_userid='user')
+        @exposed_method(authenticated_userid='user')
         def with_authenticated_userid(cls, user, param=None):
             return super(cls, Test).with_authenticated_userid(
                 user, param=param)
 
-        @furet_ui_call(resource='resource')
+        @exposed_method(resource='resource')
         def with_resource(cls, resource, param=None):
             return super(cls, Test).with_resource(resource, param=param)
 

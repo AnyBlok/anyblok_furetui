@@ -27,8 +27,8 @@ def authorized_user(request, *a, **kw):
             request.errors.status = 405
 
 
-def furet_ui_call(is_classmethod=True, request=None, authenticated_userid=None,
-                  resource=None):
+def exposed_method(is_classmethod=True, request=None, authenticated_userid=None,
+                   resource=None):
 
     def wrapper(func):
         return func

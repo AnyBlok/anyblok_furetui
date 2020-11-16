@@ -7,6 +7,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
+from pyramid.httpexceptions import HTTPUnauthorized
 from .template import Template
 from anyblok.blok import BlokManager
 from anyblok.config import Configuration
@@ -135,7 +136,10 @@ class FuretUI:
         return True
 
     @classmethod
-    def call_by_api(cls, request, resource=None, model=None, call=None,
-                    data=None, pks=None):
+    def call_exposed_method(cls, request, resource=None, model=None, call=None,
+                            data=None, pks=None):
+        if call not in cls.registry.exposed_methods.get(model, {}):
+            raise HTTPUnauthorized(f'the method {call} is not exposed')
+
         res = None
         return res
