@@ -75,24 +75,24 @@ def add_model_in_registry():
 
         @exposed_method(is_classmethod=True)
         def on_classmethod(cls, param=None):
-            return super(cls, Test).on_classmethod(param=param)
+            return super(Test, cls).on_classmethod(param=param)
 
         @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
-            return super(self, Test).on_method(param=param)
+            return super(Test, self).on_method(param=param)
 
         @exposed_method(request='request')
         def with_request(cls, request, param=None):
-            return super(cls, Test).with_request(request, param=param)
+            return super(Test, cls).with_request(request, param=param)
 
         @exposed_method(authenticated_userid='user')
         def with_authenticated_userid(cls, user, param=None):
-            return super(cls, Test).with_authenticated_userid(
+            return super(Test, cls).with_authenticated_userid(
                 user, param=param)
 
         @exposed_method(resource='resource')
         def with_resource(cls, resource, param=None):
-            return super(cls, Test).with_resource(resource, param=param)
+            return super(Test, cls).with_resource(resource, param=param)
 
 
 def _with_call_method(oncore=False, onmixin=False, onmodel=False):
@@ -114,18 +114,22 @@ def _with_call_method(oncore=False, onmixin=False, onmodel=False):
         def not_decorated(cls):
             return True  # must be raised
 
+        @classmethod
         def on_classmethod(cls, param=None):
             return param
 
         def on_method(self, param=None):
-            return self.id, param
+            return self.code, param
 
+        @classmethod
         def with_request(cls, request, param=None):
             return request.anyblok.registry.db_name, param
 
+        @classmethod
         def with_authenticated_userid(cls, user, param=None):
             return user, param
 
+        @classmethod
         def with_resource(cls, resource, param=None):
             return resource.id, param
 
@@ -176,25 +180,25 @@ class TestCallMethod:
         return webserver.post_json(url, params, status=status)
 
     def test_undecorated_method(self, webserver, registry_call_method):
-        self.call(webserver, 'not_decorated', status=403)
+        self.call(webserver, 'not_decorated', status=401)
 
     def test_decorated_classmethod(self, webserver, registry_call_method):
         response = self.call(webserver, 'on_classmethod')
-        assert response.data == 1
+        assert response.json_body == 1
 
     def test_decorated_method(self, webserver, registry_call_method):
         registry_call_method.Test.insert(code='test')
         response = self.call(webserver, 'on_method')
-        assert response.data == ('test', 1)
+        assert response.json_body == ['test', 1]
 
     def test_decorated_with_request(self, webserver, registry_call_method):
         response = self.call(webserver, 'with_request')
-        assert response.data == (get_db_name(), 1)
+        assert response.json_body == (get_db_name(), 1)
 
     def test_decorated_with_authenticated_user(self, webserver,
                                                registry_call_method):
         response = self.call(webserver, 'with_authenticated_userid')
-        assert response.data == ('test', 1)
+        assert response.json_body == ('test', 1)
 
     def test_decorated_with_resource(self, webserver, registry_call_method):
         resource = registry_call_method.FuretUI.Resource.Custom.insert(
@@ -203,7 +207,7 @@ class TestCallMethod:
         url = f'/furet-ui/resource/{resource.id}/model/Model.Test/call/{call}'
         params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
         response = webserver.post_json(url, params)
-        assert response.data == (resource.id, 1)
+        assert response.json_body == (resource.id, 1)
 
     @pytest.mark.skip()
     def test_decorated_with_permission(self, webserver, registry_call_method):

@@ -8,6 +8,7 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
 from pyramid.httpexceptions import HTTPUnauthorized
+from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from .template import Template
 from anyblok.blok import BlokManager
 from anyblok.config import Configuration
@@ -139,7 +140,16 @@ class FuretUI:
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
         if call not in cls.registry.exposed_methods.get(model, {}):
-            raise HTTPUnauthorized(f'the method {call} is not exposed')
+            raise HTTPUnauthorized(f"the method '{call}' is not exposed")
+
+        definition = cls.registry.exposed_methods[model][call]
+        args = []
+        obj = cls.registry.get(model)
+        if definition['is_classmethod'] is False:
+            obj = obj.from_primary_keys(**pks)
 
         res = None
+        with saved_errors_in_request(request):
+            res = getattr(obj, call)(*args, **data)
+
         return res

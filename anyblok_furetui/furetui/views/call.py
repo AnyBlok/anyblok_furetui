@@ -1,5 +1,4 @@
 from anyblok_pyramid import current_blok
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 from anyblok_furetui.security import authorized_user
 
@@ -20,9 +19,8 @@ def call_classmethod(request):
     body = request.json_body
     # TODO call security hooks
 
-    with saved_errors_in_request(request):
-        res = registry.FuretUI.call_by_api(request, **params, **body)
-        if res is None:
-            return []
+    res = registry.FuretUI.call_exposed_method(request, **params, **body)
+    if res is None:
+        return []
 
-        return res
+    return res
