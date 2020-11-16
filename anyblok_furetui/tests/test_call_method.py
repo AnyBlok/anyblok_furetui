@@ -171,7 +171,7 @@ class TestCallMethod:
         return
 
     def call(self, webserver, call, status=200):
-        url = '/furet-ui/resource/0/model/Model.Test/call/%s' % call
+        url = f'/furet-ui/resource/0/model/Model.Test/call/{call}'
         params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
         webserver.post_json(url, params, status=status)
 
