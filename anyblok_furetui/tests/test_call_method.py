@@ -127,7 +127,7 @@ def _with_call_method(oncore=False, onmixin=False, onmodel=False):
             return user, param
 
         def with_resource(cls, resource, param=None):
-            return resource, param
+            return resource.id, param
 
     if onmodel:
         add_model_in_registry()
@@ -173,7 +173,7 @@ class TestCallMethod:
     def call(self, webserver, call, status=200):
         url = f'/furet-ui/resource/0/model/Model.Test/call/{call}'
         params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
-        webserver.post_json(url, params, status=status)
+        return webserver.post_json(url, params, status=status)
 
     def test_undecorated_method(self, webserver, registry_call_method):
         self.call(webserver, 'not_decorated', status=403)
@@ -197,8 +197,13 @@ class TestCallMethod:
         assert response.data == ('test', 1)
 
     def test_decorated_with_resource(self, webserver, registry_call_method):
-        response = self.call(webserver, 'with_resource')
-        assert response.data == ('0', 1)
+        resource = registry_call_method.FuretUI.Resource.Custom.insert(
+            component='test')
+        call = 'with_resource'
+        url = f'/furet-ui/resource/{resource.id}/model/Model.Test/call/{call}'
+        params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
+        response = webserver.post_json(url, params)
+        assert response.data == (resource.id, 1)
 
     @pytest.mark.skip()
     def test_decorated_with_permission(self, webserver, registry_call_method):

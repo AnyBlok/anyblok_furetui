@@ -133,3 +133,9 @@ class FuretUI:
     @classmethod
     def check_security(cls, request):
         return True
+
+    @classmethod
+    def call_by_api(cls, request, resource=None, model=None, call=None,
+                    data=None, pks=None):
+        res = None
+        return res
