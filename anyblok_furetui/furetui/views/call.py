@@ -18,18 +18,10 @@ def call_classmethod(request):
     registry = request.anyblok.registry
     params = request.matchdict
     body = request.json_body
-    pks = body.get('pks', {})
-    data = body.get('data', {})
-    data['authenticated_userid'] = request.authenticated_userid
     # TODO call security hooks
 
     with saved_errors_in_request(request):
-        Model = registry.get(params['model'])
-        obj = Model
-        if pks:
-            obj = Model.from_primary_keys(**pks)
-
-        res = getattr(obj, params['call'])(**data)
+        res = registry.FuretUI.call_by_api(request, **params, **body)
         if res is None:
             return []
 

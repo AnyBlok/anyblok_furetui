@@ -37,6 +37,10 @@ def add_core_in_registry():
         def with_authenticated_userid(cls, user, param=None):
             pass
 
+        @furet_ui_call(resource='resource')
+        def with_resource(cls, resource, param=None):
+            pass
+
 
 def add_mixin_in_registry():
 
@@ -57,6 +61,10 @@ def add_mixin_in_registry():
 
         @furet_ui_call(authenticated_userid='user')
         def with_authenticated_userid(cls, user, param=None):
+            pass
+
+        @furet_ui_call(resource='resource')
+        def with_resource(cls, resource, param=None):
             pass
 
 
@@ -81,6 +89,10 @@ def add_model_in_registry():
         def with_authenticated_userid(cls, user, param=None):
             return super(cls, Test).with_authenticated_userid(
                 user, param=param)
+
+        @furet_ui_call(resource='resource')
+        def with_resource(cls, resource, param=None):
+            return super(cls, Test).with_resource(resource, param=param)
 
 
 def _with_call_method(oncore=False, onmixin=False, onmodel=False):
@@ -113,6 +125,9 @@ def _with_call_method(oncore=False, onmixin=False, onmodel=False):
 
         def with_authenticated_userid(cls, user, param=None):
             return user, param
+
+        def with_resource(cls, resource, param=None):
+            return resource, param
 
     if onmodel:
         add_model_in_registry()
