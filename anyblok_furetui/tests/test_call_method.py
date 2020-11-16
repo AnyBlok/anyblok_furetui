@@ -196,6 +196,10 @@ class TestCallMethod:
         response = self.call(webserver, 'with_authenticated_userid')
         assert response.data == ('test', 1)
 
+    def test_decorated_with_resource(self, webserver, registry_call_method):
+        response = self.call(webserver, 'with_resource')
+        assert response.data == ('0', 1)
+
     @pytest.mark.skip()
     def test_decorated_with_permission(self, webserver, registry_call_method):
         raise Exception('NotImplemented')
