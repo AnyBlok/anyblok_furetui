@@ -209,7 +209,7 @@ KWARGS = [
 def registry_call_method(request, webserver, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui"], _with_call_method,
+        ["furetui", "auth", "auth-password"], _with_call_method,
         **request.param
     )
     registry.Pyramid.User.insert(login='test')
