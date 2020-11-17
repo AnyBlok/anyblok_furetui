@@ -237,6 +237,11 @@ class TestMenuInSpace(Mixin):
         menus = space.get_menus('')
         self.checkMenus(rollback_registry, menus)
 
+    def test_for_user(self, rollback_registry):
+        space = self.import_space_definition(rollback_registry)
+        spaces = space.get_for_user('')
+        assert spaces.all().code == ['test']
+
 
 @pytest.mark.usefixtures('rollback_registry')
 class TestMenuInResource(Mixin):
