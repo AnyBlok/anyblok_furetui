@@ -405,7 +405,7 @@ class Template:
             self_copy.known[tmpl_name] = {
                 'tmpl': [x for x in self.known[tmpl_name]['tmpl']],
             }
-            if self.known[tmpl_name]['extend']:
+            if 'extend' in self.known[tmpl_name]:
                 self_copy.known[tmpl_name]['extend'] = self.known[tmpl_name][
                     'extend']
 
