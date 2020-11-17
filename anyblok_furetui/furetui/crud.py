@@ -66,7 +66,10 @@ class CRUD:
         Model = cls.registry.get(model)
         adapter = Model.get_furetui_adapter()
         qs = QueryString(request, Model, adapter=adapter)
-        query = qs.Model.query()
+        query = cls.registry.Pyramid.restrict_query_by_user(
+            qs.Model.query(),
+            request.authenticated_userid
+        )
         query = qs.from_filter_by(query)
         query = qs.from_tags(query)
 
