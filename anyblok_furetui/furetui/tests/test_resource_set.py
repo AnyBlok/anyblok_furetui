@@ -13,14 +13,19 @@ class TestResourceSet:
         resource = rollback_registry.FuretUI.Resource.Set.insert(
             code='test-set-resource', form=resource_form, list=resource_list)
 
+        acl = True
+        auth = rollback_registry.System.Blok.query().get('auth')
+        if auth.state == 'installed':
+            acl = False
+
         assert resource.get_definitions() == [
             {
                 'type': 'set',
                 'id': resource.id,
-                'can_create': True,
-                'can_delete': True,
-                'can_read': True,
-                'can_update': True,
+                'can_create': acl,
+                'can_delete': acl,
+                'can_read': acl,
+                'can_update': acl,
                 'form': resource_form.id,
                 'multi': resource_list.id,
                 'pks': ['name'],
