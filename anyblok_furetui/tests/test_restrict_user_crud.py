@@ -1,17 +1,13 @@
 from urllib.parse import urlencode
-from pyramid.httpexceptions import HTTPForbidden
 
 import pytest
 from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2One
-from anyblok.tests.conftest import (  # noqa F401
-    base_loaded,
-    bloks_loaded,
-    init_registry_with_bloks,
-)
+from anyblok.tests.conftest import (base_loaded, bloks_loaded,  # noqa F401
+                                    init_registry_with_bloks)
 from anyblok_pyramid.bloks.pyramid.restrict import restrict_query_by_user
-
+from pyramid.httpexceptions import HTTPForbidden
 # from pyramid.testing import DummyRequest
 from pyramid.request import Request
 
@@ -91,6 +87,25 @@ def registry(request, init_registry):
     return init_registry
 
 
+def test_create_restrict(registry):
+    team1 = registry.Team.query().filter_by(name="Team 1").one()
+    with pytest.raises(HTTPForbidden) as ex:
+        data = {"name": "test create", "team_id": team1.id}
+        registry.FuretUI.CRUD.create(
+            "Model.Order",
+            "fake_uuid",
+            {
+                "Model.Order": {"new": {"fake_uuid": data}},
+            },
+            "user2",
+        )
+    assert (
+        ex.value.detail == f"Your are not allowed to create this object "
+        f"Model.Order({{'id': 4}}) with given data: "
+        f"{{'name': 'test create', 'team_id': {team1.id}}}"
+    )
+
+
 def test_restrict_read_by_user(registry):
     resutls = registry.FuretUI.CRUD.read(
         DummyRequest(
@@ -130,6 +145,43 @@ def test_restrict_read_by_user2(registry):
     ]
 
 
+def test_update_not_allowed_object(registry):
+    order = registry.Order.query().filter_by(name="Order 2.1").one()
+    team1 = registry.Team.query().filter_by(name="Team 1").one()
+    with pytest.raises(HTTPForbidden) as ex:
+        registry.FuretUI.CRUD.update(
+            "Model.Order",
+            {"id": order.id},
+            {
+                "Model.Order": {f'[["id",{order.id}]]': {"team_id": team1.id}},
+            },
+            "user1",
+        )
+    assert (
+        ex.value.detail == f"Your are not allowed to update this object "
+        f"Model.Order: {{'id': {order.id}}}."
+    )
+
+
+def test_update_not_allowed_data(registry):
+    order = registry.Order.query().filter_by(name="Order 1.1").one()
+    team2 = registry.Team.query().filter_by(name="Team 2").one()
+    with pytest.raises(HTTPForbidden) as ex:
+        data = {"team_id": team2.id}
+        registry.FuretUI.CRUD.update(
+            "Model.Order",
+            {"id": order.id},
+            {
+                "Model.Order": {f'[["id",{order.id}]]': data},
+            },
+            "user1",
+        )
+    assert (
+        ex.value.detail == f"Your are not allowed to update this object "
+        f"Model.Order({{'id': {order.id}}}) with given data: {data}"
+    )
+
+
 def test_delete_for_user1(registry):
     order = registry.Order.query().filter_by(name="Order 1.1").one()
     registry.FuretUI.CRUD.delete(
@@ -148,7 +200,6 @@ def test_restrict_delete_for_user1(registry):
             "user1",
         )
     assert (
-        ex.value.detail
-        == f"Your are not allowed to remove this object "
-           f"Model.Order: {{'id': {order.id}}}"
+        ex.value.detail == f"Your are not allowed to remove this object "
+        f"Model.Order: {{'id': {order.id}}}"
     )

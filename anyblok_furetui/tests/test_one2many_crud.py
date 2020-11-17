@@ -1,16 +1,10 @@
 import pytest
-
 from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2One, One2Many
+from anyblok.tests.conftest import (base_loaded, bloks_loaded,  # noqa F401
+                                    init_registry_with_bloks, reset_db)
 from sqlalchemy import ForeignKeyConstraint
-from anyblok.tests.conftest import (  # noqa F401
-    init_registry_with_bloks,
-    reset_db,
-    bloks_loaded,
-    base_loaded,
-)
-
 
 register = Declarations.register
 Model = Declarations.Model
@@ -209,6 +203,7 @@ class Testone2many:
                     }
                 },
             },
+            "fakeuser",
         )
 
         assert order.name == "Order One"

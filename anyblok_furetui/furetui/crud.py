@@ -142,12 +142,15 @@ class CRUD:
         return linked_data
 
     @classmethod
-    def create(cls, model, uuid, changes):
-        res = cls.create_or_update(model, {"uuid": uuid}, changes)
+    def create(cls, model, uuid, changes, authenticated_userid):
+        res = cls.create_or_update(
+            model, {"uuid": uuid}, changes, authenticated_userid)
         return res
 
     @classmethod
-    def create_or_update(cls, model, pks, changes, **remote):
+    def create_or_update(
+        cls, model, pks, changes, authenticated_userid, **remote
+    ):
         Model = cls.registry.get(model)
         data = {}
         new = True
@@ -175,9 +178,24 @@ class CRUD:
         if new:
             new_obj = Model.furetui_insert(**data, **remote)
         else:
-            new_obj = Model.from_primary_keys(**pks)
+            new_obj = cls.ensure_object_access(
+                Model,
+                pks,
+                authenticated_userid,
+                f"Your are not allowed to update "
+                f"this object {model}: {pks}."
+            )
             new_obj.furetui_update(**data)
-        cls.resolve_linked_data(new_obj, linked_data, changes)
+        new_obj = cls.ensure_object_access(
+            Model,
+            new_obj.to_primary_keys(),
+            authenticated_userid,
+            f"Your are not allowed to {'create' if new else 'update'} "
+            f"this object {model}({new_obj.to_primary_keys()}) with given "
+            f"data: {data}"
+        )
+        cls.resolve_linked_data(
+            new_obj, linked_data, changes, authenticated_userid)
         return new_obj
 
     @classmethod_cache()
@@ -188,8 +206,9 @@ class CRUD:
         return fk.column.name
 
     @classmethod
-    def create_or_update_linked_data(cls, new_obj, linked_field,
-                                     primary_key, changes):
+    def create_or_update_linked_data(
+        cls, new_obj, linked_field, primary_key, changes, authenticated_userid
+    ):
         if linked_field['type'] == 'One2Many':
             m2o = {}
             if linked_field['remote_name']:
@@ -203,6 +222,7 @@ class CRUD:
                 linked_field["model"],
                 primary_key,
                 changes,
+                authenticated_userid,
                 **m2o
             )
         else:
@@ -211,11 +231,14 @@ class CRUD:
                     linked_field["model"],
                     primary_key,
                     changes,
+                    authenticated_userid,
                 )
             )
 
     @classmethod
-    def resolve_linked_data(cls, new_obj, linked_data, changes):
+    def resolve_linked_data(
+        cls, new_obj, linked_data, changes, authenticated_userid
+    ):
         for linked_field in linked_data:
             linked_model = cls.registry.get(linked_field["model"])
             linked_model_pks = set(linked_model.get_primary_keys())
@@ -229,7 +252,11 @@ class CRUD:
                         primary_key[key] = linked_instance[key]
                 if state in ["ADDED", "UPDATED"]:
                     cls.create_or_update_linked_data(
-                        new_obj, linked_field, primary_key, changes)
+                        new_obj,
+                        linked_field,
+                        primary_key,
+                        changes,
+                        authenticated_userid)
                 elif state in ["DELETED"]:
                     linked_obj = linked_model.from_primary_keys(
                         **primary_key)
@@ -249,12 +276,23 @@ class CRUD:
                     )
 
     @classmethod
-    def update(cls, model, pks, changes):
-        return cls.create_or_update(model, pks, changes)
+    def update(cls, model, pks, changes, authenticated_userid):
+        return cls.create_or_update(model, pks, changes, authenticated_userid)
 
     @classmethod
     def delete(cls, model, pks, authenticated_userid):
         Model = cls.registry.get(model)
+        obj = cls.ensure_object_access(
+            Model,
+            pks,
+            authenticated_userid,
+            f"Your are not allowed to remove "
+            f"this object {model}: {pks}"
+        )
+        obj.furetui_delete()
+
+    @classmethod
+    def ensure_object_access(cls, Model, pks, authenticated_userid, msg):
         query = cls.registry.Pyramid.restrict_query_by_user(
             Model.query_from_primary_keys(**pks),
             authenticated_userid
@@ -262,7 +300,5 @@ class CRUD:
         obj = query.first()
         if not obj:
             raise HTTPForbidden(
-                detail=f"Your are not allowed to remove "
-                       f"this object {model}: {pks}"
-            )
-        obj.furetui_delete()
+                detail=msg)
+        return obj
