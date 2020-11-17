@@ -24,11 +24,12 @@ class SqlMixin:
 
     @classmethod_cache()
     def get_filter_fields(cls):
-        if cls._display_fields is not None:
-            if isinstance(cls._display_fields, (list, set, tuple)):
-                return cls._display_fields
+        filter_fields = cls._filter_fields or cls._display_fields
+        if filter_fields is not None:
+            if isinstance(filter_fields, (list, set, tuple)):
+                return filter_fields
 
-            return [cls._display_fields]
+            return [filter_fields]
 
         for field in ('label', 'title', 'name', 'code'):
             if hasattr(cls, field):
