@@ -1,4 +1,5 @@
 from urllib.parse import urlencode
+from pyramid.httpexceptions import HTTPForbidden
 
 import pytest
 from anyblok import Declarations
@@ -127,3 +128,27 @@ def test_restrict_read_by_user2(registry):
         "Order 2.1",
         "Order 2.2",
     ]
+
+
+def test_delete_for_user1(registry):
+    order = registry.Order.query().filter_by(name="Order 1.1").one()
+    registry.FuretUI.CRUD.delete(
+        "Model.Order",
+        {"id": order.id},
+        "user1",
+    )
+
+
+def test_restrict_delete_for_user1(registry):
+    order = registry.Order.query().filter_by(name="Order 2.1").one()
+    with pytest.raises(HTTPForbidden) as ex:
+        registry.FuretUI.CRUD.delete(
+            "Model.Order",
+            {"id": order.id},
+            "user1",
+        )
+    assert (
+        ex.value.detail
+        == f"Your are not allowed to remove this object "
+           f"Model.Order: {{'id': {order.id}}}"
+    )

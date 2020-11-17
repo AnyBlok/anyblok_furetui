@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pyramid.httpexceptions import HTTPForbidden
 
 from anyblok.declarations import Declarations, classmethod_cache
 from sqlalchemy.orm import load_only, joinedload, subqueryload
@@ -252,7 +253,16 @@ class CRUD:
         return cls.create_or_update(model, pks, changes)
 
     @classmethod
-    def delete(cls, model, pks):
+    def delete(cls, model, pks, authenticated_userid):
         Model = cls.registry.get(model)
-        obj = Model.from_primary_keys(**pks)
+        query = cls.registry.Pyramid.restrict_query_by_user(
+            Model.query_from_primary_keys(**pks),
+            authenticated_userid
+        )
+        obj = query.first()
+        if not obj:
+            raise HTTPForbidden(
+                detail=f"Your are not allowed to remove "
+                       f"this object {model}: {pks}"
+            )
         obj.furetui_delete()

@@ -59,7 +59,7 @@ def crud_delete(request):
         model = data['model']
         pks = dict(json.loads(data['pks']))
 
-        registry.FuretUI.CRUD.delete(model, pks)
+        registry.FuretUI.CRUD.delete(model, pks, request.authenticated_userid)
         return {
             'pks': pks,
         }
