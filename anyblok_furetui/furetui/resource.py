@@ -715,6 +715,9 @@ class List(Declarations.Model.FuretUI.Resource):
                 else:
                     headers.append(self.field_for_(field, fields2read))
 
+        fields2read = list(set(fields2read))
+        fields2read.sort()
+
         res = [{
             'id': self.id,
             'type': self.type.label.lower(),

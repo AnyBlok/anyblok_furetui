@@ -164,6 +164,10 @@ class Template:
 
         self.known[name]['tmpl'].append(element)
 
+    def load_template_from_str(self, template):
+        el = html.fromstring(template)
+        self.load_template(el)
+
     def get_xpath(self, element):
         """ Find and return the xpath found in the template
 
@@ -393,3 +397,16 @@ class Template:
         """ compile all the templates """
         for tmpl in self.known.keys():
             self.compile_template(tmpl)
+
+    def copy(self):
+        """ copy all the templates """
+        self_copy = Template(forclient=self.forclient)
+        for tmpl_name in self.known.keys():
+            self_copy.known[tmpl_name] = {
+                'tmpl': [x for x in self.known[tmpl_name]['tmpl']],
+            }
+            if self.known[tmpl_name]['extend']:
+                self_copy.known[tmpl_name]['extend'] = self.known[tmpl_name][
+                    'extend']
+
+        return self_copy
