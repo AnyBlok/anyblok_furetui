@@ -45,7 +45,7 @@ class TestViewResource:
             component='test')
         rollback_registry.IO.Mapping.set('tmp_resource', resource)
         response = webserver.post_json(
-            f'/furet-ui/open/resource/tmp_resource',
+            '/furet-ui/open/resource/tmp_resource',
             {
                 'params': {},
                 'route': 'route_name',
@@ -77,7 +77,7 @@ class TestViewResource:
 
     def test_open_resource_without_mapping(self, webserver, rollback_registry):
         webserver.post_json(
-            f'/furet-ui/open/resource/tmp_resource',
+            '/furet-ui/open/resource/tmp_resource',
             {'params': {}, 'route': 'route_name'},
             status=500
         )
