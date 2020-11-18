@@ -1,18 +1,12 @@
-import pytest
-
-from pyramid.request import Request
 from urllib.parse import urlencode
 
+import pytest
 from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2Many, Many2One
-from anyblok.tests.conftest import (  # noqa F401
-    init_registry_with_bloks,
-    reset_db,
-    bloks_loaded,
-    base_loaded,
-)
-
+from anyblok.tests.conftest import (base_loaded, bloks_loaded,  # noqa F401
+                                    init_registry_with_bloks, reset_db)
+from pyramid.request import Request
 
 register = Declarations.register
 Model = Declarations.Model
@@ -178,6 +172,7 @@ class TestMany2Many:
                     "new": {"fake_uuid_building": {"name": "Bat A."}}
                 },
             },
+            "fakeuser",
         )
 
         assert person.name == "Pierre Verkest"
@@ -445,6 +440,7 @@ class TestMany2Many:
                     },
                 },
             },
+            "fakeuser",
         )
         assert sorted(self.person.addresses.city) == [
             "ADDED",

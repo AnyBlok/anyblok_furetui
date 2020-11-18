@@ -23,7 +23,8 @@ def crud_create(request):
         model = data['model']
         uuid = data['uuid']
         changes = deepcopy(data['changes'])
-        obj = registry.FuretUI.CRUD.create(model, uuid, changes)
+        obj = registry.FuretUI.CRUD.create(
+            model, uuid, changes, request.authenticated_userid)
         return {
             'pks': obj.to_primary_keys(),
         }
@@ -44,7 +45,8 @@ def crud_update(request):
         pks = data['pks']
         changes = deepcopy(data['changes'])
 
-        obj = registry.FuretUI.CRUD.update(model, pks, changes)
+        obj = registry.FuretUI.CRUD.update(
+            model, pks, changes, request.authenticated_userid)
         # create_or_update(registry, changes, firstmodel=model)
         return {
             'pks': obj.to_primary_keys(),
@@ -59,7 +61,7 @@ def crud_delete(request):
         model = data['model']
         pks = dict(json.loads(data['pks']))
 
-        registry.FuretUI.CRUD.delete(model, pks)
+        registry.FuretUI.CRUD.delete(model, pks, request.authenticated_userid)
         return {
             'pks': pks,
         }
