@@ -3,12 +3,7 @@ from anyblok import Declarations
 from anyblok.config import get_db_name
 from anyblok_furetui import exposed_method
 from anyblok.column import String
-from anyblok.tests.conftest import (  # noqa F401
-    init_registry_with_bloks,
-    reset_db,
-    bloks_loaded,
-    base_loaded,
-)
+from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 
 
 register = Declarations.register
@@ -240,7 +235,7 @@ class TestCallMethod:
         return webserver.post_json(url, params, status=status)
 
     def test_undecorated_method(self, webserver, registry_call_method):
-        self.call(webserver, 'not_decorated', status=401)
+        self.call(webserver, 'not_decorated', status=403)
 
     def test_decorated_classmethod(self, webserver, registry_call_method):
         response = self.call(webserver, 'on_classmethod')
