@@ -182,7 +182,7 @@ class CRUD:
                 Model,
                 pks,
                 authenticated_userid,
-                f"Your are not allowed to update "
+                f"You are not allowed to update "
                 f"this object {model}: {pks}."
             )
             new_obj.furetui_update(**data)
@@ -190,7 +190,7 @@ class CRUD:
             Model,
             new_obj.to_primary_keys(),
             authenticated_userid,
-            f"Your are not allowed to {'create' if new else 'update'} "
+            f"You are not allowed to {'create' if new else 'update'} "
             f"this object {model}({new_obj.to_primary_keys()}) with given "
             f"data: {data}"
         )
@@ -258,20 +258,36 @@ class CRUD:
                         changes,
                         authenticated_userid)
                 elif state in ["DELETED"]:
-                    linked_obj = linked_model.from_primary_keys(
-                        **primary_key)
+                    linked_obj = cls.ensure_object_access(
+                        linked_model,
+                        primary_key,
+                        authenticated_userid,
+                        f"You are not allowed to delete this object "
+                        f"{linked_field['model']}({primary_key}) "
+                        f"linked to {new_obj}."
+                    )
                     if linked_obj:
                         linked_obj.furetui_delete()
                 elif state in ["LINKED"]:
                     getattr(new_obj, linked_field["field"]).append(
-                        linked_model.from_primary_keys(
-                            **primary_key
+                        cls.ensure_object_access(
+                            linked_model,
+                            primary_key,
+                            authenticated_userid,
+                            f"You are not allowed to link this object "
+                            f"{linked_field['model']}({primary_key}) "
+                            f"with {new_obj}."
                         )
                     )
                 elif state in ["UNLINKED"]:
                     getattr(new_obj, linked_field["field"]).remove(
-                        linked_model.from_primary_keys(
-                            **primary_key
+                        cls.ensure_object_access(
+                            linked_model,
+                            primary_key,
+                            authenticated_userid,
+                            f"You are not allowed to unlink this object "
+                            f"{linked_field['model']}({primary_key}) "
+                            f"linked to {new_obj}."
                         )
                     )
 
@@ -286,7 +302,7 @@ class CRUD:
             Model,
             pks,
             authenticated_userid,
-            f"Your are not allowed to remove "
+            f"You are not allowed to remove "
             f"this object {model}: {pks}"
         )
         obj.furetui_delete()
