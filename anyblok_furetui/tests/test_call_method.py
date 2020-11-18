@@ -89,9 +89,9 @@ def add_mixin_in_registry():
             pass
 
 
-def add_model_in_registry(MixinTest):
+def add_model_in_registry():
     @register(Model)
-    class Test(MixinTest):
+    class Test(Mixin.MixinTest):
         code = String(primary_key=True)
 
         def not_decorated(cls):
@@ -186,7 +186,7 @@ def _with_call_method(oncore=False, onmixin=False, onmodel=False):
     if onmixin:
         add_mixin_in_registry()
 
-    add_model_in_registry(MixinTest)
+    add_model_in_registry()
 
     if onmodel:
         add_model_with_decorator_in_registry()
