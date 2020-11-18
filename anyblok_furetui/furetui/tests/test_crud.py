@@ -163,6 +163,7 @@ class TestCreate:
                     }
                 },
             },
+            "fakeuser",
         )
         new_list = (
             rollback_registry.FuretUI.Resource.List.query()
@@ -452,6 +453,7 @@ class TestUpdate:
                     }
                 },
             },
+            "fake-user"
         )
         new_list = (
             rollback_registry.FuretUI.Resource.List.query()
