@@ -13,7 +13,6 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
-from uuid import uuid1
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -33,7 +32,6 @@ class Template:
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
-            'key': str(uuid1()),
         }
 
         for key in ('readonly', 'writable', 'hidden'):
@@ -397,7 +395,7 @@ class Template:
                 el, fields2read, 'readonly', 'hidden', 'writable')
 
             el.tag = 'furet-ui-tabs'
-            config['name'] = el.attrib.get('name', str(uuid1()))
+            config['name'] = el.attrib['name']
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
@@ -715,6 +713,9 @@ class List(Declarations.Model.FuretUI.Resource):
                 else:
                     headers.append(self.field_for_(field, fields2read))
 
+        fields2read = list(set(fields2read))
+        fields2read.sort()
+
         res = [{
             'id': self.id,
             'type': self.type.label.lower(),
@@ -805,7 +806,6 @@ class Form(
             template = self.registry.FuretUI.get_template(
                 self.template, tostring=False)
             template.tag = 'div'
-            template.set('key', str(uuid1()))
             fields = [el.attrib.get('name')
                       for el in template.findall('.//field')]
         else:
@@ -828,15 +828,16 @@ class Form(
                 continue
 
             sub_template.tag = 'div'
-            sub_template.set('key', str(uuid1()))
             template.remove(sub_template)
             res['%s_template' % tag] = self.encode_to_furetui(
                 sub_template, fields, fields2read)
 
+        body_template = self.encode_to_furetui(template, fields, fields2read)
+        fields2read = list(set(fields2read))
+        fields2read.sort()
         res.update({
-            'body_template': self.encode_to_furetui(
-                template, fields, fields2read),
-            'fields': list(set(fields2read)),
+            'body_template': body_template,
+            'fields': fields2read,
         })
         return [res]
 

@@ -78,7 +78,7 @@ def post_open_resource(request):
             },
             {
                 'type': 'UPDATE_CURRENT_RIGHT_MENUS',
-                'menus': resource.get_menus(),
+                'menus': resource.get_menus(userId),
             },
             {
                 'type': 'UPDATE_ROUTE',
