@@ -42,6 +42,6 @@ script:
   - py.test --cov-report=term --cov=anyblok_furetui anyblok_furetui/tests
   - dropdb travis_ci_test
   - anyblok_createdb --install-bloks furetui-auth furetui-filter-ip
-  - py.test --cov-report=term --cov=anyblok_furetui --cov-append anyblok_furetui/furetui
+  - py.test --cov-report=term --cov=anyblok_furetui --cov-append anyblok_furetui/furetui anyblok_furetui/ip anyblok_furetui/auth
 
 after_success: coveralls --data_file=.coverage --config_file=.coveragerc
