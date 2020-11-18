@@ -49,6 +49,10 @@ def add_core_in_registry():
         def with_resource2(cls, resource2=None, param=None):
             pass
 
+        @exposed_method(permission='do_something')
+        def with_permission(cls, param=None):
+            pass
+
 
 def add_mixin_in_registry():
 
@@ -86,6 +90,10 @@ def add_mixin_in_registry():
 
         @exposed_method(resource='resource2')
         def with_resource2(cls, resource2=None, param=None):
+            pass
+
+        @exposed_method(permission='do_something')
+        def with_permission(cls, param=None):
             pass
 
 
@@ -128,6 +136,8 @@ def add_model_in_registry():
         @classmethod
         def with_resource2(cls, resource2, param=None):
             return resource2.id, param
+
+        with_permission = on_classmethod
 
 
 def add_model_with_decorator_in_registry():
@@ -173,8 +183,13 @@ def add_model_with_decorator_in_registry():
             return super(Test, cls).with_resource2(
                 resource2=resource2, param=param)
 
+        @exposed_method(permission='do_something')
+        def with_permission(cls, param=None):
+            return super(Test, cls).with_permission(param=param)
 
-def _with_call_method(oncore=False, onmixin=False, onmodel=False):
+
+def _with_call_method(oncore=False, onmixin=False, onmodel=False,
+                      permission=None):
 
     if oncore:
         add_core_in_registry()
@@ -204,8 +219,8 @@ KWARGS = [
 def registry_call_method(request, webserver, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui", "auth", "auth-password"], _with_call_method,
-        **request.param
+        ["furetui", "auth", "auth-password", "authorization"],
+        _with_call_method, **request.param
     )
     registry.Pyramid.User.insert(login='test')
     registry.Pyramid.CredentialStore.insert(
@@ -284,6 +299,13 @@ class TestCallMethod:
         self.call_with_resource(
             registry_call_method, webserver, 'with_resource2')
 
-    @pytest.mark.skip()
+    def test_decorated_without_permission(self, webserver,
+                                          registry_call_method):
+        self.call(webserver, 'with_permission', status=403)
+
     def test_decorated_with_permission(self, webserver, registry_call_method):
-        raise Exception('NotImplemented')
+        registry_call_method.Pyramid.Authorization.insert(
+            model='Model.Test', login='test',
+            perms=dict(do_something=dict(matched=True)))
+        response = self.call(webserver, 'with_permission')
+        assert response.json_body == 1

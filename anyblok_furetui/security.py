@@ -63,8 +63,8 @@ def exposed_method(**kwargs):
                        (default None)
     """
     exposed_kwargs = dict(
-        is_classmethod=True, request=None, authenticated_userid=None,
-        resource=None)
+        is_classmethod=True, permission=None, request=None,
+        authenticated_userid=None, resource=None)
     exposed_kwargs.update(kwargs)
     autodoc = "**exposed_method** defined with the arguments {exposed_kwargs:r}"
 

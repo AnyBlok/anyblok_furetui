@@ -137,8 +137,8 @@ class FuretUI:
         return True
 
     @classmethod
-    def get_exposed_method_options(cls, request, resource, model, call, data,
-                                   pks):
+    def get_exposed_method_options(cls, request, permission, resource, model,
+                                   call, data, pks):
 
         def get_resource():
             if resource == '0':
@@ -164,12 +164,21 @@ class FuretUI:
 
         options = {}
         definition = cls.registry.exposed_methods[model][call]
+        permission = definition['permission']
+        userId = request.authenticated_userid
+        if permission is not None:
+            if not cls.registry.Pyramid.check_acl(
+                request.authenticated_userid, model, permission
+            ):
+                raise HTTPForbidden(
+                    f"'{userId}' is not allowed to access '{model}'")
+
         obj = cls.registry.get(model)
         if definition['is_classmethod'] is False:
             obj = obj.from_primary_keys(**pks)
 
         for (key, value) in cls.get_exposed_method_options(
-            request, resource, model, call, data, pks
+            request, permission, resource, model, call, data, pks
         ):
             if definition[key] is True:
                 options[key] = apply_value(value)
