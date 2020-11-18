@@ -171,7 +171,8 @@ class FuretUI:
                 request.authenticated_userid, model, permission
             ):
                 raise HTTPForbidden(
-                    f"'{userId}' is not allowed to access '{model}'")
+                    f"The user '{userId}' has not he permission '{permission}'"
+                    f" to access the model '{model}'")
 
         obj = cls.registry.get(model)
         if definition['is_classmethod'] is False:
