@@ -200,3 +200,21 @@ class Call(
         foreign_key=Declarations.Model.System.Model.use(
             'name').options(ondelete='cascade'))
     method = String(nullable=False, size=256)
+
+    @classmethod
+    def before_insert_orm_event(cls, mapper, connection, target):
+        target.is_an_exposed_method()
+
+    @classmethod
+    def before_update_orm_event(cls, mapper, connection, target):
+        target.is_an_exposed_method()
+
+    def is_an_exposed_method(self):
+        """When creating or updating a User.Authorization, check that all rules
+        objects exists or return an AuthorizationValidationException
+
+        :exception: AuthorizationValidationException
+        """
+        if self.method not in self.registry.exposed_methods.get(self.model, {}):
+            raise Exception(
+                f"'{self.model}=>{self.method}' is not an exposed method")

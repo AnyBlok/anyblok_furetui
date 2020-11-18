@@ -309,3 +309,33 @@ class TestCallMethod:
             perms=dict(do_something=dict(matched=True)))
         response = self.call(webserver, 'with_permission')
         assert response.json_body == 1
+
+    def test_menu_call_insert_with_an_exposed_method(
+        self, registry_call_method
+    ):
+        registry_call_method.FuretUI.Menu.Call.insert(
+            model='Model.Test', method='on_classmethod', label='Test')
+
+    def test_menu_call_insert_without_an_exposed_method(
+        self, registry_call_method
+    ):
+        with pytest.raises(Exception):
+            registry_call_method.FuretUI.Menu.Call.insert(
+                model='Model.Test', method='not_decorated', label='Test')
+
+    def test_menu_call_update_with_an_exposed_method(
+        self, registry_call_method
+    ):
+        menu = registry_call_method.FuretUI.Menu.Call.insert(
+            model='Model.Test', method='on_classmethod', label='Test')
+        menu.method = 'on_method'
+        registry_call_method.flush()
+
+    def test_menu_call_update_without_an_exposed_method(
+        self, registry_call_method
+    ):
+        menu = registry_call_method.FuretUI.Menu.Call.insert(
+            model='Model.Test', method='on_classmethod', label='Test')
+        with pytest.raises(Exception):
+            menu.method = 'not_decorated'
+            registry_call_method.flush()
