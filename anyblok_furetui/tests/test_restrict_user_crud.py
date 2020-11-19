@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 import re
 from urllib.parse import urlencode
 
@@ -5,130 +13,107 @@ import pytest
 from anyblok import Declarations
 from anyblok.column import Integer, String
 from anyblok.relationship import Many2Many, Many2One
-from anyblok.tests.conftest import (  # noqa F401
-    base_loaded,
-    bloks_loaded,
-    init_registry_with_bloks,
-)
 from anyblok_pyramid.bloks.pyramid.restrict import restrict_query_by_user
 from pyramid.httpexceptions import HTTPForbidden
 
-# from pyramid.testing import DummyRequest
-from pyramid.request import Request
+from .conftest import DummyRequest
 
 register = Declarations.register
 Model = Declarations.Model
 Mixin = Declarations.Mixin
 
 
-class DummyRequest(Request):
-    authenticated_userid = None
-
-    def __init__(self, login, *args, **kwargs):
-        self.authenticated_userid = login
-        super().__init__(*args, **kwargs)
+@pytest.fixture(scope="module")
+def bloks_to_install():
+    # here furetui-auth is not necessary only define a user model is required
+    # if furetui-auth is installed require to add model ACLs
+    return ["auth", "furetui"]
 
 
 @pytest.fixture(scope="module")
-def setup_registry(request, bloks_loaded):  # noqa F811
-    def setup(bloks, function, **kwargs):
-        registry = init_registry_with_bloks(bloks, function, **kwargs)
-        request.addfinalizer(registry.close)
-        return registry
+def add_model_in_registry():
+    def add_in_registry(*args, **kwargs):
+        @register(Model)
+        class Team:
+            id = Integer(primary_key=True)
+            name = String()
 
-    return setup
+        @register(Model.Pyramid)
+        class User:
+            team = Many2One(model=Model.Team)
 
+        @register(Mixin)
+        class TeamOwner:
+            team = Many2One(model=Model.Team)
 
-def add_model_in_registry(*args, **kwargs):
-    @register(Model)
-    class Team:
-        id = Integer(primary_key=True)
-        name = String()
+            @restrict_query_by_user()
+            def restric_by_user_team(cls, query, user):
+                User = cls.registry.Pyramid.User
+                return (
+                    query.join(cls.team)
+                    .join(User)
+                    .filter(User.login == user.login)
+                )
 
-    @register(Model.Pyramid)
-    class User:
-        team = Many2One(model=Model.Team)
+        @register(Model)
+        class Customer(Mixin.TeamOwner):
+            id = Integer(primary_key=True)
+            name = String()
 
-    @register(Mixin)
-    class TeamOwner:
-        team = Many2One(model=Model.Team)
+        @register(Model)
+        class Tag(Mixin.TeamOwner):
+            id = Integer(primary_key=True)
+            name = String()
 
-        @restrict_query_by_user()
-        def restric_by_user_team(cls, query, user):
-            User = cls.registry.Pyramid.User
-            return (
-                query.join(cls.team).join(User).filter(User.login == user.login)
+        @register(Model)
+        class Order(Mixin.TeamOwner):
+            id = Integer(primary_key=True)
+            name = String()
+            customer = Many2One(model=Model.Customer, one2many="orders")
+            tags = Many2Many(
+                model=Model.Tag,
+                join_table="join_order_tag",
+                remote_columns="id",
+                local_columns="id",
+                m2m_remote_columns="tag_id",
+                m2m_local_columns="order_id",
+                many2many="orders",
             )
 
-    @register(Model)
-    class Customer(Mixin.TeamOwner):
-        id = Integer(primary_key=True)
-        name = String()
-
-    @register(Model)
-    class Tag(Mixin.TeamOwner):
-        id = Integer(primary_key=True)
-        name = String()
-
-    @register(Model)
-    class Order(Mixin.TeamOwner):
-        id = Integer(primary_key=True)
-        name = String()
-        customer = Many2One(model=Model.Customer, one2many="orders")
-        tags = Many2Many(
-            model=Model.Tag,
-            join_table="join_order_tag",
-            remote_columns="id",
-            local_columns="id",
-            m2m_remote_columns="tag_id",
-            m2m_local_columns="order_id",
-            many2many="orders",
-        )
-
-
-def shared_data(registry):
-    team1 = registry.Team.insert(name="Team 1")
-    team2 = registry.Team.insert(name="Team 2")
-    registry.Pyramid.User.insert(login="user1", team=team1)
-    registry.Pyramid.User.insert(login="user2", team=team2)
-    tag10 = registry.Tag.insert(name="Tag 1.0", team=team1)
-    tag11 = registry.Tag.insert(name="Tag 1.1", team=team1)
-    registry.Tag.insert(name="Tag 2.0", team=team2)
-    tag2 = registry.Tag.insert(name="Tag 2.1", team=team2)
-    tag22 = registry.Tag.insert(name="Tag 2.2", team=team2)
-    customer1 = registry.Customer.insert(name="Customer 1", team=team1)
-    customer2 = registry.Customer.insert(name="Customer 2", team=team2)
-    registry.Order.insert(name="Order 1.1", team=team1, customer=customer1)
-    order12 = registry.Order.insert(
-        name="Order 1.2", team=team1, customer=customer1
-    )
-    registry.Order.insert(name="Order 1.3", team=team1, customer=customer1)
-    order12.tags.extend([tag10, tag11])
-    order21 = registry.Order.insert(
-        name="Order 2.1", team=team2, customer=customer2
-    )
-    order22 = registry.Order.insert(
-        name="Order 2.2", team=team2, customer=customer2
-    )
-    order21.tags.append(tag2)
-    order22.tags.extend([tag2, tag22])
+    return add_in_registry
 
 
 @pytest.fixture(scope="module")
-def init_registry(setup_registry):
-    registry = setup_registry(
-        ["auth", "furetui"],
-        add_model_in_registry,
-    )
-    shared_data(registry)
-    return registry
+def shared_data():
+    def data(registry):
 
+        team1 = registry.Team.insert(name="Team 1")
+        team2 = registry.Team.insert(name="Team 2")
+        registry.Pyramid.User.insert(login="user1", team=team1)
+        registry.Pyramid.User.insert(login="user2", team=team2)
+        tag10 = registry.Tag.insert(name="Tag 1.0", team=team1)
+        tag11 = registry.Tag.insert(name="Tag 1.1", team=team1)
+        registry.Tag.insert(name="Tag 2.0", team=team2)
+        tag2 = registry.Tag.insert(name="Tag 2.1", team=team2)
+        tag22 = registry.Tag.insert(name="Tag 2.2", team=team2)
+        customer1 = registry.Customer.insert(name="Customer 1", team=team1)
+        customer2 = registry.Customer.insert(name="Customer 2", team=team2)
+        registry.Order.insert(name="Order 1.1", team=team1, customer=customer1)
+        order12 = registry.Order.insert(
+            name="Order 1.2", team=team1, customer=customer1
+        )
+        registry.Order.insert(name="Order 1.3", team=team1, customer=customer1)
+        order12.tags.extend([tag10, tag11])
+        order21 = registry.Order.insert(
+            name="Order 2.1", team=team2, customer=customer2
+        )
+        order22 = registry.Order.insert(
+            name="Order 2.2", team=team2, customer=customer2
+        )
+        order21.tags.append(tag2)
+        order22.tags.extend([tag2, tag22])
 
-@pytest.fixture(scope="function")
-def registry(request, init_registry):
-    transaction = init_registry.begin_nested()
-    request.addfinalizer(transaction.rollback)
-    return init_registry
+    return data
 
 
 def test_create_restrict(registry):

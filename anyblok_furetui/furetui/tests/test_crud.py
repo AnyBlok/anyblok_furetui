@@ -1,3 +1,10 @@
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 import json
 import pytest
 import urllib
@@ -52,12 +59,40 @@ def resource_tag_to_link(rollback_registry, resource_list):
     )
 
 
+def add_permimssions(registry):
+    registry.Pyramid.Authorization.insert(
+        model="Model.System.Blok",
+        login="test",
+        perm_create=dict(matched=True),
+        perm_read=dict(matched=True),
+        perm_update=dict(matched=True),
+        perm_delete=dict(matched=True),
+    )
+    registry.Pyramid.Authorization.insert(
+        model="Model.FuretUI.Resource.List",
+        login="test",
+        perm_create=dict(matched=True),
+        perm_read=dict(matched=True),
+        perm_update=dict(matched=True),
+        perm_delete=dict(matched=True),
+    )
+    registry.Pyramid.Authorization.insert(
+        model="Model.System.Model",
+        login="test",
+        perm_create=dict(matched=True),
+        perm_read=dict(matched=True),
+        perm_update=dict(matched=True),
+        perm_delete=dict(matched=True),
+    )
+
+
 @pytest.mark.usefixtures("rollback_registry")
 class TestCreate:
 
     @pytest.fixture(autouse=True)
     def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
+        add_permimssions(rollback_registry)
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
@@ -163,7 +198,7 @@ class TestCreate:
                     }
                 },
             },
-            "fakeuser",
+            "test",
         )
         new_list = (
             rollback_registry.FuretUI.Resource.List.query()
@@ -185,6 +220,7 @@ class TestRead:
     @pytest.fixture(autouse=True)
     def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
+        add_permimssions(rollback_registry)
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
@@ -345,6 +381,7 @@ class TestUpdate:
     @pytest.fixture(autouse=True)
     def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
+        add_permimssions(rollback_registry)
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
@@ -453,7 +490,7 @@ class TestUpdate:
                     }
                 },
             },
-            "fake-user"
+            "test"
         )
         new_list = (
             rollback_registry.FuretUI.Resource.List.query()
@@ -491,6 +528,7 @@ class TestDelete:
     @pytest.fixture(autouse=True)
     def transact(self, request, rollback_registry, webserver):
         rollback_registry.Pyramid.User.insert(login='test')
+        add_permimssions(rollback_registry)
         rollback_registry.Pyramid.CredentialStore.insert(
             login='test', password='test')
         webserver.post_json(
