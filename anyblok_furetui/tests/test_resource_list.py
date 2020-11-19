@@ -1,4 +1,5 @@
 import pytest
+from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 # from anyblok import Declarations
 # from anyblok_furetui import exposed_method
 from anyblok.column import (
@@ -6,10 +7,10 @@ from anyblok.column import (
     Date, DateTime, Time, Interval, Decimal, Float, LargeBinary, Integer,
     Sequence, Color, Password, UUID, URL, PhoneNumber, Email, Country,
     TimeStamp, Enum)
-from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 from anyblok.tests.test_column import (
     simple_column, MyTestEnum, has_colour, has_furl, has_phonenumbers,
     has_pycountry)
+from anyblok.tests.test_many2one import _minimum_many2one, _complete_many2one
 from ..testing import TmpTemplate
 
 
@@ -84,6 +85,20 @@ def registry_Integer(request, bloks_loaded):  # noqa F811
         ["furetui"], simple_column, ColumnType=request.param)
     request.addfinalizer(registry.close)
     return registry
+
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        (_minimum_many2one, ['address_id'], ''),
+        (_complete_many2one, ['id_of_address'], 'persons'),
+    ])
+def registry_many2one(request, bloks_loaded):  # noqa F811
+    funct, local_columns, remote_name = request.param
+    reset_db()
+    registry = init_registry_with_bloks(["furetui"], funct)
+    request.addfinalizer(registry.close)
+    return registry, local_columns, remote_name
 
 
 class TestResourceListDefault:
@@ -786,13 +801,234 @@ class TestResourceListInteger:
                     'hidden': False,
                     'label': 'Col',
                     'name': 'col',
-                    'numeric': False,
+                    'numeric': True,
                     'sticky': False,
                     'tooltip': None,
                     'type': 'integer',
                 }],
                 'id': resource.id,
                 'model': 'Model.Test',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+
+class TestResourceListMany2One:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_many2one):
+        registry = registry_many2one[0]
+        transaction = registry.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_many2one):
+        registry, local_columns, remote_name = registry_many2one
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': local_columns,
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': remote_name,
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_with_display(self, registry_many2one):
+        registry, local_columns, remote_name = registry_many2one
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" display="fields.city"/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.city', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.city',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': local_columns,
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': remote_name,
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_no_link(self, registry_many2one):
+        registry, local_columns, remote_name = registry_many2one
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" no-link/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': local_columns,
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': remote_name,
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_with_menu(self, registry_many2one):
+        registry, local_columns, remote_name = registry_many2one
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+        menu = registry.FuretUI.Menu.Resource.insert(
+            label="Resource 1", resource=resource)
+        registry.IO.Mapping.set('menu_call', menu)
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" menu="menu_call"/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': local_columns,
+                    'menu': menu.id,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': remote_name,
+                    'resource': resource.id,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_with_resource(self, registry_many2one):
+        registry, local_columns, remote_name = registry_many2one
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+        resource_form = registry.FuretUI.Resource.Form.insert(
+            code='test-list-resource', model='Model.Address')
+        registry.IO.Mapping.set('resource_call', resource_form)
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" resource="resource_call"/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': local_columns,
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': remote_name,
+                    'resource': resource_form.id,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
                 'tags': [],
                 'title': 'test-list-resource',
                 'type': 'list'

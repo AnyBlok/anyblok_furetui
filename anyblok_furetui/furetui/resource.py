@@ -561,7 +561,7 @@ class List(Declarations.Model.FuretUI.Resource):
 
             display = display.replace('!', '')
             fields = []
-            for d in display:
+            for d in display.split():
                 if 'fields.' in d:
                     fields.append(d.split('.')[1])
 
@@ -573,14 +573,14 @@ class List(Declarations.Model.FuretUI.Resource):
 
         resource = None
         menu = None
-        if eval(kwargs.get('no-link', 'False')):
+        if eval(kwargs.get('no-link', 'False') or 'True'):
             pass
         elif 'menu' in kwargs:
             menu = self.registry.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', kwargs['menu'])
             resource = menu.resource
         elif 'resource' in kwargs:
-            for type_ in ('set', 'form'):
+            for type_ in ('Set', 'Form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
                 resource = self.registry.IO.Mapping.get(
                     resource_model, kwargs['resource'])
