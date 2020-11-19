@@ -1,6 +1,7 @@
 import pytest
+from datetime import datetime
 from anyblok.tests.conftest import init_registry_with_bloks, reset_db
-# from anyblok import Declarations
+from anyblok import Declarations
 # from anyblok_furetui import exposed_method
 from anyblok.column import (
     Boolean, Json, String, BigInteger, Text, Selection,
@@ -10,8 +11,16 @@ from anyblok.column import (
 from anyblok.tests.test_column import (
     simple_column, MyTestEnum, has_colour, has_furl, has_phonenumbers,
     has_pycountry)
+from anyblok.relationship import Many2Many
 from anyblok.tests.test_many2one import _minimum_many2one, _complete_many2one
+from anyblok.tests.test_one2one import _minimum_one2one
+from anyblok.tests.test_one2many import _complete_one2many
+from anyblok.tests.test_many2many import _complete_many2many
 from ..testing import TmpTemplate
+
+register = Declarations.register
+Model = Declarations.Model
+Mixin = Declarations.Mixin
 
 
 @pytest.fixture(scope="class")
@@ -99,6 +108,88 @@ def registry_many2one(request, bloks_loaded):  # noqa F811
     registry = init_registry_with_bloks(["furetui"], funct)
     request.addfinalizer(registry.close)
     return registry, local_columns, remote_name
+
+
+@pytest.fixture(scope="class")
+def registry_one2one(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(["furetui"], _minimum_one2one)
+    request.addfinalizer(registry.close)
+    return registry
+
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        (_complete_many2one, ['id_of_address']),
+        (_complete_one2many, ['address_id']),
+    ])
+def registry_one2many(request, bloks_loaded):  # noqa F811
+    funct, remote_columns = request.param
+    reset_db()
+    registry = init_registry_with_bloks(["furetui"], funct)
+    request.addfinalizer(registry.close)
+    return registry, remote_columns
+
+
+def _complete_many2many_richtext():
+
+    @register(Model)
+    class Address:
+
+        id = Integer(primary_key=True)
+        street = String()
+        zip = String()
+        city = String()
+
+    @register(Model)
+    class PersonAddress:
+        id = Integer(primary_key=True)
+        a_id = Integer(
+            foreign_key=Model.Address.use('id'), nullable=False)
+        p_name = String(
+            foreign_key='Model.Person=>name', nullable=False)
+        create_at = DateTime(default=datetime.now)
+        foo = String(default='bar')
+
+    @register(Model)
+    class Person:
+
+        name = String(primary_key=True)
+        addresses = Many2Many(model=Model.Address,
+                              join_table="personaddress",
+                              many2many="persons")
+
+
+def _minimum_many2many(**kwargs):
+
+    @register(Model)
+    class Address:
+
+        id = Integer(primary_key=True)
+        street = String()
+        zip = String()
+        city = String()
+
+    @register(Model)
+    class Person:
+
+        name = String(primary_key=True)
+        addresses = Many2Many(model=Model.Address, many2many="persons")
+
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        _complete_many2many,
+        _minimum_many2many,
+        _complete_many2many_richtext,
+    ])
+def registry_many2many(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(["furetui"], request.param)
+    request.addfinalizer(registry.close)
+    return registry
 
 
 class TestResourceListDefault:
@@ -1029,6 +1120,194 @@ class TestResourceListMany2One:
                 }],
                 'id': resource.id,
                 'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+
+class TestResourceListOne2One:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_one2one):
+        transaction = registry_one2one.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_one2one):
+        resource = registry_one2one.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry_one2one) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['address.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Address',
+                    'local_columns': ['address_id'],
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'address',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': 'person',
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'one2one'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+
+class TestResourceListOne2Many:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_one2many):
+        transaction = registry_one2many[0].begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_one2many):
+        registry, remote_columns = registry_one2many
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Address', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="persons" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['id', 'persons.name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.name',
+                    'hidden': False,
+                    'label': 'Persons',
+                    'local_columns': ['id'],
+                    'menu': None,
+                    'model': 'Model.Person',
+                    'name': 'persons',
+                    'numeric': False,
+                    'remote_columns': remote_columns,
+                    'remote_name': 'address',
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'one2many'
+                }],
+                'id': resource.id,
+                'model': 'Model.Address',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+
+class TestResourceListMany2Many:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_many2many):
+        transaction = registry_many2many.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_many2many):
+        resource = registry_many2many.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry_many2many) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="addresses" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['addresses.id', 'name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.id',
+                    'hidden': False,
+                    'label': 'Addresses',
+                    'local_columns': ['name'],
+                    'menu': None,
+                    'model': 'Model.Address',
+                    'name': 'addresses',
+                    'numeric': False,
+                    'remote_columns': ['id'],
+                    'remote_name': 'persons',
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2many'
+                }],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_backref(self, registry_many2many):
+        resource = registry_many2many.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Address', template='tmpl_test')
+
+        with TmpTemplate(registry_many2many) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="persons" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['id', 'persons.name'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'display': 'fields.name',
+                    'hidden': False,
+                    'label': 'Persons',
+                    'local_columns': ['id'],
+                    'menu': None,
+                    'model': 'Model.Person',
+                    'name': 'persons',
+                    'numeric': False,
+                    'remote_columns': ['name'],
+                    'remote_name': 'addresses',
+                    'resource': None,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': 'many2many'
+                }],
+                'id': resource.id,
+                'model': 'Model.Address',
                 'tags': [],
                 'title': 'test-list-resource',
                 'type': 'list'
