@@ -1,5 +1,4 @@
 from anyblok_pyramid import current_blok
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 from anyblok_furetui.security import authorized_user
 
@@ -18,19 +17,10 @@ def call_classmethod(request):
     registry = request.anyblok.registry
     params = request.matchdict
     body = request.json_body
-    pks = body.get('pks', {})
-    data = body.get('data', {})
-    data['authenticated_userid'] = request.authenticated_userid
     # TODO call security hooks
 
-    with saved_errors_in_request(request):
-        Model = registry.get(params['model'])
-        obj = Model
-        if pks:
-            obj = Model.from_primary_keys(**pks)
+    res = registry.FuretUI.call_exposed_method(request, **params, **body)
+    if res is None:
+        return []
 
-        res = getattr(obj, params['call'])(**data)
-        if res is None:
-            return []
-
-        return res
+    return res

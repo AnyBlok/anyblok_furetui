@@ -71,6 +71,9 @@ setup(
             'furetui-delivery=anyblok_furetui.delivery:FuretUIDeliveryBlok',
             'furetui-filter-ip=anyblok_furetui.ip:FuretUIFilterIPBlok',
         ],
+        'anyblok.model.plugin': [
+            'exposed_method=anyblok_furetui.plugins:ExposedMethod',
+        ],
     },
     extras_require={},
 )

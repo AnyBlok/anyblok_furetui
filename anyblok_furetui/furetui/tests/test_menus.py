@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2020 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 import pytest
 from furl import furl
 
@@ -22,7 +30,7 @@ class Mixin:
             Menu.Resource.insert(label="Resource 1", resource=resource),
             Menu.Url.insert(label="Resource 2", url="http://anyblok.org"),
             Menu.Call.insert(label="Resource 3", model="Model.System.Blok",
-                             method="test_method"),
+                             method="install"),
         ])
         node2 = Menu.Node.insert(label="Node 2")
         node2.children.extend([
@@ -38,7 +46,7 @@ class Mixin:
             Menu.Resource.insert(label="Resource 7", resource=resource),
             Menu.Url.insert(label="Resource 8", url="http://anyblok.org"),
             Menu.Call.insert(label="Resource 9", model="Model.System.Blok",
-                             method="test_method"),
+                             method="install"),
         ])
         return space if with_space else resource
 
@@ -101,7 +109,7 @@ class Mixin:
                         'icon_type': None,
                         'id': call_id('Resource 9'),
                         'label': 'Resource 9',
-                        'method': 'test_method',
+                        'method': 'install',
                         'model': 'Model.System.Blok',
                         'order': 100,
                         'resource': resource.id if with_resource else None,
@@ -149,7 +157,7 @@ class Mixin:
                                 'icon_type': None,
                                 'id': call_id('Resource 3'),
                                 'label': 'Resource 3',
-                                'method': 'test_method',
+                                'method': 'install',
                                 'model': 'Model.System.Blok',
                                 'order': 100,
                                 'resource': (
