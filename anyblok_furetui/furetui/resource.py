@@ -507,7 +507,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'type': widget,
             'sticky': False,
             'numeric': (
-                True if widget in ('Integer', 'Float', 'Decimal') else False),
+                True if widget in ('integer', 'float', 'decimal') else False),
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',

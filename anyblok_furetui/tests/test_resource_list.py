@@ -8,8 +8,8 @@ from anyblok.column import (
     TimeStamp, Enum)
 from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 from anyblok.tests.test_column import (
-    simple_column, MyTestEnum, has_cryptography, has_passlib, has_colour,
-    has_furl, has_phonenumbers, has_pycountry)
+    simple_column, MyTestEnum, has_colour, has_furl, has_phonenumbers,
+    has_pycountry)
 from ..testing import TmpTemplate
 
 
@@ -23,23 +23,49 @@ def registry_Selection(request, bloks_loaded):  # noqa F811
     return registry
 
 
-@pytest.fixture(scope="class")
-def registry_Enum(request, bloks_loaded):  # noqa F811
-    reset_db()
-    registry = init_registry_with_bloks(
-        ["furetui"], simple_column, ColumnType=Enum,
-        enum_cls=MyTestEnum)
-    request.addfinalizer(registry.close)
-    return registry
+PARAMS = [
+    (Boolean, 'boolean', {}),
+    (Enum, 'enum', {'enum_cls': MyTestEnum}),
+    (Json, 'json', {}),
+    (Text, 'text', {}),
+    (Date, 'date', {}),
+    (DateTime, 'datetime', {}),
+    (TimeStamp, 'timestamp', {}),
+    (Time, 'time', {}),
+    (Email, 'email', {}),
+    (Interval, 'interval', {}),
+    (LargeBinary, 'largebinary', {}),
+    (Password, 'password', {}),
+    (UUID, 'uuid', {}),
+    (Decimal, 'decimal', {}),
+    (Float, 'float', {}),
+]
 
 
-@pytest.fixture(scope="class")
-def registry_Boolean(request, bloks_loaded):  # noqa F811
+if has_colour:
+    PARAMS.append((Color, 'color', {}))
+
+
+if has_furl:
+    PARAMS.append((URL, 'url', {}))
+
+
+if has_phonenumbers:
+    PARAMS.append((PhoneNumber, 'phonenumber', {}))
+
+
+if has_pycountry:
+    PARAMS.append((Country, 'country', {}))
+
+
+@pytest.fixture(scope="class", params=PARAMS)
+def registry_default(request, bloks_loaded):  # noqa F811
     reset_db()
+    Type, type_, kwargs = request.param
     registry = init_registry_with_bloks(
-        ["furetui"], simple_column, ColumnType=Boolean)
+        ["furetui"], simple_column, ColumnType=Type, **kwargs)
     request.addfinalizer(registry.close)
-    return registry
+    return registry, type_
 
 
 @pytest.fixture(scope="class", params=[String, Sequence])
@@ -58,6 +84,51 @@ def registry_Integer(request, bloks_loaded):  # noqa F811
         ["furetui"], simple_column, ColumnType=request.param)
     request.addfinalizer(registry.close)
     return registry
+
+
+class TestResourceListDefault:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_default):
+        registry, _ = registry_default
+        transaction = registry.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_default):
+        registry, type_ = registry_default
+        numeric = True if type_ in ('float', 'decimal') else False
+        resource = registry.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="col" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [],
+                'fields': ['col', 'id'],
+                'filters': [],
+                'headers': [{
+                    'component': 'furet-ui-field',
+                    'hidden': False,
+                    'label': 'Col',
+                    'name': 'col',
+                    'numeric': numeric,
+                    'sticky': False,
+                    'tooltip': None,
+                    'type': type_,
+                }],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
 
 
 class TestResourceListString:
@@ -404,48 +475,6 @@ class TestResourceListString:
             }]
 
 
-class TestResourceListBoolean:
-
-    @pytest.fixture(autouse=True)
-    def transact(self, request, registry_Boolean):
-        transaction = registry_Boolean.begin_nested()
-        request.addfinalizer(transaction.rollback)
-        return
-
-    def test_get_definition(self, registry_Boolean):
-        resource = registry_Boolean.FuretUI.Resource.List.insert(
-            code='test-list-resource', title='test-list-resource',
-            model='Model.Test', template='tmpl_test')
-
-        with TmpTemplate(registry_Boolean) as tmpl:
-            tmpl.load_template_from_str("""
-                <template id="tmpl_test">
-                    <field name="col" />
-                </template>
-            """)
-            tmpl.compile()
-            assert resource.get_definitions() == [{
-                'buttons': [],
-                'fields': ['col', 'id'],
-                'filters': [],
-                'headers': [{
-                    'component': 'furet-ui-field',
-                    'hidden': False,
-                    'label': 'Col',
-                    'name': 'col',
-                    'numeric': False,
-                    'sticky': False,
-                    'tooltip': None,
-                    'type': 'boolean',
-                }],
-                'id': resource.id,
-                'model': 'Model.Test',
-                'tags': [],
-                'title': 'test-list-resource',
-                'type': 'list'
-            }]
-
-
 class TestResourceListSelection:
 
     @pytest.fixture(autouse=True)
@@ -497,7 +526,10 @@ class TestResourceListSelection:
         with TmpTemplate(registry_Selection) as tmpl:
             tmpl.load_template_from_str("""
                 <template id="tmpl_test">
-                    <field name="col" selections="{'test1': 'T1', 'test2': 'T2'}"/>
+                    <field
+                        name="col"
+                        selections="{'test1': 'T1', 'test2': 'T2'}"
+                    />
                 </template>
             """)
             tmpl.compile()
@@ -532,7 +564,10 @@ class TestResourceListSelection:
         with TmpTemplate(registry_Selection) as tmpl:
             tmpl.load_template_from_str("""
                 <template id="tmpl_test">
-                    <field name="col" colors="{'test1': 'red', 'test2': 'blue'}"/>
+                    <field
+                        name="col"
+                        colors="{'test1': 'red', 'test2': 'blue'}"
+                    />
                 </template>
             """)
             tmpl.compile()
@@ -713,48 +748,6 @@ class TestResourceListSelection:
                     'sticky': False,
                     'tooltip': None,
                     'type': 'statusbar',
-                }],
-                'id': resource.id,
-                'model': 'Model.Test',
-                'tags': [],
-                'title': 'test-list-resource',
-                'type': 'list'
-            }]
-
-
-class TestResourceListEnum:
-
-    @pytest.fixture(autouse=True)
-    def transact(self, request, registry_Enum):
-        transaction = registry_Enum.begin_nested()
-        request.addfinalizer(transaction.rollback)
-        return
-
-    def test_get_definition(self, registry_Enum):
-        resource = registry_Enum.FuretUI.Resource.List.insert(
-            code='test-list-resource', title='test-list-resource',
-            model='Model.Test', template='tmpl_test')
-
-        with TmpTemplate(registry_Enum) as tmpl:
-            tmpl.load_template_from_str("""
-                <template id="tmpl_test">
-                    <field name="col" />
-                </template>
-            """)
-            tmpl.compile()
-            assert resource.get_definitions() == [{
-                'buttons': [],
-                'fields': ['col', 'id'],
-                'filters': [],
-                'headers': [{
-                    'component': 'furet-ui-field',
-                    'hidden': False,
-                    'label': 'Col',
-                    'name': 'col',
-                    'numeric': False,
-                    'sticky': False,
-                    'tooltip': None,
-                    'type': 'enum',
                 }],
                 'id': resource.id,
                 'model': 'Model.Test',
