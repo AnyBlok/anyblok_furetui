@@ -550,11 +550,6 @@ class List(Declarations.Model.FuretUI.Resource):
         f['type'] = 'Integer'
         return self.field_for_(f, fields2read, **kwargs)
 
-    def field_for_SmallInteger(self, field, fields2read, **kwargs):
-        f = field.copy()
-        f['type'] = 'Integer'
-        return self.field_for_(f, fields2read, **kwargs)
-
     def field_for_relationship(self, field, fields2read, **kwargs):
         f = field.copy()
         Model = self.registry.get(f['model'])
@@ -613,20 +608,6 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_One2Many(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
-    # @classmethod
-    # def field_for_LargeBinary(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'file'
-    #     return cls.field_for_(f, fields2read, **kwargs)
-
-    # @classmethod
-    # def field_for_Sequence(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'string'
-    #     res = cls.field_for_(f, fields2read, **kwargs)
-    #     res['readonly'] = True
-    #     return res
-
     def field_for_Selection(self, field, fields2read, **kwargs):
         f = field.copy()
         for key in ('selections', 'colors'):
@@ -660,14 +641,6 @@ class List(Declarations.Model.FuretUI.Resource):
                 x.strip() for x in kwargs.get(key, '').split(',')]
 
         return self.field_for_(f, fields2read, **kwargs)
-
-    # @classmethod
-    # def field_for_UUID(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'string'
-    #     res = cls.field_for_(f, fields2read, **kwargs)
-    #     res['readonly'] = True
-    #     return res
 
     def get_definitions(self, **kwargs):
         Model = self.registry.get(self.model)
