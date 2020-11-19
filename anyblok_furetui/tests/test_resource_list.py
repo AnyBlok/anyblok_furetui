@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime
 from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 from anyblok import Declarations
-# from anyblok_furetui import exposed_method
+from anyblok_furetui import exposed_method
 from anyblok.column import (
     Boolean, Json, String, BigInteger, Text, Selection,
     Date, DateTime, Time, Interval, Decimal, Float, LargeBinary, Integer,
@@ -188,6 +188,37 @@ def _minimum_many2many(**kwargs):
 def registry_many2many(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(["furetui"], request.param)
+    request.addfinalizer(registry.close)
+    return registry
+
+
+def with_buttons():
+
+    @register(Model)
+    class Test:
+
+        id = Integer(primary_key=True)
+
+        @classmethod
+        def not_decorated(cls):
+            pass
+
+        @exposed_method()
+        def simple_method(cls, param=None):
+            return param
+
+        @exposed_method(permission='do_something')
+        def method_with_permission(cls, param=None):
+            return param
+
+
+@pytest.fixture(scope="class")
+def registry_with_buttons(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(
+        ["furetui", "furetui-auth"], with_buttons)
+    registry.Pyramid.User.insert(login='test')
+
     request.addfinalizer(registry.close)
     return registry
 
@@ -1308,6 +1339,207 @@ class TestResourceListMany2Many:
                 }],
                 'id': resource.id,
                 'model': 'Model.Address',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+
+class TestResourceListButtons:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_with_buttons):
+        transaction = registry_with_buttons.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition_without_any_action(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button label="test" />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_call_existing_resource(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.IO.Mapping.set('resource_call', resource)
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            open-resource="resource_call"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [{
+                    'label': 'test',
+                    'open-resource': 'resource_call',
+                    'pks': ['id']
+                }],
+                'fields': ['id'],
+                'filters': [],
+                'headers': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_call_unexisting_resource(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            open-resource="resource_call"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_call_undecorated_method(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            call="not_decorated"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_call_decorated_method(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            call="simple_method"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'buttons': [{
+                    'call': 'simple_method',
+                    'label': 'test',
+                    'pks': ['id']
+                }],
+                'fields': ['id'],
+                'filters': [],
+                'headers': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_call_decorated_method_with_permission(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.Pyramid.Authorization.insert(
+            model='Model.Test', login='test',
+            perms=dict(do_something=dict(matched=True)))
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            call="method_with_permission"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'buttons': [{
+                    'call': 'method_with_permission',
+                    'label': 'test',
+                    'pks': ['id']
+                }],
+                'fields': ['id'],
+                'filters': [],
+                'headers': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'tags': [],
+                'title': 'test-list-resource',
+                'type': 'list'
+            }]
+
+    def test_get_definition_call_decorated_method_without_permission(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.List.insert(
+            code='test-list-resource', title='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <buttons>
+                        <button
+                            label="test"
+                            call="method_with_permission"
+                        />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'buttons': [],
+                'fields': ['id'],
+                'filters': [],
+                'headers': [],
+                'id': resource.id,
+                'model': 'Model.Test',
                 'tags': [],
                 'title': 'test-list-resource',
                 'type': 'list'

@@ -432,15 +432,19 @@ class Resource:
     id = Integer(primary_key=True)
     code = String()
     type = Selection(
-        selections={
+        selections='get_resource_types',
+        nullable=False)
+
+    @classmethod
+    def get_resource_types(cls):
+        return {
             'Model.FuretUI.Resource.Custom': 'Custom',
             'Model.FuretUI.Resource.Set': 'Set',
             'Model.FuretUI.Resource.List': 'List',
             'Model.FuretUI.Resource.Thumbnail': 'Thumbnail',
             'Model.FuretUI.Resource.Form': 'Form',
             'Model.FuretUI.Resource.Dashboard': 'Dashboard',
-        },
-        nullable=False)
+        }
 
     @classmethod
     def define_mapper_args(cls):
@@ -642,6 +646,42 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return self.field_for_(f, fields2read, **kwargs)
 
+    def button_for(self, userid, Model, button, pks):
+        attributes = deepcopy(button.attrib)
+        if 'call' in attributes:
+            call = attributes['call']
+            model = Model.__registry_name__
+            if call not in self.registry.exposed_methods.get(model, {}):
+                raise Exception(f"the method '{call}' is not exposed")
+
+            definition = self.registry.exposed_methods[model][call]
+            permission = definition['permission']
+            if permission is not None:
+                if not self.registry.Pyramid.check_acl(
+                    userid, model, permission
+                ):
+                    return None
+
+        elif 'open-resource' in attributes:
+            resource = None
+            for model in self.__class__.get_resource_types().keys():
+                resource = self.registry.IO.Mapping.get(
+                    model, attributes['open-resource'])
+                if resource:
+                    break
+
+            if resource is None:
+                raise Exception(
+                    f"On resource {self.id}, the resource is not "
+                    f"mapped for {attributes}")
+        else:
+            raise Exception(
+                f"On resource {self.id}, no action defined on button "
+                f"{attributes}")
+
+        attributes['pks'] = pks
+        return attributes
+
     def get_definitions(self, **kwargs):
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
@@ -667,9 +707,11 @@ class List(Declarations.Model.FuretUI.Resource):
                         field, fields2read, **attributes))
 
             for button in template.findall('.//buttons/button'):
-                attributes = deepcopy(button.attrib)
-                attributes['pks'] = pks
-                buttons.append(attributes)
+                attributes = self.button_for(
+                    kwargs.get('authenticated_userid', None),
+                    Model, button, pks)
+                if attributes is not None:
+                    buttons.append(attributes)
 
         else:
             fields = list(fd.keys())
@@ -900,8 +942,10 @@ class Set(Declarations.Model.FuretUI.Resource):
             'multi': getattr(self, self.multi_type).id,
         })
         res = [definition]
-        res.extend(self.form.get_definitions())
-        res.extend(getattr(self, self.multi_type).get_definitions())
+        res.extend(self.form.get_definitions(
+            authenticated_userid=authenticated_userid))
+        res.extend(getattr(self, self.multi_type).get_definitions(
+            authenticated_userid=authenticated_userid))
         return res
 
     def check_acl(self, authenticated_userid):
