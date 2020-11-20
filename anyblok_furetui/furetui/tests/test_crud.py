@@ -84,6 +84,11 @@ def add_permimssions(registry):
         perm_update=dict(matched=True),
         perm_delete=dict(matched=True),
     )
+    registry.Pyramid.Authorization.insert(
+        model="Model.FuretUI.Resource.Tags",
+        login="test",
+        perm_read=dict(matched=True),
+    )
 
 
 @pytest.mark.usefixtures("rollback_registry")
