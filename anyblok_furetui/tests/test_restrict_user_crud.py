@@ -10,17 +10,9 @@ import re
 from urllib.parse import urlencode
 
 import pytest
-from anyblok import Declarations
-from anyblok.column import Integer, String
-from anyblok.relationship import Many2Many, Many2One
-from anyblok_pyramid.bloks.pyramid.restrict import restrict_query_by_user
 from pyramid.httpexceptions import HTTPForbidden
 
 from .conftest import DummyRequest
-
-register = Declarations.register
-Model = Declarations.Model
-Mixin = Declarations.Mixin
 
 
 @pytest.fixture(scope="module")
@@ -28,59 +20,6 @@ def bloks_to_install():
     # here furetui-auth is not necessary only define a user model is required
     # if furetui-auth is installed require to add model ACLs
     return ["auth", "furetui"]
-
-
-@pytest.fixture(scope="module")
-def add_model_in_registry():
-    def add_in_registry(*args, **kwargs):
-        @register(Model)
-        class Team:
-            id = Integer(primary_key=True)
-            name = String()
-
-        @register(Model.Pyramid)
-        class User:
-            team = Many2One(model=Model.Team)
-
-        @register(Mixin)
-        class TeamOwner:
-            team = Many2One(model=Model.Team)
-
-            @restrict_query_by_user()
-            def restric_by_user_team(cls, query, user):
-                User = cls.registry.Pyramid.User
-                return (
-                    query.join(cls.team)
-                    .join(User)
-                    .filter(User.login == user.login)
-                )
-
-        @register(Model)
-        class Customer(Mixin.TeamOwner):
-            id = Integer(primary_key=True)
-            name = String()
-
-        @register(Model)
-        class Tag(Mixin.TeamOwner):
-            id = Integer(primary_key=True)
-            name = String()
-
-        @register(Model)
-        class Order(Mixin.TeamOwner):
-            id = Integer(primary_key=True)
-            name = String()
-            customer = Many2One(model=Model.Customer, one2many="orders")
-            tags = Many2Many(
-                model=Model.Tag,
-                join_table="join_order_tag",
-                remote_columns="id",
-                local_columns="id",
-                m2m_remote_columns="tag_id",
-                m2m_local_columns="order_id",
-                many2many="orders",
-            )
-
-    return add_in_registry
 
 
 @pytest.fixture(scope="module")

@@ -19,12 +19,21 @@ import json
 class CRUD:
 
     @classmethod
-    def parse_fields(cls, qs_fields, model):
+    def parse_fields(cls, qs_fields, model, userid):
         """Prepare fields for different use cases
 
         returns:
         """
-        def add_field(data, field, model):
+        def add_field(data, field, model, userid):
+
+            if not cls.registry.FuretUI.check_acl(
+                userid, model, "read"
+            ):
+                raise HTTPForbidden(
+                    f"User '{userid}' has to be granted "
+                    f"'read' permission in order to read on "
+                    f"model '{model}'."
+                )
             f = field.split(".", 1)
             fd = cls.registry.get(model).fields_description()
             if len(f) == 1:
@@ -34,11 +43,11 @@ class CRUD:
             else:
                 if f[0] not in data:
                     data[f[0]] = {"__fields": []}
-                add_field(data[f[0]], f[1], fd[f[0]]['model'])
+                add_field(data[f[0]], f[1], fd[f[0]]['model'], userid)
 
         fields = {"__fields": []}
         for field in qs_fields.split(','):
-            add_field(fields, field, model)
+            add_field(fields, field, model, userid)
         return fields
 
     @classmethod
@@ -70,15 +79,11 @@ class CRUD:
         # check user has access rigth to see this resource
         model = request.params['context[model]']
 
-        if not cls.registry.FuretUI.check_acl(
-            request.authenticated_userid, model, "read"
-        ):
-            raise HTTPForbidden(
-                f"User '{request.authenticated_userid}' has to be granted "
-                f"'read' permission in order to read on "
-                f"model '{model}'."
-            )
-        fields = cls.parse_fields(request.params['context[fields]'], model)
+        fields = cls.parse_fields(
+            request.params['context[fields]'],
+            model,
+            request.authenticated_userid,
+        )
 
         # TODO complex case of relationship
         Model = cls.registry.get(model)
