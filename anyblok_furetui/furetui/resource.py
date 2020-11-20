@@ -67,15 +67,8 @@ class Template:
         return self.get_field_for_(field, 'String', description, fields2read)
 
     def get_field_for_Sequence(self, field, description, fields2read):
-        Model = self.registry.get(self.model)
-        description.update({
-            'maxlength': Model.registry.loaded_namespaces_first_step[
-                self.model][description['id']].size,
-            'placeholder': field.attrib.get('placeholder', ''),
-            'icon': field.attrib.get('icon', ''),
-            'readonly': '1',
-        })
-        return self.get_field_for_(field, 'String', description, fields2read)
+        description.update(dict(readonly='1'))
+        return self.get_field_for_String(field, description, fields2read)
 
     def get_field_for_Password(self, field, description, fields2read):
         Model = self.registry.get(self.model)
@@ -114,11 +107,8 @@ class Template:
         })
         return self.get_field_for_(field, 'Integer', description, fields2read)
 
-    def get_field_for_SmallInteger(self, field, description, fields2read):
+    def get_field_for_BigInteger(self, field, description, fields2read):
         return self.get_field_for_Integer(field, description, fields2read)
-
-    def get_field_for_File(self, field, description, fields2read):
-        return self.get_field_for_(field, 'File', description, fields2read)
 
     def get_field_for_Many2One(  # noqa: C901
         self, field, description, fields2read
@@ -132,7 +122,7 @@ class Template:
 
             display = display.replace('!', '')
             fields = []
-            for d in display:
+            for d in display.split():
                 if 'fields.' in d:
                     fields.append(d.split('.')[1])
 
@@ -151,7 +141,7 @@ class Template:
 
         resource = field.attrib.get('resource')
         menu = field.attrib.get('menu')
-        if eval(field.attrib.get('no-link', 'False')):
+        if eval(field.attrib.get('no-link', 'False') or 'True'):
             pass
         elif menu:
             menu = self.registry.IO.Mapping.get(
@@ -227,9 +217,8 @@ class Template:
         })
         return self.get_field_for_(field, 'DateTime', description, fields2read)
 
-    # def get_field_for_Sequence(cls, field, description, fields2read):
-    #     description['readonly'] = True
-    #     return cls.get_field_for_(field, 'String', description, fields2read)
+    def get_field_for_TimeStamp(self, field, description, fields2read):
+        self.get_field_for_DateTime(field, description, fields2read)
 
     def get_field_for_Selection(self, field, description, fields2read):
         description = deepcopy(description)
@@ -262,10 +251,6 @@ class Template:
                 x.strip() for x in field.attrib.get(key, '').split(',')]
 
         return self.get_field_for_(field, 'StatusBar', description, fields2read)
-
-    # def get_field_for_UUID(cls, field, description, fields2read):
-    #     description['readonly'] = True
-    #     return cls.get_field_for_(field, 'String', description, fields2read)
 
     def replace_buttons(self, template, fields_description, fields2read):
         buttons = template.findall('.//button')
