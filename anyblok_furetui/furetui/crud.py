@@ -1,3 +1,11 @@
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2019 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 from copy import deepcopy
 from pyramid.httpexceptions import HTTPForbidden
 
@@ -11,12 +19,21 @@ import json
 class CRUD:
 
     @classmethod
-    def parse_fields(cls, qs_fields, model):
+    def parse_fields(cls, qs_fields, model, userid):
         """Prepare fields for different use cases
 
         returns:
         """
-        def add_field(data, field, model):
+        def add_field(data, field, model, userid):
+
+            if not cls.registry.FuretUI.check_acl(
+                userid, model, "read"
+            ):
+                raise HTTPForbidden(
+                    f"User '{userid}' has to be granted "
+                    f"'read' permission in order to read on "
+                    f"model '{model}'."
+                )
             f = field.split(".", 1)
             fd = cls.registry.get(model).fields_description()
             if len(f) == 1:
@@ -26,11 +43,11 @@ class CRUD:
             else:
                 if f[0] not in data:
                     data[f[0]] = {"__fields": []}
-                add_field(data[f[0]], f[1], fd[f[0]]['model'])
+                add_field(data[f[0]], f[1], fd[f[0]]['model'], userid)
 
         fields = {"__fields": []}
         for field in qs_fields.split(','):
-            add_field(fields, field, model)
+            add_field(fields, field, model, userid)
         return fields
 
     @classmethod
@@ -61,7 +78,12 @@ class CRUD:
         # check user is disconnected
         # check user has access rigth to see this resource
         model = request.params['context[model]']
-        fields = cls.parse_fields(request.params['context[fields]'], model)
+
+        fields = cls.parse_fields(
+            request.params['context[fields]'],
+            model,
+            request.authenticated_userid,
+        )
 
         # TODO complex case of relationship
         Model = cls.registry.get(model)
@@ -143,6 +165,14 @@ class CRUD:
 
     @classmethod
     def create(cls, model, uuid, changes, authenticated_userid):
+        if not cls.registry.FuretUI.check_acl(
+            authenticated_userid, model, "create"
+        ):
+            raise HTTPForbidden(
+                f"User '{authenticated_userid}' has to be granted "
+                f"'create' permission in order to create object on "
+                f"model '{model}'."
+            )
         res = cls.create_or_update(
             model, {"uuid": uuid}, changes, authenticated_userid)
         return res
@@ -293,10 +323,26 @@ class CRUD:
 
     @classmethod
     def update(cls, model, pks, changes, authenticated_userid):
+        if not cls.registry.FuretUI.check_acl(
+            authenticated_userid, model, "update"
+        ):
+            raise HTTPForbidden(
+                f"User '{authenticated_userid}' has to be granted "
+                f"'update' permission in order to update this object: "
+                f"'{model}({pks})'."
+            )
         return cls.create_or_update(model, pks, changes, authenticated_userid)
 
     @classmethod
     def delete(cls, model, pks, authenticated_userid):
+        if not cls.registry.FuretUI.check_acl(
+            authenticated_userid, model, "delete"
+        ):
+            raise HTTPForbidden(
+                f"User '{authenticated_userid}' has to be granted "
+                f"'delete' permission in order to delete this object: "
+                f"'{model}({pks})'."
+            )
         Model = cls.registry.get(model)
         obj = cls.ensure_object_access(
             Model,
@@ -315,6 +361,5 @@ class CRUD:
         )
         obj = query.first()
         if not obj:
-            raise HTTPForbidden(
-                detail=msg)
+            raise HTTPForbidden(detail=msg)
         return obj

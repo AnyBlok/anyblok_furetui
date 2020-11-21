@@ -25,5 +25,5 @@ class Blok:
 
     @exposed_method(is_classmethod=False, permission='admin')
     def upgrade(self):
-        super(Blok, self).uninstall()
+        super(Blok, self).upgrade()
         # MAIBE reload UI
