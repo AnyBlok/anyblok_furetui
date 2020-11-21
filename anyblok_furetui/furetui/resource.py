@@ -2,6 +2,7 @@
 # This file is a part of the AnyBlok project
 #
 #    Copyright (C) 2020 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
@@ -468,7 +469,7 @@ class Resource:
             return True
 
         type_ = self.type.label.lower()
-        return self.registry.Pyramid.check_acl(
+        return self.registry.FuretUI.check_acl(
             authenticated_userid, self.code, type_)
 
     def get_menus(self, authenticated_userid):
@@ -909,7 +910,7 @@ class Set(Declarations.Model.FuretUI.Resource):
 
     def get_definitions(self, authenticated_userid=None, **kwargs):
         definition = self.to_dict('id', 'type')
-        check_acl = self.registry.Pyramid.check_acl
+        check_acl = self.registry.FuretUI.check_acl
         for acl in ('create', 'read', 'update', 'delete'):
             if getattr(self, 'can_%s' % acl):
                 if not self.code:

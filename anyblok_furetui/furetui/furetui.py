@@ -2,6 +2,7 @@
 # This file is a part of the AnyBlok project
 #
 #    Copyright (C) 2017 Jean-Sebastien SUZANNE <jssuzanne@anybox.fr>
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
@@ -154,6 +155,18 @@ class FuretUI:
         return res
 
     @classmethod
+    def check_acl(cls, userid, resource, permission):
+        """Checking ACL require `authorization` blok from
+        Anyblok Pyramid to be installed.
+        This method is override as expected using `furetui-auth` which depends
+        from `authorization` blok.
+        """
+        logger.warning(
+            "In order to properly check ACL, you should install `furetui-auth`"
+        )
+        return True
+
+    @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
         if call not in cls.registry.exposed_methods.get(model, {}):
@@ -167,12 +180,14 @@ class FuretUI:
         permission = definition['permission']
         userId = request.authenticated_userid
         if permission is not None:
-            if not cls.registry.Pyramid.check_acl(
+            if not cls.check_acl(
                 request.authenticated_userid, model, permission
             ):
                 raise HTTPForbidden(
-                    f"The user '{userId}' has not he permission '{permission}'"
-                    f" to access the model '{model}'")
+                    f"User '{userId}' has to be granted '{permission}' "
+                    f"permission in order to call this method '{call}' on "
+                    f"model '{model}'."
+                )
 
         obj = cls.registry.get(model)
         if definition['is_classmethod'] is False:
