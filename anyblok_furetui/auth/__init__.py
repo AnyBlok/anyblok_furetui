@@ -14,13 +14,9 @@ from .i18n import fr, en
 
 
 def import_module(reload=None):
-    from . import pyramid
     from . import user
-    from . import furetui
     if reload is not None:
-        reload(pyramid)
         reload(user)
-        reload(furetui)
 
 
 class FuretUIAuthBlok(Blok, BlokImporter):

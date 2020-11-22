@@ -1363,6 +1363,7 @@ class TestResourceListButtons:
                 <template id="tmpl_test">
                     <buttons>
                         <button label="test" />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1383,6 +1384,7 @@ class TestResourceListButtons:
                             label="test"
                             open-resource="resource_call"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1417,6 +1419,7 @@ class TestResourceListButtons:
                             label="test"
                             open-resource="resource_call"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1438,6 +1441,7 @@ class TestResourceListButtons:
                             label="test"
                             call="not_decorated"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1459,6 +1463,7 @@ class TestResourceListButtons:
                             label="test"
                             call="simple_method"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1496,6 +1501,7 @@ class TestResourceListButtons:
                             label="test"
                             call="method_with_permission"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()
@@ -1530,6 +1536,7 @@ class TestResourceListButtons:
                             label="test"
                             call="method_with_permission"
                         />
+                    </buttons>
                 </template>
             """)
             tmpl.compile()

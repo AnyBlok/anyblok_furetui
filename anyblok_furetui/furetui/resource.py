@@ -361,10 +361,14 @@ class Template:
             if 'model' in el.attrib:
                 Model = self.registry.get(el.attrib['model'])
                 query = Model.query()
-                code = el.attrib.get('field_code')
-                label = el.attrib.get('field_label')
+                code = el.attrib['field_code']
+                label = el.attrib['field_label']
                 config['selections'] = {getattr(x, code): getattr(x, label)
                                         for x in query}
+            elif 'selections' not in el.attrib:
+                raise Exception(
+                    'No model or selections defined on selector'
+                )
 
             for key in ('selections', 'selection_colors', 'name'):
                 if key in el.attrib:

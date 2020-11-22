@@ -213,6 +213,8 @@ def with_buttons():
     class Test:
 
         id = Integer(primary_key=True)
+        code = String()
+        label = String()
 
         @classmethod
         def not_decorated(cls):
@@ -1418,14 +1420,468 @@ class TestResourceFormOne2Many:
             }]
 
 
-# class TestResourceFormButtons:
-#
-#     @pytest.fixture(autouse=True)
-#     def transact(self, request, registry_with_buttons):
-#         transaction = registry_with_buttons.begin_nested()
-#         request.addfinalizer(transaction.rollback)
-#         return
-#
+class TestResourceFormOther:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_with_buttons):
+        transaction = registry_with_buttons.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition_div(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div>Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div>Test</div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_div_with_hidden(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div hidden>Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-div hidden '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'hidden\': \'1\', \'props\': '
+                    '{}}">Test</furet-ui-div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_fieldset(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <fieldset>Test</fieldset>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-fieldset '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{}">Test</furet-ui-fieldset>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_fieldset_with_readonly(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <fieldset readonly>Test</fieldset>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-fieldset readonly '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'readonly\': \'readonly\', \'props\': '
+                    '{}}">Test</furet-ui-fieldset>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_fieldset_with_hidden(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <fieldset hidden>Test</fieldset>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-fieldset hidden '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'hidden\': \'1\', \'props\': '
+                    '{}}">Test</furet-ui-fieldset>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_fieldset_with_writable(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <fieldset writable>Test</fieldset>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-fieldset writable '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'writable\': \'1\', \'props\': '
+                    '{}}">Test</furet-ui-fieldset>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_tabs(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <tabs name="test">
+                        <tab label="Test"
+                            Test
+                        </tab>
+                    </tabs>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-tabs name="test" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'test\'}"><furet-ui-tab '
+                    'label="Test" test v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{}">\n'
+                    '                    </furet-ui-tab></furet-ui-tabs>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_tabs_with_readonly(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <tabs name="test" readonly>
+                        <tab label="Test"
+                            Test
+                        </tab>
+                    </tabs>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-tabs name="test" readonly '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'readonly\': \'readonly\', \'props\': '
+                    '{\'name\': \'test\'}, \'name\': \'test\'}"><furet-ui-tab '
+                    'label="Test" test v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{}">\n'
+                    '                    </furet-ui-tab></furet-ui-tabs>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_tabs_with_hidden(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <tabs name="test" hidden>
+                        <tab label="Test"
+                            Test
+                        </tab>
+                    </tabs>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-tabs name="test" hidden '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'hidden\': \'1\', \'props\': {\'name\': '
+                    '\'test\'}, \'name\': \'test\'}"><furet-ui-tab '
+                    'label="Test" test v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{}">\n'
+                    '                    </furet-ui-tab></furet-ui-tabs>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_tabs_with_writable(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <tabs name="test" writable>
+                        <tab label="Test"
+                            Test
+                        </tab>
+                    </tabs>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-tabs name="test" writable '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'writable\': \'1\', \'props\': '
+                    '{\'name\': \'test\'}, \'name\': \'test\'}">'
+                    '<furet-ui-tab label="Test" test '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{}">\n'
+                    '                    </furet-ui-tab></furet-ui-tabs>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_selector_without_any_selection(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <selector name="test"/>
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_selector_with_selection(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <selector selections="{'test': 'Test 1'}"/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-selector selections="{\'test\': '
+                    '\'Test 1\'}" v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{\'name\': \'tag0\', '
+                    '\'selections\': &quot;{\'test\': \'Test 1\'}&quot;}">'
+                    '</furet-ui-selector>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_selector_with_name(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <selector
+                        name="myselector"
+                        selections="{'test': 'Test 1'}"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-selector name="myselector" '
+                    'selections="{\'test\': \'Test 1\'}" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'myselector\', \'selections\': '
+                    '&quot;{\'test\': \'Test 1\'}&quot;}"></furet-ui-selector>'
+                    '\n                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_selector_with_colors(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <selector
+                        selections="{'test': 'Test 1'}"
+                        selection_colors="{'test': 'Test 1'}"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-selector selections="{\'test\': '
+                    '\'Test 1\'}" selection_colors="{\'test\': \'Test 1\'}" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'tag0\', \'selections\': '
+                    "&quot;{'test': 'Test 1'}&quot;, 'selection_colors': "
+                    '&quot;{\'test\': \'Test 1\'}&quot;}"></furet-ui-selector>'
+                    '\n                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_selector_with_model(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.Test.insert(code='test1', label='Test 1')
+        registry_with_buttons.Test.insert(code='test2', label='Test 2')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <selector
+                        name="myselector"
+                        model="Model.Test"
+                        field_code="code"
+                        field_label="label"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-selector name="myselector" '
+                    'model="Model.Test" field_code="code" field_label="label" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'myselector\', \'selections\': '
+                    "{'test1': 'Test 1', 'test2': 'Test "
+                    '2\'}}"></furet-ui-selector>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
 #     def test_get_definition_without_any_action(self, registry_with_buttons):
 #         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
 #             code='test-list-resource',
