@@ -253,25 +253,52 @@ class Template:
 
         return self.get_field_for_(field, 'StatusBar', description, fields2read)
 
-    def replace_buttons(self, template, fields_description, fields2read):
+    def replace_buttons(self, userid, template, fields_description,
+                        fields2read):
         buttons = template.findall('.//button')
         for el in buttons:
             el.tag = 'furet-ui-form-button'
             self.add_template_bind(el)
             config = {
                 'label': el.attrib['label'],
-                'call': el.attrib['call'],
-                'open_resource': el.attrib.get('open-resource'),
                 'class': el.attrib.get('class', '').split(),
             }
-            for key in ('readonly', 'hidden'):
-                value = el.attrib.get(key, '0')
-                if value == '':
-                    value = '1'
-                elif key == value:
-                    value = '1'
+            if 'call' in el.attrib:
+                call = el.attrib['call']
+                if call not in self.registry.exposed_methods.get(self.model,
+                                                                 {}):
+                    raise Exception(f"the method '{call}' is not exposed")
 
-                config[key] = value
+                definition = self.registry.exposed_methods[self.model][call]
+                permission = definition['permission']
+                if permission is not None:
+                    if not self.registry.Pyramid.check_acl(
+                        userid, self.model, permission
+                    ):
+                        el.getparent().remove(el)
+                        return
+
+                config['call'] = call
+            elif 'open-resource' in el.attrib:
+                resource = None
+                for model in self.__class__.get_resource_types().keys():
+                    resource = self.registry.IO.Mapping.get(
+                        model, el.attrib['open-resource'])
+                    if resource:
+                        break
+
+                if resource is None:
+                    raise Exception(
+                        f"On resource {self.id}, the resource is not "
+                        f"mapped for {el.attrib}")
+
+                config['open_resource'] = el.attrib['open-resource']
+            else:
+                raise Exception('Button defined without action')
+
+            config.update(self.update_interface_attributes(
+                el, fields2read, 'readonly', 'hidden'))
+            config.pop('props', None)
 
             el.attrib['{%s}config' % el.nsmap['v-bind']] = json.dumps(config)
 
@@ -296,6 +323,8 @@ class Template:
         for key in attributes:
             value = el.attrib.get(key)
             if value == '':
+                value = '1'
+            elif value == key:
                 value = '1'
 
             if not value:
@@ -392,7 +421,8 @@ class Template:
     def replace_tab(self, template, fields2read):
         self.replace_by_(template, fields2read, 'tab')
 
-    def _encode_to_furetui(self, template, fields_description, fields2read):
+    def _encode_to_furetui(self, userid, template, fields_description,
+                           fields2read):
         nsmap = {'v-bind': 'https://vuejs.org/'}
         etree.cleanup_namespaces(
             template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
@@ -402,12 +432,13 @@ class Template:
         self.replace_tabs(template, fields2read)
         self.replace_tab(template, fields2read)
         self.replace_fields(template, fields_description, fields2read)
-        self.replace_buttons(template, fields_description, fields2read)
+        self.replace_buttons(userid, template, fields_description, fields2read)
 
-    def encode_to_furetui(self, template, fields, fields2read):
+    def encode_to_furetui(self, userid, template, fields, fields2read):
         Model = self.registry.get(self.model)
         fields_description = Model.fields_description(fields)
-        self._encode_to_furetui(template, fields_description, fields2read)
+        self._encode_to_furetui(
+            userid, template, fields_description, fields2read)
         return self.registry.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
 
@@ -805,6 +836,7 @@ class Form(
 
     def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
+        userid = kwargs.get('authenticated_userid')
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
         if self.template:
@@ -835,9 +867,10 @@ class Form(
             sub_template.tag = 'div'
             template.remove(sub_template)
             res['%s_template' % tag] = self.encode_to_furetui(
-                sub_template, fields, fields2read)
+                userid, sub_template, fields, fields2read)
 
-        body_template = self.encode_to_furetui(template, fields, fields2read)
+        body_template = self.encode_to_furetui(
+            userid, template, fields, fields2read)
         fields2read = list(set(fields2read))
         fields2read.sort()
         res.update({

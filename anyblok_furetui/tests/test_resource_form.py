@@ -1525,7 +1525,7 @@ class TestResourceFormOther:
                     '<div xmlns:v-bind="https://vuejs.org/" '
                     'id="tmpl_test"><furet-ui-fieldset readonly '
                     'v-bind:resource="resource" v-bind:data="data" '
-                    'v-bind:config="{\'readonly\': \'readonly\', \'props\': '
+                    'v-bind:config="{\'readonly\': \'1\', \'props\': '
                     '{}}">Test</furet-ui-fieldset>\n'
                     '                </div>\n'
                     '            '
@@ -1647,7 +1647,7 @@ class TestResourceFormOther:
                     '<div xmlns:v-bind="https://vuejs.org/" '
                     'id="tmpl_test"><furet-ui-tabs name="test" readonly '
                     'v-bind:resource="resource" v-bind:data="data" '
-                    'v-bind:config="{\'readonly\': \'readonly\', \'props\': '
+                    'v-bind:config="{\'readonly\': \'1\', \'props\': '
                     '{\'name\': \'test\'}, \'name\': \'test\'}"><furet-ui-tab '
                     'label="Test" test v-bind:resource="resource" '
                     'v-bind:data="data" v-bind:config="{}">\n'
@@ -1882,147 +1882,268 @@ class TestResourceFormOther:
                 'type': 'form'
             }]
 
-#     def test_get_definition_without_any_action(self, registry_with_buttons):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button label="test" />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             with pytest.raises(Exception):
-#                 resource.get_definitions()
-#
-#     def test_get_definition_call_existing_resource(self,
-# registry_with_buttons):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#         registry_with_buttons.IO.Mapping.set('resource_call', resource)
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             open-resource="resource_call"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             assert resource.get_definitions() == [{
-#             }]
-#
-#     def test_get_definition_call_unexisting_resource(
-#         self, registry_with_buttons
-#     ):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             open-resource="resource_call"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             with pytest.raises(Exception):
-#                 resource.get_definitions()
-#
-#     def test_get_definition_call_undecorated_method(
-#         self, registry_with_buttons
-#     ):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             call="not_decorated"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             with pytest.raises(Exception):
-#                 resource.get_definitions()
-#
-#     def test_get_definition_call_decorated_method(
-#         self, registry_with_buttons
-#     ):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             call="simple_method"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             assert resource.get_definitions() == [{
-#             }]
-#
-#     def test_get_definition_call_decorated_method_with_permission(
-#         self, registry_with_buttons
-#     ):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#         registry_with_buttons.Pyramid.Authorization.insert(
-#             model='Model.Test', login='test',
-#             perms=dict(do_something=dict(matched=True)))
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             call="method_with_permission"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             assert resource.get_definitions(authenticated_userid='test') == [{
-#             }]
-#
-#     def test_get_definition_call_decorated_method_without_permission(
-#         self, registry_with_buttons
-#     ):
-#         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
-#             code='test-list-resource',
-#             model='Model.Test', template='tmpl_test')
-#
-#         with TmpTemplate(registry_with_buttons) as tmpl:
-#             tmpl.load_template_from_str("""
-#                 <template id="tmpl_test">
-#                     <buttons>
-#                         <button
-#                             label="test"
-#                             call="method_with_permission"
-#                         />
-#                 </template>
-#             """)
-#             tmpl.compile()
-#             assert resource.get_definitions(authenticated_userid='test') == [{
-#             }]
+    def test_get_definition_button_without_any_action(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button label="test" />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_button_call_existing_resource(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.IO.Mapping.set('resource_call', resource)
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        open-resource="resource_call"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-form-button label="test" '
+                    'open-resource="resource_call" v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
+                    '"class": [], "open_resource": "resource_call"}\'>'
+                    '</furet-ui-form-button>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_button_readonly(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.IO.Mapping.set('resource_call', resource)
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        readonly
+                        open-resource="resource_call"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-form-button label="test" '
+                    'readonly open-resource="resource_call" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config=\'{"label": "test", "class": [], '
+                    '"open_resource": "resource_call", "readonly": '
+                    '"1"}\'></furet-ui-form-button>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_button_hidden(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.IO.Mapping.set('resource_call', resource)
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        hidden="1"
+                        open-resource="resource_call"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-form-button label="test" '
+                    'hidden="1" open-resource="resource_call" '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config=\'{"label": "test", "class": [], '
+                    '"open_resource": "resource_call", '
+                    '"hidden": "1"}\'></furet-ui-form-button>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_button_call_unexisting_resource(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        open-resource="resource_call"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_button_call_undecorated_method(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        call="not_decorated"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            with pytest.raises(Exception):
+                resource.get_definitions()
+
+    def test_get_definition_button_call_decorated_method(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        call="simple_method"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-form-button label="test" '
+                    'call="simple_method" v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
+                    '"class": [], "call": "simple_method"}\'>'
+                    '</furet-ui-form-button>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_button_call_decorated_method_with_permission(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+        registry_with_buttons.Pyramid.Authorization.insert(
+            model='Model.Test', login='test',
+            perms=dict(do_something=dict(matched=True)))
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        call="method_with_permission"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-form-button label="test" '
+                    'call="method_with_permission" v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
+                    '"class": [], "call": "method_with_permission"}\'>'
+                    '</furet-ui-form-button>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_get_definition_button_call_decorated_method_without_permission(
+        self, registry_with_buttons
+    ):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <button
+                        label="test"
+                        call="method_with_permission"
+                    />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"></div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
