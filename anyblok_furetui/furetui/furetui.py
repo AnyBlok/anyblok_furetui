@@ -198,3 +198,34 @@ class FuretUI:
             res = getattr(obj, call)(**options, **data)
 
         return res
+
+    @classmethod
+    def validate_resources(cls):
+        res = []
+        res.extend(cls.validate_form_resources())
+        res.extend(cls.validate_list_resources())
+        return res
+
+    @classmethod
+    def validate_form_resources(cls):
+        res = []
+        for resource in cls.registry.FuretUI.Resource.Form.query():
+            try:
+                resource.get_definitions()
+            except Exception as e:
+                logger.error(str(e))
+                res.append(e)
+
+        return res
+
+    @classmethod
+    def validate_list_resources(cls):
+        res = []
+        for resource in cls.registry.FuretUI.Resource.List.query():
+            try:
+                resource.get_definitions()
+            except Exception as e:
+                logger.error(str(e))
+                res.append(e)
+
+        return res
