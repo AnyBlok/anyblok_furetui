@@ -50,29 +50,34 @@ class TestResourceForm:
         with TmpTemplate(rollback_registry) as tmpl:
             tmpl.load_template_from_str(tmpl_test_form_ok)
             tmpl.compile()
-            assert len(rollback_registry.FuretUI.validate_form_resources()) == 0
+            validate = rollback_registry.FuretUI.validate_form_resources()
+            assert len(validate) == 0, ', '.join(validate)
 
     def test_valide_resource_form_ko(self, rollback_registry):
         with TmpTemplate(rollback_registry) as tmpl:
             tmpl.load_template_from_str(tmpl_test_form_ko)
             tmpl.compile()
-            assert len(rollback_registry.FuretUI.validate_form_resources()) == 1
+            validate = rollback_registry.FuretUI.validate_form_resources()
+            assert len(validate) == 1, ', '.join(validate)
 
     def test_valide_resource_list_ok(self, rollback_registry):
         with TmpTemplate(rollback_registry) as tmpl:
             tmpl.load_template_from_str(tmpl_test_list_ok)
             tmpl.compile()
-            assert len(rollback_registry.FuretUI.validate_list_resources()) == 0
+            validate = rollback_registry.FuretUI.validate_list_resources()
+            assert len(validate) == 0, ', '.join(validate)
 
     def test_valide_resource_list_ko(self, rollback_registry):
         with TmpTemplate(rollback_registry) as tmpl:
             tmpl.load_template_from_str(tmpl_test_list_ko)
             tmpl.compile()
-            assert len(rollback_registry.FuretUI.validate_list_resources()) == 1
+            validate = rollback_registry.FuretUI.validate_list_resources()
+            assert len(validate) == 1, ', '.join(validate)
 
     def test_valide_resources_ko(self, rollback_registry):
         with TmpTemplate(rollback_registry) as tmpl:
             tmpl.load_template_from_str(tmpl_test_form_ko)
             tmpl.load_template_from_str(tmpl_test_list_ko)
             tmpl.compile()
-            assert len(rollback_registry.FuretUI.validate_resources()) == 2
+            validate = rollback_registry.FuretUI.validate_resources()
+            assert len(validate) == 2, ', '.join(validate)
