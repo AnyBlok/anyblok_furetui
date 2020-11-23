@@ -68,15 +68,8 @@ class Template:
         return self.get_field_for_(field, 'String', description, fields2read)
 
     def get_field_for_Sequence(self, field, description, fields2read):
-        Model = self.registry.get(self.model)
-        description.update({
-            'maxlength': Model.registry.loaded_namespaces_first_step[
-                self.model][description['id']].size,
-            'placeholder': field.attrib.get('placeholder', ''),
-            'icon': field.attrib.get('icon', ''),
-            'readonly': '1',
-        })
-        return self.get_field_for_(field, 'String', description, fields2read)
+        description.update(dict(readonly='1'))
+        return self.get_field_for_String(field, description, fields2read)
 
     def get_field_for_Password(self, field, description, fields2read):
         Model = self.registry.get(self.model)
@@ -115,11 +108,8 @@ class Template:
         })
         return self.get_field_for_(field, 'Integer', description, fields2read)
 
-    def get_field_for_SmallInteger(self, field, description, fields2read):
+    def get_field_for_BigInteger(self, field, description, fields2read):
         return self.get_field_for_Integer(field, description, fields2read)
-
-    def get_field_for_File(self, field, description, fields2read):
-        return self.get_field_for_(field, 'File', description, fields2read)
 
     def get_field_for_Many2One(  # noqa: C901
         self, field, description, fields2read
@@ -133,7 +123,7 @@ class Template:
 
             display = display.replace('!', '')
             fields = []
-            for d in display:
+            for d in display.split():
                 if 'fields.' in d:
                     fields.append(d.split('.')[1])
 
@@ -152,7 +142,7 @@ class Template:
 
         resource = field.attrib.get('resource')
         menu = field.attrib.get('menu')
-        if eval(field.attrib.get('no-link', 'False')):
+        if eval(field.attrib.get('no-link', 'False') or 'True'):
             pass
         elif menu:
             menu = self.registry.IO.Mapping.get(
@@ -228,9 +218,8 @@ class Template:
         })
         return self.get_field_for_(field, 'DateTime', description, fields2read)
 
-    # def get_field_for_Sequence(cls, field, description, fields2read):
-    #     description['readonly'] = True
-    #     return cls.get_field_for_(field, 'String', description, fields2read)
+    def get_field_for_TimeStamp(self, field, description, fields2read):
+        self.get_field_for_DateTime(field, description, fields2read)
 
     def get_field_for_Selection(self, field, description, fields2read):
         description = deepcopy(description)
@@ -264,29 +253,52 @@ class Template:
 
         return self.get_field_for_(field, 'StatusBar', description, fields2read)
 
-    # def get_field_for_UUID(cls, field, description, fields2read):
-    #     description['readonly'] = True
-    #     return cls.get_field_for_(field, 'String', description, fields2read)
-
-    def replace_buttons(self, template, fields_description, fields2read):
+    def replace_buttons(self, userid, template, fields_description,
+                        fields2read):
         buttons = template.findall('.//button')
         for el in buttons:
             el.tag = 'furet-ui-form-button'
             self.add_template_bind(el)
             config = {
                 'label': el.attrib['label'],
-                'call': el.attrib['call'],
-                'open_resource': el.attrib.get('open-resource'),
                 'class': el.attrib.get('class', '').split(),
             }
-            for key in ('readonly', 'hidden'):
-                value = el.attrib.get(key, '0')
-                if value == '':
-                    value = '1'
-                elif key == value:
-                    value = '1'
+            if 'call' in el.attrib:
+                call = el.attrib['call']
+                if call not in self.registry.exposed_methods.get(self.model,
+                                                                 {}):
+                    raise Exception(f"the method '{call}' is not exposed")
 
-                config[key] = value
+                definition = self.registry.exposed_methods[self.model][call]
+                permission = definition['permission']
+                if permission is not None:
+                    if not self.registry.Pyramid.check_acl(
+                        userid, self.model, permission
+                    ):
+                        el.getparent().remove(el)
+                        return
+
+                config['call'] = call
+            elif 'open-resource' in el.attrib:
+                resource = None
+                for model in self.__class__.get_resource_types().keys():
+                    resource = self.registry.IO.Mapping.get(
+                        model, el.attrib['open-resource'])
+                    if resource:
+                        break
+
+                if resource is None:
+                    raise Exception(
+                        f"On resource {self.id}, the resource is not "
+                        f"mapped for {el.attrib}")
+
+                config['open_resource'] = el.attrib['open-resource']
+            else:
+                raise Exception('Button defined without action')
+
+            config.update(self.update_interface_attributes(
+                el, fields2read, 'readonly', 'hidden'))
+            config.pop('props', None)
 
             el.attrib['{%s}config' % el.nsmap['v-bind']] = json.dumps(config)
 
@@ -311,6 +323,8 @@ class Template:
         for key in attributes:
             value = el.attrib.get(key)
             if value == '':
+                value = '1'
+            elif value == key:
                 value = '1'
 
             if not value:
@@ -376,10 +390,14 @@ class Template:
             if 'model' in el.attrib:
                 Model = self.registry.get(el.attrib['model'])
                 query = Model.query()
-                code = el.attrib.get('field_code')
-                label = el.attrib.get('field_label')
+                code = el.attrib['field_code']
+                label = el.attrib['field_label']
                 config['selections'] = {getattr(x, code): getattr(x, label)
                                         for x in query}
+            elif 'selections' not in el.attrib:
+                raise Exception(
+                    'No model or selections defined on selector'
+                )
 
             for key in ('selections', 'selection_colors', 'name'):
                 if key in el.attrib:
@@ -403,7 +421,8 @@ class Template:
     def replace_tab(self, template, fields2read):
         self.replace_by_(template, fields2read, 'tab')
 
-    def _encode_to_furetui(self, template, fields_description, fields2read):
+    def _encode_to_furetui(self, userid, template, fields_description,
+                           fields2read):
         nsmap = {'v-bind': 'https://vuejs.org/'}
         etree.cleanup_namespaces(
             template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
@@ -413,12 +432,13 @@ class Template:
         self.replace_tabs(template, fields2read)
         self.replace_tab(template, fields2read)
         self.replace_fields(template, fields_description, fields2read)
-        self.replace_buttons(template, fields_description, fields2read)
+        self.replace_buttons(userid, template, fields_description, fields2read)
 
-    def encode_to_furetui(self, template, fields, fields2read):
+    def encode_to_furetui(self, userid, template, fields, fields2read):
         Model = self.registry.get(self.model)
         fields_description = Model.fields_description(fields)
-        self._encode_to_furetui(template, fields_description, fields2read)
+        self._encode_to_furetui(
+            userid, template, fields_description, fields2read)
         return self.registry.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
 
@@ -433,15 +453,19 @@ class Resource:
     id = Integer(primary_key=True)
     code = String()
     type = Selection(
-        selections={
+        selections='get_resource_types',
+        nullable=False)
+
+    @classmethod
+    def get_resource_types(cls):
+        return {
             'Model.FuretUI.Resource.Custom': 'Custom',
             'Model.FuretUI.Resource.Set': 'Set',
             'Model.FuretUI.Resource.List': 'List',
             'Model.FuretUI.Resource.Thumbnail': 'Thumbnail',
             'Model.FuretUI.Resource.Form': 'Form',
             'Model.FuretUI.Resource.Dashboard': 'Dashboard',
-        },
-        nullable=False)
+        }
 
     @classmethod
     def define_mapper_args(cls):
@@ -508,7 +532,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'type': widget,
             'sticky': False,
             'numeric': (
-                True if widget in ('Integer', 'Float', 'Decimal') else False),
+                True if widget in ('integer', 'float', 'decimal') else False),
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
@@ -551,11 +575,6 @@ class List(Declarations.Model.FuretUI.Resource):
         f['type'] = 'Integer'
         return self.field_for_(f, fields2read, **kwargs)
 
-    def field_for_SmallInteger(self, field, fields2read, **kwargs):
-        f = field.copy()
-        f['type'] = 'Integer'
-        return self.field_for_(f, fields2read, **kwargs)
-
     def field_for_relationship(self, field, fields2read, **kwargs):
         f = field.copy()
         Model = self.registry.get(f['model'])
@@ -567,7 +586,7 @@ class List(Declarations.Model.FuretUI.Resource):
 
             display = display.replace('!', '')
             fields = []
-            for d in display:
+            for d in display.split():
                 if 'fields.' in d:
                     fields.append(d.split('.')[1])
 
@@ -579,14 +598,14 @@ class List(Declarations.Model.FuretUI.Resource):
 
         resource = None
         menu = None
-        if eval(kwargs.get('no-link', 'False')):
+        if eval(kwargs.get('no-link', 'False') or 'True'):
             pass
         elif 'menu' in kwargs:
             menu = self.registry.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', kwargs['menu'])
             resource = menu.resource
         elif 'resource' in kwargs:
-            for type_ in ('set', 'form'):
+            for type_ in ('Set', 'Form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
                 resource = self.registry.IO.Mapping.get(
                     resource_model, kwargs['resource'])
@@ -613,20 +632,6 @@ class List(Declarations.Model.FuretUI.Resource):
 
     def field_for_One2Many(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
-
-    # @classmethod
-    # def field_for_LargeBinary(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'file'
-    #     return cls.field_for_(f, fields2read, **kwargs)
-
-    # @classmethod
-    # def field_for_Sequence(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'string'
-    #     res = cls.field_for_(f, fields2read, **kwargs)
-    #     res['readonly'] = True
-    #     return res
 
     def field_for_Selection(self, field, fields2read, **kwargs):
         f = field.copy()
@@ -662,13 +667,41 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return self.field_for_(f, fields2read, **kwargs)
 
-    # @classmethod
-    # def field_for_UUID(cls, field, fields2read, **kwargs):
-    #     f = field.copy()
-    #     f['type'] = 'string'
-    #     res = cls.field_for_(f, fields2read, **kwargs)
-    #     res['readonly'] = True
-    #     return res
+    def button_for(self, userid, Model, button, pks):
+        attributes = deepcopy(button.attrib)
+        if 'call' in attributes:
+            call = attributes['call']
+            model = Model.__registry_name__
+            if call not in self.registry.exposed_methods.get(model, {}):
+                raise Exception(f"the method '{call}' is not exposed")
+
+            definition = self.registry.exposed_methods[model][call]
+            permission = definition['permission']
+            if permission is not None:
+                if not self.registry.Pyramid.check_acl(
+                    userid, model, permission
+                ):
+                    return None
+
+        elif 'open-resource' in attributes:
+            resource = None
+            for model in self.__class__.get_resource_types().keys():
+                resource = self.registry.IO.Mapping.get(
+                    model, attributes['open-resource'])
+                if resource:
+                    break
+
+            if resource is None:
+                raise Exception(
+                    f"On resource {self.id}, the resource is not "
+                    f"mapped for {attributes}")
+        else:
+            raise Exception(
+                f"On resource {self.id}, no action defined on button "
+                f"{attributes}")
+
+        attributes['pks'] = pks
+        return attributes
 
     def get_definitions(self, **kwargs):
         Model = self.registry.get(self.model)
@@ -695,9 +728,11 @@ class List(Declarations.Model.FuretUI.Resource):
                         field, fields2read, **attributes))
 
             for button in template.findall('.//buttons/button'):
-                attributes = deepcopy(button.attrib)
-                attributes['pks'] = pks
-                buttons.append(attributes)
+                attributes = self.button_for(
+                    kwargs.get('authenticated_userid', None),
+                    Model, button, pks)
+                if attributes is not None:
+                    buttons.append(attributes)
 
         else:
             fields = list(fd.keys())
@@ -801,6 +836,7 @@ class Form(
 
     def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
+        userid = kwargs.get('authenticated_userid')
         Model = self.registry.get(self.model)
         fd = Model.fields_description()
         if self.template:
@@ -831,9 +867,10 @@ class Form(
             sub_template.tag = 'div'
             template.remove(sub_template)
             res['%s_template' % tag] = self.encode_to_furetui(
-                sub_template, fields, fields2read)
+                userid, sub_template, fields, fields2read)
 
-        body_template = self.encode_to_furetui(template, fields, fields2read)
+        body_template = self.encode_to_furetui(
+            userid, template, fields, fields2read)
         fields2read = list(set(fields2read))
         fields2read.sort()
         res.update({
@@ -928,8 +965,10 @@ class Set(Declarations.Model.FuretUI.Resource):
             'multi': getattr(self, self.multi_type).id,
         })
         res = [definition]
-        res.extend(self.form.get_definitions())
-        res.extend(getattr(self, self.multi_type).get_definitions())
+        res.extend(self.form.get_definitions(
+            authenticated_userid=authenticated_userid))
+        res.extend(getattr(self, self.multi_type).get_definitions(
+            authenticated_userid=authenticated_userid))
         return res
 
     def check_acl(self, authenticated_userid):

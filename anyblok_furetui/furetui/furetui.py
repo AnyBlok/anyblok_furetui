@@ -156,15 +156,7 @@ class FuretUI:
 
     @classmethod
     def check_acl(cls, userid, resource, permission):
-        """Checking ACL require `authorization` blok from
-        Anyblok Pyramid to be installed.
-        This method is override as expected using `furetui-auth` which depends
-        from `authorization` blok.
-        """
-        logger.warning(
-            "In order to properly check ACL, you should install `furetui-auth`"
-        )
-        return True
+        return cls.registry.Pyramid.check_acl(userid, resource, permission)
 
     @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
