@@ -15,8 +15,11 @@ from .i18n import fr, en
 
 def import_module(reload=None):
     from . import user
+    from .data import role_authorization_importer
+
     if reload is not None:
         reload(user)
+        reload(role_authorization_importer)
 
 
 class FuretUIAuthBlok(Blok, BlokImporter):
@@ -57,3 +60,4 @@ class FuretUIAuthBlok(Blok, BlokImporter):
         self.import_file_xml('Model.FuretUI.Space', 'data', 'spaces.xml')
         self.import_file_xml('Model.FuretUI.Resource', 'data', 'resources.xml')
         self.import_file_xml('Model.FuretUI.Menu', 'data', 'menus.xml')
+        self.registry.Data.import_authorization_roles(latest)
