@@ -15,9 +15,6 @@ from .i18n import fr, en
 
 def import_module(reload=None):
     from . import user
-    from . import data
-
-    data.import_declaration_module(reload)
     if reload is not None:
         reload(user)
 
@@ -60,4 +57,32 @@ class FuretUIAuthBlok(Blok, BlokImporter):
         self.import_file_xml('Model.FuretUI.Space', 'data', 'spaces.xml')
         self.import_file_xml('Model.FuretUI.Resource', 'data', 'resources.xml')
         self.import_file_xml('Model.FuretUI.Menu', 'data', 'menus.xml')
-        self.registry.Data.import_authorization_roles(latest=latest)
+        self.set_admin_role()
+
+    def set_admin_role(self):
+        self.registry.Pyramid.Role.ensure_role_exists(
+            "admin",
+            [
+                {
+                    "code": "role-admin-pyramid-authorization"
+                    "model": "Model.Pyramid.Authorization",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-role"
+                    "model": "Model.Pyramid.Role",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-user"
+                    "model": "Model.Pyramid.User",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-system-blok"
+                    "model": "Model.System.Blok",
+                    "perms": PERM_WRITE,
+                },
+            ]
+            label="Administrator"
+        )
