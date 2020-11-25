@@ -1626,6 +1626,40 @@ class TestResourceFormOther:
                 'type': 'form'
             }]
 
+    def test_get_definition_tabs_without_name(self, registry_with_buttons):
+        resource = registry_with_buttons.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_buttons) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <tabs>
+                        <tab label="Test"
+                            Test
+                        </tab>
+                    </tabs>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-tabs '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'tabs1\'}"><furet-ui-tab '
+                    'label="Test" test v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{}">\n'
+                    '                    </furet-ui-tab></furet-ui-tabs>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
     def test_get_definition_tabs_with_readonly(self, registry_with_buttons):
         resource = registry_with_buttons.FuretUI.Resource.Form.insert(
             code='test-list-resource',
