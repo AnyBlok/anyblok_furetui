@@ -267,7 +267,10 @@ class Template:
                 call = el.attrib['call']
                 if call not in self.registry.exposed_methods.get(self.model,
                                                                  {}):
-                    raise Exception(f"the method '{call}' is not exposed")
+                    raise Exception(
+                        f"On resource {self.identity} : The button "
+                        f"{config} define an unexposed method '{call}'"
+                    )
 
                 definition = self.registry.exposed_methods[self.model][call]
                 permission = definition['permission']
@@ -289,12 +292,15 @@ class Template:
 
                 if resource is None:
                     raise Exception(
-                        f"On resource {self.id}, the resource is not "
-                        f"mapped for {el.attrib}")
+                        f"On resource {self.identity} : The button "
+                        f"{config} defined an unmapped resource "
+                        f"{el.attrib['open-resource']}")
 
                 config['open_resource'] = el.attrib['open-resource']
             else:
-                raise Exception('Button defined without action')
+                raise Exception(
+                    f"On resource {self.identity} : The button "
+                    f"{config} foes not define call or resource")
 
             config.update(self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden'))
@@ -387,6 +393,10 @@ class Template:
             config['name'] = 'tag%d' % count
             count += 1
 
+            for key in ('selections', 'selection_colors', 'name'):
+                if key in el.attrib:
+                    config[key] = el.attrib[key]
+
             if 'model' in el.attrib:
                 Model = self.registry.get(el.attrib['model'])
                 query = Model.query()
@@ -396,12 +406,9 @@ class Template:
                                         for x in query}
             elif 'selections' not in el.attrib:
                 raise Exception(
-                    'No model or selections defined on selector'
+                    f"On resource {self.id}, The  selector {config} does not "
+                    f"declare model or selections"
                 )
-
-            for key in ('selections', 'selection_colors', 'name'):
-                if key in el.attrib:
-                    config[key] = el.attrib[key]
 
             el.tag = 'furet-ui-selector'
             self.add_template_bind(el)
@@ -409,12 +416,14 @@ class Template:
 
     def replace_tabs(self, template, fields2read):
         tags = template.findall('.//tabs')
+        counter = 0
         for el in tags:
+            counter += 1
             config = self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden', 'writable')
 
             el.tag = 'furet-ui-tabs'
-            config['name'] = el.attrib['name']
+            config['name'] = el.attrib.get('name', f'tabs{counter}')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
@@ -673,7 +682,10 @@ class List(Declarations.Model.FuretUI.Resource):
             call = attributes['call']
             model = Model.__registry_name__
             if call not in self.registry.exposed_methods.get(model, {}):
-                raise Exception(f"the method '{call}' is not exposed")
+                raise Exception(
+                    f"On resource {self.identity} : The button "
+                    f"{attributes} define an unexposed method '{call}'"
+                )
 
             definition = self.registry.exposed_methods[model][call]
             permission = definition['permission']
@@ -693,12 +705,13 @@ class List(Declarations.Model.FuretUI.Resource):
 
             if resource is None:
                 raise Exception(
-                    f"On resource {self.id}, the resource is not "
-                    f"mapped for {attributes}")
+                    f"On resource {self.identity} : The button "
+                    f"{attributes} defined an unmapped resource "
+                    f"{button.attrib['open-resource']}")
         else:
             raise Exception(
-                f"On resource {self.id}, no action defined on button "
-                f"{attributes}")
+                f"On resource {self.identity} : The button "
+                f"{attributes} foes not define call or resource")
 
         attributes['pks'] = pks
         return attributes

@@ -209,7 +209,8 @@ class FuretUI:
     @classmethod
     def validate_form_resources(cls):
         res = []
-        for resource in cls.registry.FuretUI.Resource.Form.query():
+        Form = cls.registry.FuretUI.Resource.Form
+        for resource in Form.query().filter(Form.template.isnot(None)):
             try:
                 resource.get_definitions()
             except Exception as e:
@@ -221,7 +222,8 @@ class FuretUI:
     @classmethod
     def validate_list_resources(cls):
         res = []
-        for resource in cls.registry.FuretUI.Resource.List.query():
+        List = cls.registry.FuretUI.Resource.List
+        for resource in List.query().filter(List.template.isnot(None)):
             try:
                 resource.get_definitions()
             except Exception as e:
