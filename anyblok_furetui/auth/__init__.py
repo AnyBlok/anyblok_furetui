@@ -10,6 +10,7 @@
 from anyblok.blok import Blok
 from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
+from anyblok_pyramid import PERM_WRITE
 from .i18n import fr, en
 
 
