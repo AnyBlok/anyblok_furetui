@@ -301,7 +301,7 @@ class Template:
             else:
                 raise ResourceTemplateRendererException(
                     f"On resource {self.identity} : The button "
-                    f"{config} foes not define call or resource")
+                    f"{config} doesn't define call or resource")
 
             config.update(self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden'))
