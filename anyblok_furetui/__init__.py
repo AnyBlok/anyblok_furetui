@@ -9,3 +9,4 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 
 from .security import exposed_method  # noqa
+from .exceptions import ResourceTemplateRendererException  # noqa

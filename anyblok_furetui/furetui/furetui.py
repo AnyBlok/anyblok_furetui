@@ -8,6 +8,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
+from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from .template import Template
@@ -213,9 +214,12 @@ class FuretUI:
         for resource in Form.query().filter(Form.template.isnot(None)):
             try:
                 resource.get_definitions()
-            except Exception as e:
+            except ResourceTemplateRendererException as e:
                 logger.error(str(e))
                 res.append(e)
+            except Exception as e:
+                logger.exception(str(e))
+                raise
 
         return res
 
@@ -226,8 +230,11 @@ class FuretUI:
         for resource in List.query().filter(List.template.isnot(None)):
             try:
                 resource.get_definitions()
-            except Exception as e:
+            except ResourceTemplateRendererException as e:
                 logger.error(str(e))
                 res.append(e)
+            except Exception as e:
+                logger.exception(str(e))
+                raise
 
         return res

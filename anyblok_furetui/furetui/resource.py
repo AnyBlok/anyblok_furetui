@@ -10,6 +10,7 @@
 import json
 from copy import deepcopy
 from lxml import etree, html
+from anyblok_furetui import ResourceTemplateRendererException
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
@@ -267,7 +268,7 @@ class Template:
                 call = el.attrib['call']
                 if call not in self.registry.exposed_methods.get(self.model,
                                                                  {}):
-                    raise Exception(
+                    raise ResourceTemplateRendererException(
                         f"On resource {self.identity} : The button "
                         f"{config} define an unexposed method '{call}'"
                     )
@@ -291,14 +292,14 @@ class Template:
                         break
 
                 if resource is None:
-                    raise Exception(
+                    raise ResourceTemplateRendererException(
                         f"On resource {self.identity} : The button "
                         f"{config} defined an unmapped resource "
                         f"{el.attrib['open-resource']}")
 
                 config['open_resource'] = el.attrib['open-resource']
             else:
-                raise Exception(
+                raise ResourceTemplateRendererException(
                     f"On resource {self.identity} : The button "
                     f"{config} foes not define call or resource")
 
@@ -405,7 +406,7 @@ class Template:
                 config['selections'] = {getattr(x, code): getattr(x, label)
                                         for x in query}
             elif 'selections' not in el.attrib:
-                raise Exception(
+                raise ResourceTemplateRendererException(
                     f"On resource {self.id}, The  selector {config} does not "
                     f"declare model or selections"
                 )
@@ -692,7 +693,7 @@ class List(Declarations.Model.FuretUI.Resource):
             call = attributes['call']
             model = Model.__registry_name__
             if call not in self.registry.exposed_methods.get(model, {}):
-                raise Exception(
+                raise ResourceTemplateRendererException(
                     f"On resource {self.identity} : The button "
                     f"{attributes} define an unexposed method '{call}'"
                 )
@@ -714,12 +715,12 @@ class List(Declarations.Model.FuretUI.Resource):
                     break
 
             if resource is None:
-                raise Exception(
+                raise ResourceTemplateRendererException(
                     f"On resource {self.identity} : The button "
                     f"{attributes} defined an unmapped resource "
                     f"{button.attrib['open-resource']}")
         else:
-            raise Exception(
+            raise ResourceTemplateRendererException(
                 f"On resource {self.identity} : The button "
                 f"{attributes} foes not define call or resource")
 
