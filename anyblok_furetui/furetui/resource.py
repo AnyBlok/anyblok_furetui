@@ -721,7 +721,7 @@ class List(Declarations.Model.FuretUI.Resource):
         else:
             raise Exception(
                 f"On resource {self.identity} : The button "
-                f"{attributes} foes not define call or resource")
+                f"{attributes} doesn't define call or resource")
 
         attributes['pks'] = pks
         return attributes
