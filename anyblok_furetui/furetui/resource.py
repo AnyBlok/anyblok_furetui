@@ -487,6 +487,16 @@ class Resource:
 
         return mapper_args
 
+    @property
+    def identity(self):
+        Mapping = self.registry.IO.Mapping
+        mapping = Mapping.get_from_model_and_primary_keys(
+            self.__registry_name__, {'id': self.id})
+        if mapping is not None:
+            return mapping.key
+
+        return self.id
+
     def get_definitions(self, **kwargs):
         raise Exception('This method must be over right')
 
