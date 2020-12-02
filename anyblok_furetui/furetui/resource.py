@@ -113,7 +113,7 @@ class Template:
         return self.get_field_for_Integer(field, description, fields2read)
 
     def get_field_for_Many2One(  # noqa: C901
-        self, field, description, fields2read
+        self, field, description, fields2read, relation="Many2One"
     ):
         Model = self.registry.get(description['model'])
         description = description.copy()
@@ -167,7 +167,7 @@ class Template:
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
-        return self.get_field_for_(field, 'Many2One', description, [])
+        return self.get_field_for_(field, relation, description, [])
 
     def get_field_for_x2Many(self, field, relation, description, fields2read):
         description = description.copy()
@@ -200,8 +200,13 @@ class Template:
     def get_field_for_One2Many(self, field, description, fields2read):
         return self.get_field_for_x2Many(field, 'One2Many', description, [])
 
+    def get_field_for_Many2ManyTags(self, field, description, fields2read):
+        return self.get_field_for_Many2One(
+            field, description, fields2read, relation="Many2ManyTags")
+
     def get_field_for_Many2Many(self, field, description, fields2read):
-        return self.get_field_for_x2Many(field, 'Many2Many', description, [])
+        return self.get_field_for_Many2One(
+            field, description, fields2read, relation="Many2Many")
 
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
@@ -647,6 +652,9 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_One2One(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
+    def field_for_Many2ManyTags(self, field, fields2read, **kwargs):
+        return self.field_for_relationship(field, fields2read, **kwargs)
+
     def field_for_Many2Many(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
@@ -763,8 +771,10 @@ class List(Declarations.Model.FuretUI.Resource):
             fields.sort()
             for field_name in fields:
                 field = fd[field_name]
-                if field['type'] in ('FakeColumn', 'Many2Many', 'One2Many',
-                                     'Function'):
+                if field['type'] in (
+                    'FakeColumn', 'Many2Tags', 'Many2Many', 'One2Many',
+                    'Function',
+                ):
                     continue
 
                 meth = 'field_for_' + field['type']
