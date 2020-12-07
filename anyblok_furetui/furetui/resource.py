@@ -205,8 +205,7 @@ class Template:
             field, description, fields2read, relation="Many2ManyTags")
 
     def get_field_for_Many2Many(self, field, description, fields2read):
-        return self.get_field_for_Many2One(
-            field, description, fields2read, relation="Many2Many")
+        return self.get_field_for_x2Many(field, 'Many2Many', description, [])
 
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
@@ -652,9 +651,6 @@ class List(Declarations.Model.FuretUI.Resource):
     def field_for_One2One(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
-    def field_for_Many2ManyTags(self, field, fields2read, **kwargs):
-        return self.field_for_relationship(field, fields2read, **kwargs)
-
     def field_for_Many2Many(self, field, fields2read, **kwargs):
         return self.field_for_relationship(field, fields2read, **kwargs)
 
@@ -771,10 +767,8 @@ class List(Declarations.Model.FuretUI.Resource):
             fields.sort()
             for field_name in fields:
                 field = fd[field_name]
-                if field['type'] in (
-                    'FakeColumn', 'Many2Tags', 'Many2Many', 'One2Many',
-                    'Function',
-                ):
+                if field['type'] in ('FakeColumn', 'Many2Many', 'One2Many',
+                                     'Function'):
                     continue
 
                 meth = 'field_for_' + field['type']
