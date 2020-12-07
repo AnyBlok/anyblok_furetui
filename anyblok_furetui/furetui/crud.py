@@ -94,6 +94,7 @@ class CRUD:
             request.authenticated_userid
         )
         query = qs.from_filter_by(query)
+        query = qs.from_filter_by_primary_keys(query)
         query = qs.from_tags(query)
 
         query2 = qs.from_order_by(query)
