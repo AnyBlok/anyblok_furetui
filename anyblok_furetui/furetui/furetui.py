@@ -195,6 +195,8 @@ class FuretUI:
                 options[definition[key]] = apply_value(value)
 
         res = None
+        if not data:
+            data = {}
         with saved_errors_in_request(request):
             res = getattr(obj, call)(**options, **data)
 

@@ -1,4 +1,5 @@
 from anyblok.declarations import Declarations, classmethod_cache
+from anyblok_furetui import exposed_method
 
 
 class SqlMixin:
@@ -47,6 +48,28 @@ class SqlMixin:
             cls.adapter_.load_decorators()
 
         return cls.adapter_
+
+    @exposed_method(
+        is_classmethod=True,
+        request="request",
+        authenticated_userid="authenticated_userid",
+        resource="resource",
+        permission="create"
+    )
+    def get_default_values(
+        cls,
+        *args,
+        request=None,
+        authenticated_userid=None,
+        resource=None,
+        **kwargs
+    ):
+        """This method aims to be called by client on model before creating
+        a new object to define it's default values.
+
+        It return a dict with default values.
+        """
+        return {}
 
 
 @Declarations.register(Declarations.Core)
