@@ -56,7 +56,7 @@ class SqlMixin:
         resource="resource",
         permission="create"
     )
-    def get_default_values(
+    def default_values(
         cls,
         *args,
         request=None,
@@ -69,7 +69,7 @@ class SqlMixin:
 
         It return a dict with default values.
         """
-        return {}
+        return []
 
 
 @Declarations.register(Declarations.Core)
