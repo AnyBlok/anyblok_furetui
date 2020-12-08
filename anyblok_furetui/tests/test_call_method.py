@@ -205,7 +205,10 @@ def _with_call_method(oncore=False, onmixin=False, onmodel=False,
 
     @register(Mixin)
     class MixinTest:
-        pass
+
+        @classmethod
+        def default_values(cls, request=None, **kwargs):
+            return [kwargs]
 
     if onmixin:
         add_mixin_in_registry()
@@ -253,10 +256,30 @@ class TestCallMethod:
         request.addfinalizer(transaction.rollback)
         return
 
-    def call(self, webserver, call, status=200):
+    def call(self, webserver, call, status=200, params=None):
         url = f'/furet-ui/resource/0/model/Model.Test/call/{call}'
-        params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
+        if not params:
+            params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
         return webserver.post_json(url, params, status=status)
+
+    def test_default_values_without_permission(
+        self, webserver, registry_call_method
+    ):
+        self.call(webserver, 'default_values', status=403)
+
+    def test_default_values(self, webserver, registry_call_method):
+        registry_call_method.Pyramid.Authorization.insert(
+            model='Model.Test', login='test',
+            perms=dict(create=dict(matched=True)))
+        response = self.call(
+            webserver, 'default_values', params={"data": {"hello": "world"}})
+        assert response.json_body == [
+            {
+                'authenticated_userid': 'test',
+                'resource': None,
+                "hello": "world"
+            }
+        ]
 
     def test_undecorated_method(self, webserver, registry_call_method):
         self.call(webserver, 'not_decorated', status=403)
