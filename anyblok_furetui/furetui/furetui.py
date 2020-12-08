@@ -113,13 +113,17 @@ class FuretUI:
         ]
 
     @classmethod
+    def get_authenticated_userid_locale(cls, authenticated_userid):
+        return Configuration.get('furetui_default_locale', 'en')
+
+    @classmethod
     def get_initialize(cls, authenticated_userid):
         res = []
         locales = {'en'}
         if not authenticated_userid:
             locale = Configuration.get('furetui_default_locale', 'en')
         else:
-            locale = Configuration.get('furetui_default_locale', 'en')
+            locale = cls.get_authenticated_userid_locale(authenticated_userid)
             res.extend(cls.get_user_informations(authenticated_userid))
 
         locales.add(locale)

@@ -7,12 +7,33 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
+from anyblok.column import Selection
 from anyblok.field import Function
+
+
+@Declarations.register(Declarations.Model)
+class FuretUI:
+
+    @classmethod
+    def get_authenticated_userid_locale(cls, authenticated_userid):
+        res = super(FuretUI, cls).get_authenticated_userid_locale(
+            authenticated_userid)
+        user = cls.registry.Pyramid.User.query().get(authenticated_userid)
+        return user.lang or res
 
 
 @Declarations.register(Declarations.Model.Pyramid)
 class User:
     active = Function(fget='fget_active', fexpr='fexpr_active')
+    lang = Selection(selections='get_languages')
+
+    @classmethod
+    def get_languages(cls):
+        return {x: f'language.{x}' for x in cls.get_languages_code()}
+
+    @classmethod
+    def get_languages_code(cls):
+        return ['en', 'fr']
 
     def fget_active(self):
         credential = self.registry.Pyramid.CredentialStore.query().filter_by(
