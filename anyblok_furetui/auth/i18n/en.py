@@ -22,4 +22,8 @@ en = {
             }
         }
     },
+    'language': {
+        'en': 'English',
+        'fr': 'French',
+    }
 }
