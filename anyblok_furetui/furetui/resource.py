@@ -55,6 +55,7 @@ class Template:
             else:
                 config[attrib] = description[attrib]
 
+        self.clean_unnecessary_attributes(field)
         field.attrib['{%s}config' % field.nsmap['v-bind']] = json.dumps(config)
 
     def get_field_for_String(self, field, description, fields2read):
@@ -258,7 +259,6 @@ class Template:
         buttons = template.findall('.//button')
         for el in buttons:
             el.tag = 'furet-ui-form-button'
-            self.add_template_bind(el)
             config = {
                 'label': el.attrib['label'],
                 'class': el.attrib.get('class', '').split(),
@@ -300,7 +300,14 @@ class Template:
                 el, fields2read, 'readonly', 'hidden'))
             config.pop('props', None)
 
+            self.clean_unnecessary_attributes(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = json.dumps(config)
+            self.add_template_bind(el)
+
+    def clean_unnecessary_attributes(self, el, *allows):
+        for key in el.attrib:
+            if key not in allows:
+                del el.attrib[key]
 
     def replace_fields(self, template, fields_description, fields2read):
         fields = template.findall('.//field')
@@ -361,6 +368,7 @@ class Template:
                 continue
 
             el.tag = 'furet-ui-div'
+            self.clean_unnecessary_attributes(el, 'class')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
@@ -371,6 +379,7 @@ class Template:
                 el, fields2read, 'readonly', 'hidden', 'writable')
 
             el.tag = 'furet-ui-%s' % tag
+            self.clean_unnecessary_attributes(el, 'class', 'label')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
@@ -404,6 +413,7 @@ class Template:
                     config[key] = el.attrib[key]
 
             el.tag = 'furet-ui-selector'
+            self.clean_unnecessary_attributes(el, 'class')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 
@@ -415,6 +425,7 @@ class Template:
 
             el.tag = 'furet-ui-tabs'
             config['name'] = el.attrib['name']
+            self.clean_unnecessary_attributes(el, 'class')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
 

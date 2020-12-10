@@ -265,7 +265,7 @@ class TestResourceFormDefault:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": '
                     f'"{type_}", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
@@ -304,7 +304,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": '
                     '"string", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
@@ -336,8 +336,8 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" label="Another '
-                    'label" v-bind:config=\'{"name": "col", "type": "string", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Another label", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
                     '"hidden": "0", "icon": "", "maxlength": 64, '
@@ -367,7 +367,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" tooltip="Test" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": "Test", "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -398,7 +398,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" hidden '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -429,7 +429,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" required '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "1", "readonly": "0", "writable": "0", '
@@ -460,7 +460,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" readonly '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "1", "writable": "0", '
@@ -491,7 +491,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" writable '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "1", '
@@ -522,8 +522,8 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="BarCode" v-bind:config=\'{"name": "col", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", '
                     '"type": "barcode", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
                     '"writable": "0", "hidden": "0", "icon": "", '
@@ -554,8 +554,7 @@ class TestResourceFormString:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="BarCode" barcode-foo="bar" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "barcode", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -594,7 +593,7 @@ class TestResourceFormSequence:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "string", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "1", "writable": "0", '
@@ -633,7 +632,7 @@ class TestResourceFormPassword:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "password", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -664,7 +663,7 @@ class TestResourceFormPassword:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" reveal '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "password", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -705,7 +704,7 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "selection", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -740,8 +739,7 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'selections="{\'test1\': \'T1\', \'test2\': \'T2\'}" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "selection", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -775,8 +773,7 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'colors="{\'test1\': \'red\', \'test2\': \'blue\'}" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "selection", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -808,8 +805,8 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="StatusBar" v-bind:config=\'{"name": "col", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", '
                     '"type": "statusbar", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
                     '"writable": "0", "hidden": "0", "dangerous-states": '
@@ -847,9 +844,8 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="StatusBar" selections="{\'test1\': \'T1\', '
-                    '\'test2\': \'T2\'}" v-bind:config=\'{"name": "col", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", '
                     '"type": "statusbar", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
                     '"writable": "0", "hidden": "0", "dangerous-states": [""], '
@@ -886,8 +882,7 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="StatusBar" done-states="test1" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "statusbar", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -925,8 +920,7 @@ class TestResourceFormSelection:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
-                    'widget="StatusBar" dangerous-states="test1" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "statusbar", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -967,7 +961,7 @@ class TestResourceFormInteger:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "integer", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -1007,7 +1001,7 @@ class TestResourceFormDateTime:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="col" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "col", "type": "datetime", '
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
@@ -1051,7 +1045,7 @@ class TestResourceFormMany2One:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="address" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
@@ -1088,8 +1082,8 @@ class TestResourceFormMany2One:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="address" '
-                    'display="fields.city" v-bind:config=\'{"name": "address", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "address", '
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
@@ -1124,7 +1118,7 @@ class TestResourceFormMany2One:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="address" no-link '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
@@ -1164,8 +1158,8 @@ class TestResourceFormMany2One:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="address" '
-                    'menu="menu_call" v-bind:config=\'{"name": "address", '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "address", '
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
@@ -1204,8 +1198,8 @@ class TestResourceFormMany2One:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="address" '
-                    'resource="resource_call" v-bind:config=\'{"name": '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": '
                     '"address", "type": "many2one", "label": "Address", '
                     '"tooltip": null, "model": "Model.Address", "required": '
                     f'"{required}", "readonly": "0", "writable": "0", '
@@ -1249,7 +1243,7 @@ class TestResourceFormMany2Many:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="addresses" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "addresses", "type": '
                     '"many2many", "label": "Addresses", "tooltip": null, '
                     '"model": "Model.Address", "required": "0", "readonly": '
@@ -1281,7 +1275,7 @@ class TestResourceFormMany2Many:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="persons" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "persons", "type": "many2many", '
                     '"label": "Persons", "tooltip": null, "model": '
                     '"Model.Person", "required": "0", "readonly": "0", '
@@ -1318,8 +1312,7 @@ class TestResourceFormMany2Many:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="addresses" '
-                    'resource-external_id="resource_call" resource-type="form" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "addresses", "type": '
                     '"many2many", "label": "Addresses", "tooltip": null, '
                     '"model": "Model.Address", "required": "0", "readonly": '
@@ -1362,7 +1355,7 @@ class TestResourceFormOne2Many:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="persons" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "persons", "type": "one2many", '
                     '"label": "Persons", "tooltip": null, "model": '
                     '"Model.Person", "required": "0", "readonly": "0", '
@@ -1400,8 +1393,7 @@ class TestResourceFormOne2Many:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-field name="persons" '
-                    'resource-external_id="resource_call" resource-type="form" '
+                    'id="tmpl_test"><furet-ui-field '
                     'v-bind:config=\'{"name": "persons", "type": "one2many", '
                     '"label": "Persons", "tooltip": null, "model": '
                     '"Model.Person", "required": "0", "readonly": "0", '
@@ -1468,7 +1460,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-div hidden '
+                    'id="tmpl_test"><furet-ui-div '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'hidden\': \'1\', \'props\': '
                     '{}}">Test</furet-ui-div>\n'
@@ -1523,7 +1515,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-fieldset readonly '
+                    'id="tmpl_test"><furet-ui-fieldset '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'readonly\': \'1\', \'props\': '
                     '{}}">Test</furet-ui-fieldset>\n'
@@ -1551,7 +1543,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-fieldset hidden '
+                    'id="tmpl_test"><furet-ui-fieldset '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'hidden\': \'1\', \'props\': '
                     '{}}">Test</furet-ui-fieldset>\n'
@@ -1579,7 +1571,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-fieldset writable '
+                    'id="tmpl_test"><furet-ui-fieldset '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'writable\': \'1\', \'props\': '
                     '{}}">Test</furet-ui-fieldset>\n'
@@ -1611,10 +1603,10 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-tabs name="test" '
+                    'id="tmpl_test"><furet-ui-tabs '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'name\': \'test\'}"><furet-ui-tab '
-                    'label="Test" test v-bind:resource="resource" '
+                    'label="Test" v-bind:resource="resource" '
                     'v-bind:data="data" v-bind:config="{}">\n'
                     '                    </furet-ui-tab></furet-ui-tabs>\n'
                     '                </div>\n'
@@ -1645,11 +1637,11 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-tabs name="test" readonly '
+                    'id="tmpl_test"><furet-ui-tabs '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'readonly\': \'1\', \'props\': '
                     '{\'name\': \'test\'}, \'name\': \'test\'}"><furet-ui-tab '
-                    'label="Test" test v-bind:resource="resource" '
+                    'label="Test" v-bind:resource="resource" '
                     'v-bind:data="data" v-bind:config="{}">\n'
                     '                    </furet-ui-tab></furet-ui-tabs>\n'
                     '                </div>\n'
@@ -1680,11 +1672,11 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-tabs name="test" hidden '
+                    'id="tmpl_test"><furet-ui-tabs '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'hidden\': \'1\', \'props\': {\'name\': '
                     '\'test\'}, \'name\': \'test\'}"><furet-ui-tab '
-                    'label="Test" test v-bind:resource="resource" '
+                    'label="Test" v-bind:resource="resource" '
                     'v-bind:data="data" v-bind:config="{}">\n'
                     '                    </furet-ui-tab></furet-ui-tabs>\n'
                     '                </div>\n'
@@ -1715,11 +1707,11 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-tabs name="test" writable '
+                    'id="tmpl_test"><furet-ui-tabs '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'writable\': \'1\', \'props\': '
                     '{\'name\': \'test\'}, \'name\': \'test\'}">'
-                    '<furet-ui-tab label="Test" test '
+                    '<furet-ui-tab label="Test" '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{}">\n'
                     '                    </furet-ui-tab></furet-ui-tabs>\n'
@@ -1766,9 +1758,9 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-selector selections="{\'test\': '
-                    '\'Test 1\'}" v-bind:resource="resource" '
-                    'v-bind:data="data" v-bind:config="{\'name\': \'tag0\', '
+                    'id="tmpl_test"><furet-ui-selector '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'name\': \'tag0\', '
                     '\'selections\': &quot;{\'test\': \'Test 1\'}&quot;}">'
                     '</furet-ui-selector>\n'
                     '                </div>\n'
@@ -1798,8 +1790,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-selector name="myselector" '
-                    'selections="{\'test\': \'Test 1\'}" '
+                    'id="tmpl_test"><furet-ui-selector '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'name\': \'myselector\', \'selections\': '
                     '&quot;{\'test\': \'Test 1\'}&quot;}"></furet-ui-selector>'
@@ -1830,8 +1821,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-selector selections="{\'test\': '
-                    '\'Test 1\'}" selection_colors="{\'test\': \'Test 1\'}" '
+                    'id="tmpl_test"><furet-ui-selector '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'name\': \'tag0\', \'selections\': '
                     "&quot;{'test': 'Test 1'}&quot;, 'selection_colors': "
@@ -1867,8 +1857,7 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-selector name="myselector" '
-                    'model="Model.Test" field_code="code" field_label="label" '
+                    'id="tmpl_test"><furet-ui-selector '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'name\': \'myselector\', \'selections\': '
                     "{'test1': 'Test 1', 'test2': 'Test "
@@ -1920,10 +1909,10 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-form-button label="test" '
-                    'open-resource="resource_call" v-bind:resource="resource" '
-                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
-                    '"class": [], "open_resource": "resource_call"}\'>'
+                    'id="tmpl_test"><furet-ui-form-button '
+                    'v-bind:config=\'{"label": "test", '
+                    '"class": [], "open_resource": "resource_call"}\' '
+                    'v-bind:resource="resource" v-bind:data="data">'
                     '</furet-ui-form-button>\n'
                     '                </div>\n'
                     '            '
@@ -1956,12 +1945,11 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-form-button label="test" '
-                    'readonly open-resource="resource_call" '
-                    'v-bind:resource="resource" v-bind:data="data" '
+                    'id="tmpl_test"><furet-ui-form-button '
                     'v-bind:config=\'{"label": "test", "class": [], '
-                    '"open_resource": "resource_call", "readonly": '
-                    '"1"}\'></furet-ui-form-button>\n'
+                    '"open_resource": "resource_call", "readonly": "1"}\' '
+                    'v-bind:resource="resource" v-bind:data="data">'
+                    '</furet-ui-form-button>\n'
                     '                </div>\n'
                     '            '
                 ),
@@ -1993,12 +1981,11 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-form-button label="test" '
-                    'hidden="1" open-resource="resource_call" '
-                    'v-bind:resource="resource" v-bind:data="data" '
+                    'id="tmpl_test"><furet-ui-form-button '
                     'v-bind:config=\'{"label": "test", "class": [], '
-                    '"open_resource": "resource_call", '
-                    '"hidden": "1"}\'></furet-ui-form-button>\n'
+                    '"open_resource": "resource_call", "hidden": "1"}\' '
+                    'v-bind:resource="resource" v-bind:data="data">'
+                    '</furet-ui-form-button>\n'
                     '                </div>\n'
                     '            '
                 ),
@@ -2068,10 +2055,10 @@ class TestResourceFormOther:
             assert resource.get_definitions() == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-form-button label="test" '
-                    'call="simple_method" v-bind:resource="resource" '
-                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
-                    '"class": [], "call": "simple_method"}\'>'
+                    'id="tmpl_test"><furet-ui-form-button '
+                    'v-bind:config=\'{"label": "test", '
+                    '"class": [], "call": "simple_method"}\' '
+                    'v-bind:resource="resource" v-bind:data="data">'
                     '</furet-ui-form-button>\n'
                     '                </div>\n'
                     '            '
@@ -2105,10 +2092,10 @@ class TestResourceFormOther:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-form-button label="test" '
-                    'call="method_with_permission" v-bind:resource="resource" '
-                    'v-bind:data="data" v-bind:config=\'{"label": "test", '
-                    '"class": [], "call": "method_with_permission"}\'>'
+                    'id="tmpl_test"><furet-ui-form-button '
+                    'v-bind:config=\'{"label": "test", '
+                    '"class": [], "call": "method_with_permission"}\' '
+                    'v-bind:resource="resource" v-bind:data="data">'
                     '</furet-ui-form-button>\n'
                     '                </div>\n'
                     '            '
