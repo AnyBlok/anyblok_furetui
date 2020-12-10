@@ -1640,7 +1640,7 @@ class TestResourceFormOther:
                     'id="tmpl_test"><furet-ui-tabs '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'name\': \'tabs1\'}"><furet-ui-tab '
-                    'label="Test" test v-bind:resource="resource" '
+                    'label="Test" v-bind:resource="resource" '
                     'v-bind:data="data" v-bind:config="{}">\n'
                     '                    </furet-ui-tab></furet-ui-tabs>\n'
                     '                </div>\n'
