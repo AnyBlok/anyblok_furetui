@@ -10,6 +10,7 @@
 from anyblok.blok import Blok
 from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
+from anyblok_pyramid import PERM_WRITE
 from .i18n import fr, en
 
 
@@ -57,3 +58,32 @@ class FuretUIAuthBlok(Blok, BlokImporter):
         self.import_file_xml('Model.FuretUI.Space', 'data', 'spaces.xml')
         self.import_file_xml('Model.FuretUI.Resource', 'data', 'resources.xml')
         self.import_file_xml('Model.FuretUI.Menu', 'data', 'menus.xml')
+        self.update_admin_role()
+
+    def update_admin_role(self):
+        self.registry.Pyramid.Role.ensure_exists(
+            "admin",
+            [
+                {
+                    "code": "role-admin-pyramid-authorization",
+                    "model": "Model.Pyramid.Authorization",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-role",
+                    "model": "Model.Pyramid.Role",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-user",
+                    "model": "Model.Pyramid.User",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-system-blok",
+                    "model": "Model.System.Blok",
+                    "perms": PERM_WRITE,
+                },
+            ],
+            label="Administrator"
+        )

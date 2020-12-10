@@ -2,6 +2,7 @@
   <template id="PyramidUserList">
     <field name="login" sortable />
     <field name="active" widget="Boolean" sortable />
+    <field name="lang" />
     <field name="roles" />
   </template>
   <template id="PyramidUserForm">
@@ -10,7 +11,8 @@
     </header>
     <div class="columns">
       <div class="column"><field name="login"/></div>
+      <div class="column"><field name="lang"/></div>
     </div>
-    <field name="roles" />
+    <field name="roles" widget="Many2ManyTags" />
   </template>
 </templates>

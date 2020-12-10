@@ -28,10 +28,6 @@ install:
   - pip install python-coveralls
   - pip install WebTest
   - pip install colour furl phonenumbers pycountry
-  # Waiting awnser next release AnyBlok >= 0.22.6
-  - pip install -e git+https://github.com/Anyblok/AnyBlok@master#egg=AnyBlok
-  # Waiting restric query by user AnyBlok_Pyramid >= 1.1.2
-  - pip install -e git+https://github.com/Anyblok/AnyBlok_pyramid@master#egg=anyblok_pyramid
   - pip install -e .
 
 env:

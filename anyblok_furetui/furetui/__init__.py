@@ -65,6 +65,10 @@ class FuretUIBlok(Blok):
             if Model.is_sql:
                 Model.fields_description()
 
+        test_mode = Configuration.get('pyramid.reload_all', False)
+        if test_mode:
+            self.registry.FuretUI.validate_resources()
+
     @classmethod
     def import_declaration_module(cls):
         import_module()

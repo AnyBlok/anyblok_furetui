@@ -10,6 +10,7 @@
 import json
 from copy import deepcopy
 from lxml import etree, html
+from anyblok_furetui import ResourceTemplateRendererException
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
@@ -113,7 +114,7 @@ class Template:
         return self.get_field_for_Integer(field, description, fields2read)
 
     def get_field_for_Many2One(  # noqa: C901
-        self, field, description, fields2read
+        self, field, description, fields2read, relation="Many2One"
     ):
         Model = self.registry.get(description['model'])
         description = description.copy()
@@ -167,7 +168,7 @@ class Template:
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
-        return self.get_field_for_(field, 'Many2One', description, [])
+        return self.get_field_for_(field, relation, description, [])
 
     def get_field_for_x2Many(self, field, relation, description, fields2read):
         description = description.copy()
@@ -199,6 +200,10 @@ class Template:
 
     def get_field_for_One2Many(self, field, description, fields2read):
         return self.get_field_for_x2Many(field, 'One2Many', description, [])
+
+    def get_field_for_Many2ManyTags(self, field, description, fields2read):
+        return self.get_field_for_Many2One(
+            field, description, fields2read, relation="Many2ManyTags")
 
     def get_field_for_Many2Many(self, field, description, fields2read):
         return self.get_field_for_x2Many(field, 'Many2Many', description, [])
@@ -267,7 +272,10 @@ class Template:
                 call = el.attrib['call']
                 if call not in self.registry.exposed_methods.get(self.model,
                                                                  {}):
-                    raise Exception(f"the method '{call}' is not exposed")
+                    raise ResourceTemplateRendererException(
+                        f"On resource {self.identity} : The button "
+                        f"{config} define an unexposed method '{call}'"
+                    )
 
                 definition = self.registry.exposed_methods[self.model][call]
                 permission = definition['permission']
@@ -288,13 +296,16 @@ class Template:
                         break
 
                 if resource is None:
-                    raise Exception(
-                        f"On resource {self.id}, the resource is not "
-                        f"mapped for {el.attrib}")
+                    raise ResourceTemplateRendererException(
+                        f"On resource {self.identity} : The button "
+                        f"{config} defined an unmapped resource "
+                        f"{el.attrib['open-resource']}")
 
                 config['open_resource'] = el.attrib['open-resource']
             else:
-                raise Exception('Button defined without action')
+                raise ResourceTemplateRendererException(
+                    f"On resource {self.identity} : The button "
+                    f"{config} doesn't define call or resource")
 
             config.update(self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden'))
@@ -396,6 +407,10 @@ class Template:
             config['name'] = 'tag%d' % count
             count += 1
 
+            for key in ('selections', 'selection_colors', 'name'):
+                if key in el.attrib:
+                    config[key] = el.attrib[key]
+
             if 'model' in el.attrib:
                 Model = self.registry.get(el.attrib['model'])
                 query = Model.query()
@@ -404,13 +419,10 @@ class Template:
                 config['selections'] = {getattr(x, code): getattr(x, label)
                                         for x in query}
             elif 'selections' not in el.attrib:
-                raise Exception(
-                    'No model or selections defined on selector'
+                raise ResourceTemplateRendererException(
+                    f"On resource {self.id}, The  selector {config} does not "
+                    f"declare model or selections"
                 )
-
-            for key in ('selections', 'selection_colors', 'name'):
-                if key in el.attrib:
-                    config[key] = el.attrib[key]
 
             el.tag = 'furet-ui-selector'
             self.clean_unnecessary_attributes(el, 'class')
@@ -419,12 +431,14 @@ class Template:
 
     def replace_tabs(self, template, fields2read):
         tags = template.findall('.//tabs')
+        counter = 0
         for el in tags:
+            counter += 1
             config = self.update_interface_attributes(
                 el, fields2read, 'readonly', 'hidden', 'writable')
 
             el.tag = 'furet-ui-tabs'
-            config['name'] = el.attrib['name']
+            config['name'] = el.attrib.get('name', f'tabs{counter}')
             self.clean_unnecessary_attributes(el, 'class')
             self.add_template_bind(el)
             el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
@@ -488,6 +502,16 @@ class Resource:
             mapper_args.update({'polymorphic_identity': cls.__registry_name__})
 
         return mapper_args
+
+    @property
+    def identity(self):
+        Mapping = self.registry.IO.Mapping
+        mapping = Mapping.get_from_model_and_primary_keys(
+            self.__registry_name__, {'id': self.id})
+        if mapping is not None:
+            return mapping.key
+
+        return self.id
 
     def get_definitions(self, **kwargs):
         raise Exception('This method must be over right')
@@ -684,7 +708,10 @@ class List(Declarations.Model.FuretUI.Resource):
             call = attributes['call']
             model = Model.__registry_name__
             if call not in self.registry.exposed_methods.get(model, {}):
-                raise Exception(f"the method '{call}' is not exposed")
+                raise ResourceTemplateRendererException(
+                    f"On resource {self.identity} : The button "
+                    f"{attributes} define an unexposed method '{call}'"
+                )
 
             definition = self.registry.exposed_methods[model][call]
             permission = definition['permission']
@@ -703,13 +730,14 @@ class List(Declarations.Model.FuretUI.Resource):
                     break
 
             if resource is None:
-                raise Exception(
-                    f"On resource {self.id}, the resource is not "
-                    f"mapped for {attributes}")
+                raise ResourceTemplateRendererException(
+                    f"On resource {self.identity} : The button "
+                    f"{attributes} defined an unmapped resource "
+                    f"{button.attrib['open-resource']}")
         else:
-            raise Exception(
-                f"On resource {self.id}, no action defined on button "
-                f"{attributes}")
+            raise ResourceTemplateRendererException(
+                f"On resource {self.identity} : The button "
+                f"{attributes} doesn't define call or resource")
 
         attributes['pks'] = pks
         return attributes
