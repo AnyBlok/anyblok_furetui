@@ -475,11 +475,22 @@ class Template:
             if roles & expected_roles:
                 el.attrib['readonly'] = '1'
 
+    def apply_roles_attributes_write_only_for_roles(self, roles, template):
+        els = template.findall('.//*[@write-only-for-roles]')
+        for el in els:
+            expected_roles = set([
+                x.strip()
+                for x in el.attrib['write-only-for-roles'].split(',')])
+            del el.attrib['write-only-for-roles']
+            if not (roles & expected_roles):
+                el.attrib['readonly'] = '1'
+
     def apply_roles_attributes(self, userid, template):
         roles = set(self.registry.Pyramid.get_roles(userid))
         self.apply_roles_attributes_only_for_roles(roles, template)
         self.apply_roles_attributes_not_for_roles(roles, template)
         self.apply_roles_attributes_readonly_for_roles(roles, template)
+        self.apply_roles_attributes_write_only_for_roles(roles, template)
 
     def _encode_to_furetui(self, userid, template, fields_description,
                            fields2read):

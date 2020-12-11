@@ -2538,7 +2538,7 @@ class TestResourceRoles:
         with TmpTemplate(registry_with_roles) as tmpl:
             tmpl.load_template_from_str("""
                 <template id="tmpl_test">
-                    <div write-only-for-roles="role1">
+                    <div>
                         <field name="id" />
                     </div>
                 </template>
@@ -2546,6 +2546,17 @@ class TestResourceRoles:
             tmpl.compile()
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "0", "writable": "0", "hidden": "0", "max": '
+                    'null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
                 ),
                 'fields': ['id'],
                 'id': resource.id,
@@ -2569,6 +2580,17 @@ class TestResourceRoles:
             tmpl.compile()
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "0", "writable": "0", "hidden": "0", "max": '
+                    'null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
                 ),
                 'fields': ['id'],
                 'id': resource.id,
@@ -2592,6 +2614,18 @@ class TestResourceRoles:
             tmpl.compile()
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-div v-bind:resource="resource" '
+                    'v-bind:data="data" v-bind:config="{\'readonly\': \'1\', '
+                    '\'props\': {}}"><furet-ui-field v-bind:config=\'{"name": '
+                    '"id", "type": "integer", "label": "Id", "tooltip": null, '
+                    '"model": null, "required": "1", "readonly": "0", '
+                    '"writable": "0", "hidden": "0", "max": null, "min": '
+                    'null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </furet-ui-div>\n'
+                    '                </div>\n'
+                    '            '
                 ),
                 'fields': ['id'],
                 'id': resource.id,
@@ -2607,14 +2641,29 @@ class TestResourceRoles:
         with TmpTemplate(registry_with_roles) as tmpl:
             tmpl.load_template_from_str("""
                 <template id="tmpl_test">
-                    <div write-only-for-roles="role1">
-                        <field name="id" readonly="fields.id==1"/>
+                    <div>
+                        <field
+                            name="id"
+                            write-only-for-roles="role1"
+                            readonly="fields.id==1"
+                        />
                     </div>
                 </template>
             """)
             tmpl.compile()
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "fields.id==1", "writable": "0", "hidden": "0'
+                    '", "max": null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
                 ),
                 'fields': ['id'],
                 'id': resource.id,
@@ -2630,14 +2679,29 @@ class TestResourceRoles:
         with TmpTemplate(registry_with_roles) as tmpl:
             tmpl.load_template_from_str("""
                 <template id="tmpl_test">
-                    <div write-only-for-roles="role3">
-                        <field name="id" readonly="fields.id==1"/>
+                    <div>
+                        <field
+                            name="id"
+                            write-only-for-roles="role3"
+                            readonly="fields.id==1"
+                        />
                     </div>
                 </template>
             """)
             tmpl.compile()
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "1", "writable": "0", "hidden": "0", "max": '
+                    'null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
                 ),
                 'fields': ['id'],
                 'id': resource.id,
