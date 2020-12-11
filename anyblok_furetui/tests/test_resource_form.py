@@ -240,6 +240,28 @@ def registry_with_buttons(request, bloks_loaded):  # noqa F811
     return registry
 
 
+def with_roles():
+
+    @register(Model)
+    class Pyramid:
+
+        @classmethod
+        def get_roles(cls, user):
+            return ['role1', 'role2']
+
+    @register(Model)
+    class Test:
+        id = Integer(primary_key=True)
+
+
+@pytest.fixture(scope="class")
+def registry_with_roles(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(["furetui"], with_roles)
+    request.addfinalizer(registry.close)
+    return registry
+
+
 class TestResourceFormDefault:
 
     @pytest.fixture(autouse=True)
@@ -2177,6 +2199,460 @@ class TestResourceFormOther:
                     '            '
                 ),
                 'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+
+class TestResourceRoles:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_with_roles):
+        transaction = registry_with_roles.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_only_for_roles_1(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div only-for-roles="role1">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '<div>Test</div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_only_for_roles_2(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div only-for-roles="role2,role3">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '<div>Test</div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_only_for_roles_3(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div only-for-roles="role3">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '</div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_not_for_roles_1(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div not-for-roles="role1">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '</div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_not_for_roles_2(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div not-for-roles="role2,role3">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '</div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_not_for_roles_3(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div not-for-roles="role3">Test</div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" id="tmpl_test">'
+                    '<div>Test</div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': [],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_readonly_for_roles_1(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div readonly-for-roles="role1">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-div readonly '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'readonly\': \'1\', \'props\': '
+                    '{}}"><furet-ui-field name="id" v-bind:config=\'{"name": '
+                    '"id", "type": "integer", "label": "Id", "tooltip": null, '
+                    '"model": null, "required": "1", "readonly": "0", '
+                    '"writable": "0", "hidden": "0", "max": null, "min": '
+                    'null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </furet-ui-div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_readonly_for_roles_2(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div readonly-for-roles="role2,role3">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-div readonly '
+                    'v-bind:resource="resource" v-bind:data="data" '
+                    'v-bind:config="{\'readonly\': \'1\', \'props\': '
+                    '{}}"><furet-ui-field name="id" v-bind:config=\'{"name": '
+                    '"id", "type": "integer", "label": "Id", "tooltip": null, '
+                    '"model": null, "required": "1", "readonly": "0", '
+                    '"writable": "0", "hidden": "0", "max": null, "min": '
+                    'null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </furet-ui-div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_readonly_for_roles_3(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div readonly-for-roles="role3">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field name="id" '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "0", "writable": "0", "hidden": "0", "max": '
+                    'null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_readonly_for_roles_4(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div>
+                        <field
+                            name="id"
+                            readonly-for-roles="role1"
+                            readonly="fields.id==1"
+                        />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field name="id" readonly '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "1", "writable": "0", "hidden": "0", "max": '
+                    'null, "min": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_readonly_for_roles_5(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div>
+                        <field
+                            name="id"
+                            readonly-for-roles="role3"
+                            readonly="fields.id==1"
+                        />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><div><furet-ui-field name="id" readonly '
+                    'v-bind:config=\'{"name": "id", "type": "integer", '
+                    '"label": '
+                    '"Id", "tooltip": null, "model": null, "required": "1", '
+                    '"readonly": "fields.id==1", "writable": "0", "hidden": '
+                    '"0", "max": null, "min": null}\' '
+                    'v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                    </div>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_write_only_for_roles_1(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div write-only-for-roles="role1">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_write_only_for_roles_2(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div write-only-for-roles="role2,role3">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_write_only_for_roles_3(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div write-only-for-roles="role3">
+                        <field name="id" />
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_write_only_for_roles_4(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div write-only-for-roles="role1">
+                        <field name="id" readonly="fields.id==1"/>
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                ),
+                'fields': ['id'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+    def test_write_only_for_roles_5(self, registry_with_roles):
+        resource = registry_with_roles.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry_with_roles) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <div write-only-for-roles="role3">
+                        <field name="id" readonly="fields.id==1"/>
+                    </div>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions(authenticated_userid='test') == [{
+                'body_template': (
+                ),
+                'fields': ['id'],
                 'id': resource.id,
                 'model': 'Model.Test',
                 'type': 'form'
