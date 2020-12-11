@@ -374,7 +374,7 @@ class Template:
         fields = template.findall('.//div')
         for el in fields:
             config = self.update_interface_attributes(
-                el, fields2read, 'hidden')
+                el, fields2read, 'hidden', 'readonly')
             if not config:
                 continue
 
@@ -446,11 +446,58 @@ class Template:
     def replace_tab(self, template, fields2read):
         self.replace_by_(template, fields2read, 'tab')
 
+    def apply_roles_attributes_only_for_roles(self, roles, template):
+        els = template.findall('.//*[@only-for-roles]')
+        for el in els:
+            expected_roles = set([
+                x.strip() for x in el.attrib['only-for-roles'].split(',')])
+            if roles & expected_roles:
+                del el.attrib['only-for-roles']
+            else:
+                el.getparent().remove(el)
+
+    def apply_roles_attributes_not_for_roles(self, roles, template):
+        els = template.findall('.//*[@not-for-roles]')
+        for el in els:
+            expected_roles = set([
+                x.strip() for x in el.attrib['not-for-roles'].split(',')])
+            if roles & expected_roles:
+                el.getparent().remove(el)
+            else:
+                del el.attrib['not-for-roles']
+
+    def apply_roles_attributes_readonly_for_roles(self, roles, template):
+        els = template.findall('.//*[@readonly-for-roles]')
+        for el in els:
+            expected_roles = set([
+                x.strip() for x in el.attrib['readonly-for-roles'].split(',')])
+            del el.attrib['readonly-for-roles']
+            if roles & expected_roles:
+                el.attrib['readonly'] = '1'
+
+    def apply_roles_attributes_write_only_for_roles(self, roles, template):
+        els = template.findall('.//*[@write-only-for-roles]')
+        for el in els:
+            expected_roles = set([
+                x.strip()
+                for x in el.attrib['write-only-for-roles'].split(',')])
+            del el.attrib['write-only-for-roles']
+            if not (roles & expected_roles):
+                el.attrib['readonly'] = '1'
+
+    def apply_roles_attributes(self, userid, template):
+        roles = set(self.registry.Pyramid.get_roles(userid))
+        self.apply_roles_attributes_only_for_roles(roles, template)
+        self.apply_roles_attributes_not_for_roles(roles, template)
+        self.apply_roles_attributes_readonly_for_roles(roles, template)
+        self.apply_roles_attributes_write_only_for_roles(roles, template)
+
     def _encode_to_furetui(self, userid, template, fields_description,
                            fields2read):
         nsmap = {'v-bind': 'https://vuejs.org/'}
         etree.cleanup_namespaces(
             template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
+        self.apply_roles_attributes(userid, template)
         self.replace_divs(template, fields2read)
         self.replace_selector(template, fields2read)
         self.replace_fieldsets(template, fields2read)
