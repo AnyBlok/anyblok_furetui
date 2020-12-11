@@ -2364,10 +2364,10 @@ class TestResourceRoles:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-div readonly '
+                    'id="tmpl_test"><furet-ui-div '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'readonly\': \'1\', \'props\': '
-                    '{}}"><furet-ui-field name="id" v-bind:config=\'{"name": '
+                    '{}}"><furet-ui-field v-bind:config=\'{"name": '
                     '"id", "type": "integer", "label": "Id", "tooltip": null, '
                     '"model": null, "required": "1", "readonly": "0", '
                     '"writable": "0", "hidden": "0", "max": null, "min": '
@@ -2400,10 +2400,10 @@ class TestResourceRoles:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><furet-ui-div readonly '
+                    'id="tmpl_test"><furet-ui-div '
                     'v-bind:resource="resource" v-bind:data="data" '
                     'v-bind:config="{\'readonly\': \'1\', \'props\': '
-                    '{}}"><furet-ui-field name="id" v-bind:config=\'{"name": '
+                    '{}}"><furet-ui-field v-bind:config=\'{"name": '
                     '"id", "type": "integer", "label": "Id", "tooltip": null, '
                     '"model": null, "required": "1", "readonly": "0", '
                     '"writable": "0", "hidden": "0", "max": null, "min": '
@@ -2436,7 +2436,7 @@ class TestResourceRoles:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><div><furet-ui-field name="id" '
+                    'id="tmpl_test"><div><furet-ui-field '
                     'v-bind:config=\'{"name": "id", "type": "integer", '
                     '"label": '
                     '"Id", "tooltip": null, "model": null, "required": "1", '
@@ -2474,7 +2474,7 @@ class TestResourceRoles:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><div><furet-ui-field name="id" readonly '
+                    'id="tmpl_test"><div><furet-ui-field '
                     'v-bind:config=\'{"name": "id", "type": "integer", '
                     '"label": '
                     '"Id", "tooltip": null, "model": null, "required": "1", '
@@ -2512,7 +2512,7 @@ class TestResourceRoles:
             assert resource.get_definitions(authenticated_userid='test') == [{
                 'body_template': (
                     '<div xmlns:v-bind="https://vuejs.org/" '
-                    'id="tmpl_test"><div><furet-ui-field name="id" readonly '
+                    'id="tmpl_test"><div><furet-ui-field '
                     'v-bind:config=\'{"name": "id", "type": "integer", '
                     '"label": '
                     '"Id", "tooltip": null, "model": null, "required": "1", '
