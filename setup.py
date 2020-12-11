@@ -37,6 +37,17 @@ with open(
 ) as front:
     FRONT = front.read()
 
+
+console_scripts = [
+    'furetui_user=anyblok_furetui.scripts:furetui_user',
+]
+
+
+anyblok_init = [
+    'anyblok_furetui_config=anyblok_furetui:anyblok_init_config',
+]
+
+
 setup(
     name="anyblok_furetui",
     version=version,
@@ -64,6 +75,8 @@ setup(
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
     ],
     entry_points={
+        'console_scripts': console_scripts,
+        'anyblok.init': anyblok_init,
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
             'furetui-auth=anyblok_furetui.auth:FuretUIAuthBlok',

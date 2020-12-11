@@ -244,3 +244,7 @@ class FuretUI:
                 raise
 
         return res
+
+    @classmethod
+    def user_management(cls, login, password, roles):
+        raise NotImplementedError('This method must be overwrite')

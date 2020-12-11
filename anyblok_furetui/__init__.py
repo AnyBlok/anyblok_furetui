@@ -10,3 +10,7 @@
 
 from .security import exposed_method  # noqa
 from .exceptions import ResourceTemplateRendererException  # noqa
+
+
+def anyblok_init_config(unittest=False):
+    from . import config  # noqa import config definition

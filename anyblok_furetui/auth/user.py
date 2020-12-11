@@ -21,6 +21,25 @@ class FuretUI:
         user = cls.registry.Pyramid.User.query().get(authenticated_userid)
         return user.lang or res
 
+    @classmethod
+    def user_management(cls, login, password, roles):
+        Pyramid = cls.registry.Pyramid
+        user = Pyramid.User.query().get(login)
+        if user is None:
+            user = Pyramid.User.insert(login=login)
+
+        if password:
+            cs = Pyramid.CredentialStore.query().get(login)
+            if cs is None:
+                Pyramid.CredentialStore.insert(
+                    login=login, password=password)
+            elif cs.password != password:
+                cls.password = password
+
+        for role_name in roles:
+            role = Pyramid.Role.query().filter_by(name=role_name).one()
+            user.append(role)
+
 
 @Declarations.register(Declarations.Model.Pyramid)
 class User:
