@@ -11,9 +11,11 @@ from anyblok.blok import Blok, BlokManager
 from anyblok.config import Configuration
 from anyblok_furetui.release import version
 from os.path import join
+
 from .pyramid import json_data_adapter
 from .i18n import fr, en
 from logging import getLogger
+
 
 logger = getLogger(__name__)
 
