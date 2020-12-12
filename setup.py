@@ -9,7 +9,7 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 import os
 from setuptools import setup, find_packages
-version = '0.0.1'
+version = '0.1.0'
 
 requires = [
     'anyblok',
@@ -18,10 +18,10 @@ requires = [
     'anyblok_pyramid_beaker',
     'anyblok_pyramid_rest_api',
     'lxml',
-    'rst2html5',
+    'furl',
     'python-magic',
     'simplejson',
-    'pyjsparser',
+    'SQLAlchemy>=1.3.6'
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -38,6 +38,17 @@ with open(
 ) as front:
     FRONT = front.read()
 
+
+console_scripts = [
+    'furetui_user=anyblok_furetui.scripts:furetui_user',
+]
+
+
+anyblok_init = [
+    'anyblok_furetui_config=anyblok_furetui:anyblok_init_config',
+]
+
+
 setup(
     name="anyblok_furetui",
     version=version,
@@ -51,23 +62,31 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires=requires,
-    tests_require=requires + ['nose'],
+    tests_require=requires + ['pytest'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Software Development',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
     ],
     entry_points={
+        'console_scripts': console_scripts,
+        'anyblok.init': anyblok_init,
         'bloks': [
             'furetui=anyblok_furetui.furetui:FuretUIBlok',
             'furetui-auth=anyblok_furetui.auth:FuretUIAuthBlok',
+            'furetui-address=anyblok_furetui.address:FuretUIAddressBlok',
+            'furetui-delivery=anyblok_furetui.delivery:FuretUIDeliveryBlok',
+            'furetui-filter-ip=anyblok_furetui.ip:FuretUIFilterIPBlok',
+        ],
+        'anyblok.model.plugin': [
+            'exposed_method=anyblok_furetui.plugins:ExposedMethod',
         ],
     },
     extras_require={},

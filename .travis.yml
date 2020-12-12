@@ -3,9 +3,15 @@ sudo: true
 
 python:
   - "3.6"
-  - "3.6-dev"
-  - "3.7-dev"
+  - "3.7"
+  - "3.8"
+  - "3.9-dev"
   - "nightly"
+
+matrix:
+  allow_failures:
+    - python: "3.9-dev"
+    - python: "nightly"
 
 virtualenv:
   system_site_packages: false
@@ -14,21 +20,15 @@ services:
   - postgresql
 
 install:
-  - pip install -U pip
-  # only eggs: do an erreur with wheel
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then pip install python_editor texttable PyYAML simplejson; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 'nightly' ]]; then pip install python_editor texttable PyYAML simplejson; fi
+  - pip install -U pip wheel
   # only wheel
   - pip install -U flake8 pytest pytest-cov
-  - pip install wheel
   - pip install psycopg2
-  - pip install anyblok
-  - pip install marshmallow --pre
   - pip install coverage
   - pip install python-coveralls
-  - pip install flake8 pytest pytest-cov
   - pip install WebTest
-  - python setup.py develop
+  - pip install colour furl phonenumbers pycountry
+  - pip install -e .
 
 env:
   global:
@@ -38,8 +38,9 @@ env:
 
 script:
   - flake8 anyblok_furetui
-  - anyblok_createdb --install-bloks furetui
-  - py.test --cov-report= --cov=anyblok_furetui anyblok_furetui
-  
-after_success:
-  coveralls --data_file=.coverage --config_file=.coveragerc
+  - py.test --cov-report=term --cov=anyblok_furetui anyblok_furetui/tests
+  - dropdb travis_ci_test
+  - anyblok_createdb --install-bloks furetui-auth furetui-filter-ip
+  - py.test --cov-report=term --cov=anyblok_furetui --cov-append anyblok_furetui/furetui anyblok_furetui/ip anyblok_furetui/auth
+
+after_success: coveralls --data_file=.coverage --config_file=.coveragerc

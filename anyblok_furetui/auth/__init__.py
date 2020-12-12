@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # This file is a part of the AnyBlok project
 #
-#    Copyright (C) 2017 Jean-Sebastien SUZANNE <jssuzanne@anybox.fr>
+#    Copyright (C) 2020 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#    Copyright (C) 2020 Pierre Verkest <pierreverkest84@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
@@ -9,54 +10,80 @@
 from anyblok.blok import Blok
 from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
-from .i18n import en, fr
-from logging import getLogger
-
-logger = getLogger(__name__)
+from anyblok_pyramid import PERM_WRITE
+from .i18n import fr, en
 
 
-class FuretUIAuthBlok(BlokImporter, Blok):
-    """Setup FuretUI for AnyBlok"""
+def import_module(reload=None):
+    from . import user
+    if reload is not None:
+        reload(user)
+
+
+class FuretUIAuthBlok(Blok, BlokImporter):
     version = version
     author = 'Suzanne Jean-Sébastien'
     logo = 'static/images/logo.png'
 
     required = [
         'anyblok-core',
+        'pyramid',
+        'furetui',
         'anyblok-io-xml',
         'auth',
-        'furetui',
+        'auth-password',
+        'authorization',
     ]
 
     furetui = {
-        'css': [],
-        'js': [
-             'components/login.js',
-             'components/logout.js',
-             'components/user.js',
-        ],
         'i18n': {
             'en': en,
             'fr': fr,
         },
         'templates': [
-             'components/login.tmpl',
-             'components/user.tmpl',
+            'templates/user.tmpl',
+            'templates/role.tmpl',
         ],
     }
 
     @classmethod
-    def pyramid_load_config(cls, config):
-        config.scan(cls.__module__ + '.views')
-
-    @classmethod
     def import_declaration_module(cls):
-        from . import furetui  # noqa
+        import_module()
 
     @classmethod
     def reload_declaration_module(cls, reload):
-        from . import furetui
-        reload(furetui)
+        import_module(reload=reload)
 
-    def update(self, latest_version):
-        self.import_file_xml('Model.FuretUI.Menu.User', 'menus.xml')
+    def update(self, latest):
+        self.import_file_xml('Model.FuretUI.Space', 'data', 'spaces.xml')
+        self.import_file_xml('Model.FuretUI.Resource', 'data', 'resources.xml')
+        self.import_file_xml('Model.FuretUI.Menu', 'data', 'menus.xml')
+        self.update_admin_role()
+
+    def update_admin_role(self):
+        self.registry.Pyramid.Role.ensure_exists(
+            "admin",
+            [
+                {
+                    "code": "role-admin-pyramid-authorization",
+                    "model": "Model.Pyramid.Authorization",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-role",
+                    "model": "Model.Pyramid.Role",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-pyramid-user",
+                    "model": "Model.Pyramid.User",
+                    "perms": PERM_WRITE,
+                },
+                {
+                    "code": "role-admin-system-blok",
+                    "model": "Model.System.Blok",
+                    "perms": PERM_WRITE,
+                },
+            ],
+            label="Administrator"
+        )

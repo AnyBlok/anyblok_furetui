@@ -1,36 +1,29 @@
+# -*- coding: utf-8 -*-
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2020 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 en = {
-    'components': {
-        'login': {
-            'username': 'Username',
-            'password': 'Password',
-            'errors': {
-                'username': 'The username does not exist',
-                'password': 'The password is incorrect',
-            },
+    'space': {
+        'settings': {
+            'title': 'Settings',
+            'description': 'Global setting of the application',
         },
     },
-    'users': {
-        'title': {
-            'list': 'Users',
-            'new': 'User',
-            'page': 'User',
-            'edit': 'User',
-        },
-        'name': 'Name',
-        'first_name': 'First name',
-        'last_name': 'Last name',
-        'email': 'E-mail',
-        'roles': 'Roles',
-        'login': 'Login',
-        'password': 'Password',
-        'password2': 'Confirm password',
-        'update_password': {
-            'header': 'Define the newest password',
-            'open': "Change the user's password",
-            'empty': 'This field is required',
-            'not_same': 'The two values are different',
-            'close': 'Close without change',
-            'submit': 'Update and close',
+    'menu': {
+        'settings': {
+            'auth': {
+                'title': 'Authentication and authorization',
+                'user': 'Users',
+                'role': 'Roles',
+            }
         }
     },
+    'language': {
+        'en': 'English',
+        'fr': 'French',
+    }
 }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record external_id="menu_settings_auth" model="Model.FuretUI.Menu.Root">
+    <field name="order">10</field>
+    <field name="label">menu.settings.auth.title</field>
+    <field name="space" external_id="space_settings"/>
+    <field name="icon_code">user</field>
+    <field name="icon_type">fa</field>
+    <field name="children">
+      <record external_id="menu_setting_auth_user" model="Model.FuretUI.Menu.Resource">
+        <field name="order">10</field>
+        <field name="default">True</field>
+        <field name="label">menu.settings.auth.user</field>
+        <field 
+            name="resource" 
+            model="Model.FuretUI.Resource.Set" 
+            external_id="resource_pyramid_user"/>
+        <field name="order_by">role.login,asc</field>
+      </record>
+      <record external_id="menu_setting_auth_role" model="Model.FuretUI.Menu.Resource">
+        <field name="order">20</field>
+        <field name="label">menu.settings.auth.role</field>
+        <field 
+            name="resource" 
+            model="Model.FuretUI.Resource.Set" 
+            external_id="resource_pyramid_role"/>
+      </record>
+    </field>
+  </record>
+</records>

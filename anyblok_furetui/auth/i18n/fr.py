@@ -1,36 +1,29 @@
+# -*- coding: utf-8 -*-
+# This file is a part of the AnyBlok project
+#
+#    Copyright (C) 2020 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
+#
+# This Source Code Form is subject to the terms of the Mozilla Public License,
+# v. 2.0. If a copy of the MPL was not distributed with this file,You can
+# obtain one at http://mozilla.org/MPL/2.0/.
 fr = {
-    'components': {
-        'login': {
-            'username': "Nom de l'utilisateur",
-            'password': 'Mot de passe',
-            'errors': {
-                'username': "L'utilisateur n'éxiste pas",
-                'password': "Le mot de passe est incorrect",
-            },
+    'space': {
+        'settings': {
+            'title': 'Configuration',
+            'description': "Configuration de l'application",
         },
     },
-    'users': {
-        'title': {
-            'list': 'Utilisateurs',
-            'new': 'Utilisateurs',
-            'page': 'Utilisateurs',
-            'edit': 'Utilisateurs',
-        },
-        'first_name': 'Prénom',
-        'last_name': 'Nom de famille',
-        'email': 'Courriel',
-        'roles': 'Rôles',
-        'name': 'Nom',
-        'login': 'Identifiant',
-        'password': 'Mot de passe',
-        'password2': 'Confirmez le mot de passe',
-        'update_password': {
-            'header': 'Définisser le nouveau mot de passe',
-            'open': "Changer le mot de passe de l'utilisateur",
-            'empty': 'Ce champ est requis',
-            'not_same': 'Les deux valeurs sont différentes',
-            'close': 'Fermer sans sauvegarder',
-            'submit': 'Sauvegarder et fermer',
+    'menu': {
+        'settings': {
+            'auth': {
+                'title': 'Authentifiation et permissions',
+                'user': 'Utilisateur',
+                'role': 'Roles',
+            }
         }
     },
+    'language': {
+        'en': 'English',
+        'fr': 'French',
+    }
 }

@@ -1,12 +1,19 @@
 from pyramid.httpexceptions import HTTPFound
+from pyramid.response import Response
+from pyramid.security import remember, forget
+from pyramid.httpexceptions import HTTPUnauthorized
 from anyblok.config import Configuration
 from anyblok_pyramid import current_blok
 from anyblok.blok import BlokManager
 from pyramid.response import FileResponse
 from os.path import join
 from cornice import Service
-from pyjsparser import PyJsParser
 from logging import getLogger
+from urllib.parse import urlparse
+try:
+    from anyblok_pyramid.bloks.pyramid import oidc
+except ImportError:
+    oidc = None
 
 
 logger = getLogger(__name__)
@@ -20,97 +27,11 @@ client = Service(name='client_furet_ui',
 
 @client.get()
 def get_client_file(request):
-    print('get_client_file', request.query_string)
-    blok_path = BlokManager.getPath('furetui')
-    path = join(blok_path, 'static', 'index.html')
-    return FileResponse(path, request=request, content_type='text/html')
-
-
-init = Service(name='init_furet_ui',
-               path='/furet-ui/app/component/files',
-               description='get global data for backend initialization',
-               cors_origins=('*',),
-               installed_blok=current_blok())
-
-
-@init.get()
-def get_global_init(request):
-    # TODO call cached pre_load
-    print('get_global_init', request.query_string)
-    registry = request.anyblok.registry
-    FuretUI = registry.FuretUI
-    if eval(Configuration.get('furetui_debug', 'False'), {}, {}) is True:
-        FuretUI.pre_load()
-
-    authenticated_userid = request.authenticated_userid
-    default_spaces_menu = FuretUI.get_default_space(authenticated_userid)
-    res = {
-        'templates': FuretUI.get_templates(),
-        'lang': 'fr',
-        'langs': FuretUI.get_i18n(),
-        'js': FuretUI.get_js_files(),
-        'css': FuretUI.get_css_files(),
-        'global': FuretUI.get_global(authenticated_userid),
-        'menus': {
-            'user': FuretUI.get_user_menu(authenticated_userid),
-            'spaces': FuretUI.get_spaces_menu(authenticated_userid,
-                                              default_spaces_menu),
-            'spaceMenus': FuretUI.get_space_menus(authenticated_userid,
-                                                  default_spaces_menu),
-        },
-    }
-    return res
-
-
-static = Service(name='furet_ui_js_file',
-                 path='/furet-ui/{blok_name}/{filetype}/{file_path:.*}',
-                 installed_blok=current_blok())
-
-
-class MyPyJsParser(PyJsParser):
-
-    def __init__(self, *args, **kwargs):
-        super(MyPyJsParser, self).__init__(*args, **kwargs)
-        self.exceptions = {}
-
-    def throwUnexpectedToken(self, token={}, message=''):
-        msg = str(self.unexpectedTokenError(token, message))
-        msg += '\n' + '\n'.join(self.source.split(
-            '\n')[token['lineNumber'] - 3: token['lineNumber']])
-        self.exceptions.setdefault(token['lineNumber'], msg)
-
-    def parse(self, blok_name, file_path, content):
-        try:
-            super(MyPyJsParser, self).parse(content)
-        except Exception:
-            pass
-
-        for exception in self.exceptions.values():
-            logger.error("Parsing error for %s:%r => %s",
-                         blok_name, file_path, exception)
-
-
-@static.get()
-def get_static_file(request):
-    blok_name = request.matchdict['blok_name']
-    file_path = request.matchdict['file_path']
+    blok_name, static_path = Configuration.get('furetui_client_static',
+                                               'furetui:static').split(':')
     blok_path = BlokManager.getPath(blok_name)
-    path = join(blok_path, file_path)
-    content_type = 'text/html'
-    if request.matchdict['filetype'] == 'js':
-        content_type = 'application/javascript'
-        if eval(Configuration.get('furetui_debug', 'False'), {}, {}) is True:
-            parser = MyPyJsParser()
-            with open(path, 'r') as fp:
-                content = fp.read()
-                parser.parse(blok_name, file_path, content)
-
-    elif request.matchdict['filetype'] == 'css':
-        content_type = 'text/css'
-
-    response = FileResponse(path, request=request, content_type=content_type)
-    response.headerlist.append(('Access-Control-Allow-Origin', '*'))
-    return response
+    path = join(blok_path, *static_path.split('/'), 'index.html')
+    return FileResponse(path, request=request, content_type='text/html')
 
 
 logo = Service(name='logo',
@@ -123,3 +44,129 @@ logo = Service(name='logo',
 @logo.get()
 def get_logo(request):
     return HTTPFound('/furetui/static/logo.png')
+
+
+init = Service(name='init_furet_ui',
+               path='/furet-ui/initialize',
+               description='get global data for backend initialization',
+               cors_origins=('*',),
+               cors_credentials=True,
+               installed_blok=current_blok())
+
+
+@init.get()
+def get_global_init(request):
+    res = request.anyblok.registry.FuretUI.get_initialize(
+        request.authenticated_userid)
+    if request.session.get("init_redirect_uri"):
+        res.append({'type': 'UPDATE_ROUTE',
+                    'path': request.session.get("init_redirect_uri")})
+    return res
+
+
+login = Service(name='login_furet_ui',
+                path='/furet-ui/login',
+                cors_origins=('*',),
+                installed_blok=current_blok())
+
+
+@login.post()
+def post_login(request):
+    registry = request.anyblok.registry
+    FuretUI = registry.FuretUI
+
+    Pyramid = registry.Pyramid
+    params = Pyramid.format_login_params(request)
+    login = params['login']
+    try:
+        Pyramid.check_user_exists(login)
+    except Exception as e:
+        logger.info('Fail check_user_exists: %r', e)
+        registry.rollback()
+        request.errors.add('header', 'login', 'wrong username')
+        request.errors.status = 401
+        return
+
+    try:
+        Pyramid.check_login(**params)
+        headers = remember(request, login)
+        authenticated_userid = request.authenticated_userid
+        res = FuretUI.get_user_informations(authenticated_userid)
+        redirect = request.json_body.get('redirect', FuretUI.get_default_path(
+            authenticated_userid))
+        res.append({'type': 'UPDATE_ROUTE', 'path': redirect})
+        return Response(json_body=res, headers=headers)
+    except HTTPUnauthorized:
+        registry.rollback()
+        request.errors.add('header', 'password', 'wrong password')
+        request.errors.status = 401
+        return
+
+
+logout = Service(name='logout_furet_ui',
+                 path='/furet-ui/logout',
+                 cors_origins=('*',),
+                 installed_blok=current_blok())
+
+
+@logout.post()
+def post_logout(request):
+    registry = request.anyblok.registry
+    FuretUI = registry.FuretUI
+    return Response(json_body=FuretUI.get_logout(), headers=forget(request))
+
+
+oidc_login = Service(
+    name='oidc_login_furet_ui',
+    path='/furet-ui/oidc/login',
+    installed_blok=current_blok()
+)
+
+
+@oidc_login.post()
+def oic_login(request):
+    if oidc is None:
+        raise ImportError('pyoidc is not installed')
+
+    request.session.update({"redirect": request.json_body.get('redirect')})
+    location = oidc.prepare_auth_url(request)
+    return location
+
+
+oidc_callback = Service(
+    name='oidc_login_callback_furet_ui',
+    path='/furet-ui/oidc/callback',
+    installed_blok=current_blok()
+)
+
+
+@oidc_callback.get()
+def oic_callback(request):
+    if oidc is None:
+        raise ImportError('pyoidc is not installed')
+
+    # get redirection before before connection as session is invalidate
+    # once user is successfully logged
+    redirect = request.session.get("redirect")
+    _, headers = oidc.log_user(request)
+    if headers is None:
+        # TODO find a way to display a nice error message to enduser
+        # probably using session
+        return
+
+    request.session.update(
+        {
+            "init_redirect_uri": (
+                redirect if redirect else
+                request.anyblok.registry.FuretUI.get_default_path(
+                    request.authenticated_userid)
+            ),
+        }
+    )
+    return HTTPFound(
+        location=urlparse(
+            request.environ.get("HTTP_X_FORWARDED_HOST"),
+            scheme=request.environ.get("HTTP_X_FORWARDED_PROTO")
+        ).geturl(),
+        headers=headers
+    )

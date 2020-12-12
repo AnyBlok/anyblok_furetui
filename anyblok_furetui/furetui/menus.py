@@ -9,159 +9,214 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok.declarations import Declarations
-from anyblok.column import Integer, String, Json, Selection
-from anyblok.relationship import Many2One
+from anyblok.column import Integer, String, Boolean, Selection, Json, URL
+from anyblok.relationship import Many2One, One2Many
 
 
 @Declarations.register(Declarations.Model.FuretUI)
 class Menu:
-    MENU_TYPE = None
-
     id = Integer(primary_key=True)
-    sequence = Integer(nullable=False, default=100)
-    label = String(nullable=False)
-    component = String()
-    properties = Json(default={})
-    login_state = Selection(
+    parent_id = Integer(foreign_key='Model.FuretUI.Menu=>id')
+    order = Integer(nullable=False, default=100)
+    icon_code = String()
+    icon_type = String()
+    menu_type = Selection(
         selections={
-            'logged': 'Logged',
-            'unlogged': 'Unlogged',
-            'both': 'Logged and Unlogged',
-        }, nullable=False)
-    label_is_props = String()
-    type = Selection(
-        selections={'user': 'User', 'spaces': 'Space',
-                    'spaceiMenus': 'Space menus'},
+            'Model.FuretUI.Menu.Root': 'Root',
+            'Model.FuretUI.Menu.Node': 'Node',
+            'Model.FuretUI.Menu.Resource': 'Resource',
+            'Model.FuretUI.Menu.Url': 'Url',
+            'Model.FuretUI.Menu.Call': 'Call',
+        },
         nullable=False)
 
     @classmethod
     def define_mapper_args(cls):
         mapper_args = super(Menu, cls).define_mapper_args()
         if cls.__registry_name__ == 'Model.FuretUI.Menu':
-            mapper_args.update({'polymorphic_on': cls.type})
+            mapper_args.update({'polymorphic_on': cls.menu_type})
+            mapper_args.update({'polymorphic_identity': None})
+        else:
+            mapper_args.update({'polymorphic_identity': cls.__registry_name__})
 
-        mapper_args.update({'polymorphic_identity': cls.MENU_TYPE})
         return mapper_args
 
-    @classmethod
-    def query(cls, *args, **kwargs):
-        query = super(Menu, cls).query(*args, **kwargs)
-        if cls.__registry_name__ != 'Model.FuretUI.Menu':
-            query = query.filter(cls.type == cls.MENU_TYPE)
-
-        return query
+    def check_acl(self, authenticated_userid):
+        return True
 
     @classmethod
-    def update_query_from_authenticated_id(cls, query, authenticated_userid):
-        query = query.order_by(cls.sequence)
-        if authenticated_userid:
-            query = query.filter(cls.login_state.in_(['logged', 'both']))
-        else:
-            query = query.filter(cls.login_state.in_(['unlogged', 'both']))
+    def rec_get_children_menus(cls, children, authenticated_userid,
+                               resource=None):
+        res = []
+        for child in children:
+            if child.check_acl(authenticated_userid):
+                children = []
+                definition = child.to_dict(
+                    'id', 'order', 'label', 'icon_code', 'icon_type')
 
-        return query
+                if child.menu_type == 'Model.FuretUI.Menu.Node':
+                    children = cls.rec_get_children_menus(
+                        child.children, authenticated_userid, resource=resource)
+                elif child.menu_type == 'Model.FuretUI.Menu.Resource':
+                    definition['resource'] = child.resource.id
+                    definition.update(child.to_dict(
+                        'tags', 'order_by', 'filters'))
+                elif child.menu_type == 'Model.FuretUI.Menu.Url':
+                    definition.update(child.to_dict('url'))
+                elif child.menu_type == 'Model.FuretUI.Menu.Call':
+                    definition['resource'] = resource.id if resource else None
+
+                    definition.update(child.to_dict('model', 'method'))
+
+                res.append({'children': children, **definition})
+
+        return res
 
     @classmethod
-    def get_for(cls, authenticated_userid):
-        # TODO raise if MENU_TYPE is None
-        query = cls.query()
-        query = cls.update_query_from_authenticated_id(
-            query, authenticated_userid)
-        return [x.format_menu(authenticated_userid) for x in query]
+    def get_menus_from(cls, authenticated_userid, space=None, resource=None):
+        menus = []
+        Menu = cls.registry.FuretUI.Menu
+        MRo = cls.registry.FuretUI.Menu.Root
+        mros = MRo.query()
 
-    def format_menu(self, authenticated_userid):
-        menu = {}
-        if self.properties:
-            menu.update(self.properties)
+        if space is not None:
+            mros = mros.filter(MRo.space == space)
+        elif resource is not None:
+            mros = mros.filter(MRo.resource == resource)
 
-        menu.update({
-            'name': self.id,
-            'label': self.label,
-        })
-        if self.component:
-            menu['component'] = self.component
+        mros = mros.order_by(MRo.order.asc())
+        for mro in mros:
+            mres = Menu.query().filter(Menu.parent_id == mro.id)
+            mres = mres.order_by(Menu.order.asc()).order_by(Menu.id.asc())
+            mres = mres.all()
+            if not mres:
+                continue
 
-        if self.label_is_props:
-            if 'props' not in menu:
-                menu['props'] = {}
+            mres = cls.rec_get_children_menus(
+                mro.children, authenticated_userid, resource=resource)
 
-            menu['props'][self.label_is_props] = self.label
+            if not mres:
+                continue
 
-        children = self.registry.FuretUI.Menu.Sub.get_for(
-            self, authenticated_userid)
-        if children:
-            menu['props']['children'] = children
+            if mro.label:
+                menus.append(
+                    {'children': mres, **mro.to_dict(
+                        'id', 'order', 'label', 'icon_code', 'icon_type')})
+            else:
+                menus.extend(mres)
 
-        return menu
+        return menus
 
 
-@Declarations.register(Declarations.Model.FuretUI.Menu)
-class Sub:
+@Declarations.register(Declarations.Mixin)
+class FuretUIMenuChildren:
+    children = One2Many(
+        model='Model.FuretUI.Menu',
+        primaryjoin=(
+            "ModelFuretUIMenu.id == ModelFuretUIMenu.parent_id"
+            " and ModelFuretUIMenu.menu_type != 'Model.FuretUI.Menu.Root'"
+        )
+    )
 
-    id = Integer(primary_key=True)
-    sequence = Integer(nullable=False, default=100)
+
+@Declarations.register(Declarations.Mixin)
+class FuretUIMenuParent:
+    parent = Many2One(
+        model='Model.FuretUI.Menu',
+        primaryjoin=(
+            "ModelFuretUIMenu.id == ModelFuretUIMenu.parent_id"
+            " and ModelFuretUIMenu.menu_type.in_(["
+            "'Model.FuretUI.Menu.Root', 'Model.FuretUI.Menu.Node'"
+            "])"
+        )
+    )
+
+
+@Declarations.register(Declarations.Mixin)
+class FuretUIMenu:
+    id = Integer(primary_key=True,
+                 foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
     label = String(nullable=False)
-    properties = Json(default={})
-    login_state = Selection(
-        selections={
-            'logged': 'Logged',
-            'unlogged': 'Unlogged',
-            'both': 'Logged and Unlogged',
-        }, nullable=False, default='both')
-    parent = Many2One(model=Declarations.Model.FuretUI.Menu,
-                      one2many="children")
-
-    @classmethod
-    def update_query_from_authenticated_id(cls, query, authenticated_userid):
-        if authenticated_userid:
-            query = query.filter(cls.login_state.in_(['logged', 'both']))
-        else:
-            query = query.filter(cls.login_state.in_(['unlogged', 'both']))
-
-        return query
-
-    @classmethod
-    def get_for(cls, parent, authenticated_userid):
-        # TODO raise if MENU_TYPE is None
-        query = cls.query()
-        query = query.filter(cls.parent == parent)
-        query = cls.update_query_from_authenticated_id(
-            query, authenticated_userid)
-
-        query = query.order_by(cls.sequence)
-        return [x.format_menu(authenticated_userid) for x in query]
-
-    def format_menu(self, authenticated_userid):
-        menu = {}
-        if self.properties:
-            menu.update(self.properties)
-
-        menu.update({
-            'name': self.id,
-            'label': self.label,
-        })
-        return menu
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class User(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'user'
+class Root(
+    Declarations.Model.FuretUI.Menu,
+    Declarations.Mixin.FuretUIMenuChildren
+):
+    id = Integer(primary_key=True,
+                 foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
+    label = String()
+    type = Selection(
+        selections={'space': 'Space', 'resource': 'Resource'},
+        default='space', nullable=False)
+    resource = Many2One(model=Declarations.Model.FuretUI.Resource)
+    space = Many2One(model=Declarations.Model.FuretUI.Space)
+    # TODO check resource space requirement
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class Space(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'spaces'
+class Node(
+    Declarations.Model.FuretUI.Menu,
+    Declarations.Mixin.FuretUIMenu,
+    Declarations.Mixin.FuretUIMenuChildren,
+    Declarations.Mixin.FuretUIMenuParent
+):
+    pass
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
-class SpaceMenu(Declarations.Model.FuretUI.Menu):
-    MENU_TYPE = 'spaceMenus'
-    # TODO add dependencies with Space
+class Resource(
+    Declarations.Model.FuretUI.Menu,
+    Declarations.Mixin.FuretUIMenu,
+    Declarations.Mixin.FuretUIMenuParent
+):
+    resource = Many2One(model=Declarations.Model.FuretUI.Resource,
+                        nullable=False)
+    default = Boolean(default=False)
+    tags = String()
+    order_by = String()
+    filters = Json(default={})
+
+    def check_acl(self, authenticated_userid):
+        return self.resource.check_acl(authenticated_userid)
+
+
+@Declarations.register(Declarations.Model.FuretUI.Menu)
+class Url(
+    Declarations.Model.FuretUI.Menu,
+    Declarations.Mixin.FuretUIMenu,
+    Declarations.Mixin.FuretUIMenuParent
+):
+    url = URL(nullable=False)
+
+
+@Declarations.register(Declarations.Model.FuretUI.Menu)
+class Call(
+    Declarations.Model.FuretUI.Menu,
+    Declarations.Mixin.FuretUIMenu,
+    Declarations.Mixin.FuretUIMenuParent
+):
+    model = String(
+        nullable=False, size=256,
+        foreign_key=Declarations.Model.System.Model.use(
+            'name').options(ondelete='cascade'))
+    method = String(nullable=False, size=256)
 
     @classmethod
-    def get_for(cls, authenticated_userid, default_space):
-        query = cls.query()
-        # TODO check dependencies
-        query = cls.update_query_from_authenticated_id(
-            query, authenticated_userid)
-        return [x.format_menu(authenticated_userid) for x in query]
+    def before_insert_orm_event(cls, mapper, connection, target):
+        target.is_an_exposed_method()
+
+    @classmethod
+    def before_update_orm_event(cls, mapper, connection, target):
+        target.is_an_exposed_method()
+
+    def is_an_exposed_method(self):
+        """When creating or updating a User.Authorization, check that all rules
+        objects exists or return an AuthorizationValidationException
+
+        :exception: AuthorizationValidationException
+        """
+        if self.method not in self.registry.exposed_methods.get(self.model, {}):
+            raise Exception(
+                f"'{self.model}=>{self.method}' is not an exposed method")

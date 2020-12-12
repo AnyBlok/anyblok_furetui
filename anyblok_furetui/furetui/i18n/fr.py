@@ -10,22 +10,36 @@ fr = {
                 'about': 'A propos',
             },
         },
-        'page': {
-            'header': {
-                'search': 'Rechercher',
-                'notFound': 'Aucun résultat',
-                'next': '',
-                'previous': '',
-            },
-            'list': 'Retour',
+        'spaces': {
+            'title': 'Espace fonctionnel',
+            'search': 'Filtrer',
+        },
+        'header': {
+            'search': 'Rechercher',
+            'notFound': 'Aucun résultat',
+            'previous': 'Précédant',
+            'next': 'Suivant',
+            'return': 'Retour',
             'new': 'Créer',
             'edit': 'Modifier',
             'save': 'Sauver',
-            'clear': 'Annuler',
+            'apply': 'Appliquer',
+            'cancel': 'Annuler',
             'delete': 'Supprimer',
+            'browse': 'Parcourir',
+            'total': 'Total',
+            'created': 'Créé',
+            'updated': 'Modifié',
+            'deleted': 'Supprimé',
+            'linked': 'lié',
+            'unlinked': 'délié',
         },
         'fields': {
             'notFound': 'Aucun résultat',
+            'yesno': {
+                'yes': 'Oui',
+                'no': 'Non',
+            },
         }
     },
 }
