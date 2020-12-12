@@ -1,0 +1,40 @@
+<templates>
+  <template id="AddressList">
+    <field name="last_name" sortable />
+    <field name="first_name" sortable />
+    <field name="company_name" sortable />
+    <field name="street1" />
+    <field name="street2" />
+    <field name="street3" />
+    <field name="zip_code" sortable />
+    <field name="city" sortable />
+    <field name="country" sortable />
+  </template>
+  <template id="AddressForm">
+    <header>
+      <h1>{{ data.first_name }} : {{ data.last_name }}</h1>
+    </header>
+    <field name="readonly" hidden/>
+    <div class="columns">
+      <div class="column"><field readonly="fields.readonly" name="first_name"/></div>
+      <div class="column"><field readonly="fields.readonly" name="last_name"/></div>
+      <div class="column"><field readonly="fields.readonly" name="company_name"/></div>
+    </div>
+    <div class="columns">
+      <div class="column"><field readonly="fields.readonly" name="street1"/></div>
+      <div class="column"><field readonly="fields.readonly" name="street2"/></div>
+      <div class="column"><field readonly="fields.readonly" name="street3"/></div>
+    </div>
+    <div class="columns">
+      <div class="column"><field readonly="fields.readonly" name="zip_code"/></div>
+      <div class="column"><field readonly="fields.readonly" name="city"/></div>
+      <div class="column"><field readonly="fields.readonly" name="state"/></div>
+      <div class="column"><field readonly="fields.readonly" name="country"/></div>
+    </div>
+    <div class="columns">
+      <div class="column"><field readonly="fields.readonly" name="phone1"/></div>
+      <div class="column"><field readonly="fields.readonly" name="phone2"/></div>
+      <div class="column"><field readonly="fields.readonly" name="email"/></div>
+    </div>
+  </template>
+</templates>

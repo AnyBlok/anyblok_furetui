@@ -1,0 +1,42 @@
+<templates>
+  <template id="DeliveryShipmentList">
+    <field name="reason" sortable />
+    <field name="create_date" sortable />
+    <field name="tracking_number" sortable />
+    <field name="sender_address" widget="FormatedAddress" sortable="sender_address.last_name" />
+    <field name="recipient_address"  widget="FormatedAddress" sortable="recipient_address.last_name" />
+    <field name="document_uuid"  label="Label" widget="PrintableAttachment" printer="device_code" />
+    <field name="cn23_document_uuid"  label="CN23" widget="PrintableAttachment" printer="cn23_device_code" />
+    <field name="status" />
+  </template>
+  <template id="DeliveryShipmentForm">
+    <header>
+      <nav class="level">
+        <div class="level-left">
+          <div class="level-item content">
+            <h1 class="is-large">{{ data.reason }}</h1>
+          </div>
+        </div>
+        <div class="level-right">
+          <div class="level-item">
+            <field name="status" widget="StatusBar" />
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="columns">
+      <div class="column"><field name="reason"/></div>
+      <div class="column"><field name="create_date" readonly/></div>
+    </div>
+    <div class="columns">
+      <div class="column"><field name="tracking_number" readonly/></div>
+      <div class="column"><field name="document_uuid"  widget="PrintableAttachment" printer="device_code" /></div>
+      <div class="column"><field name="cn23_document_uuid"  widget="PrintableAttachment" printer="cn23_device_code" /></div>
+    </div>
+    <div class="columns">
+      <div class="column"><field name="sender_address" widget="FormatedAddress" /></div>
+      <div class="column"><field name="recipient_address"  widget="FormatedAddress" /></div>
+    </div>
+    <field name="properties" />
+  </template>
+</templates>

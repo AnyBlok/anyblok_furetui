@@ -1,0 +1,25 @@
+<templates>
+  <template id="PyramidRoleList">
+    <field name="name" sortable />
+    <field name="label" sortable />
+    <field name="children" />
+  </template>
+  <template id="PyramidRoleForm">
+    <header>
+      <h1><strong>Role : </strong>{{data.label}}</h1>
+    </header>
+    <div class="columns">
+      <div class="column"><field name="name"/></div>
+      <div class="column"><field name="label"/></div>
+    </div>
+    <tabs>
+      <tab label="Users">
+        <field name="users" widget="Many2ManyTags" />
+      </tab>
+      <tab label="Inheritances">
+        <field name="parents" widget="Many2ManyTags" />
+        <field name="children"  widget="Many2ManyTags" />
+      </tab>
+    </tabs>
+  </template>
+</templates>
