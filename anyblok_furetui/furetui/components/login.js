@@ -1,0 +1,1 @@
+defineComponent('login', {template: '#Login'});

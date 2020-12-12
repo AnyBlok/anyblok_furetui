@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record external_id="menu_user_login">
+      <field name="label">components.login.button</field>
+      <field name="component">furet-ui-appbar-head-router-link-button</field>
+      <field name="properties">{"props": {"to": {"name": "login"}}}</field>
+      <field name="label_is_props">label</field>
+      <field name="login_state">unlogged</field>
+  </record>
+  <record external_id="menu_user_logout">
+      <field name="label">components.logout.button</field>
+      <field name="component">furet-ui-appbar-user-dropmenu</field>
+      <field name="login_state">logged</field>
+  </record>
+</records>

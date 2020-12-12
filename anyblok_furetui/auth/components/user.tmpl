@@ -1,0 +1,167 @@
+<templates>
+  <template id="UsersList">
+    <furet-ui-list
+      id="users"
+      v-bind:title="$i18n.t('users.title.list')"
+      v-bind:default_filters="filters"
+      v-bind:defaultSortField="sortField"
+      v-bind:defaultSortOrder="sortOrder"
+      v-bind:browseFields="['login']"
+      rest_api_url="/api/v1/users"
+      v-on:go-to-page="goToPage"
+      can_go_to_new="true"
+      v-on:go-to-new="goToNew"
+    >
+      <template slot-scope="props">
+        <b-table-column field="first_name" v-bind:label="$i18n.t('users.first_name')" sortable>
+          {{ props.row.first_name }}
+        </b-table-column>
+        <b-table-column field="last_name" v-bind:label="$i18n.t('users.last_name')" sortable>
+          {{ props.row.last_name }}
+        </b-table-column>
+        <b-table-column field="email" v-bind:label="$i18n.t('users.email')" sortable>
+          {{ props.row.email }}
+        </b-table-column>
+        <b-table-column field="roles" v-bind:label="$i18n.t('users.roles')" >
+          <b-taglist >
+            <b-tag type="is-info" v-if="props.row.roles.length" v-for="role in props.row.roles" v-bind:key="role.name">{{ role.label }}</b-tag>
+          </b-taglist>
+        </b-table-column>
+      </template>
+    </furet-ui-list>
+  </template>
+  <template id="UserNew">
+    <furet-ui-new
+      v-bind:title="$i18n.t('users.title.new')"
+      v-bind:default_data="user"
+      rest_api_url="/api/v1/users"
+      v-on:go-to-page="goToPage"
+      v-on:go-to-list="goToList"
+    >
+      <template slot-scope="props">
+        <b-field horizontal v-bind:label="$i18n.t('users.name')" >
+          <b-input v-model="props.data.first_name" v-bind:placeholder="$i18n.t('users.first_name')" ref="first_name" expanded required></b-input>
+          <b-input v-model="props.data.last_name" v-bind:placeholder="$i18n.t('users.last_name')" ref="last_name" expanded required></b-input>
+        </b-field>
+        <b-field horizontal v-bind:label="$i18n.t('users.email')" >
+          <b-input type="email" v-model="props.data.email" v-bind:placeholder="$i18n.t('users.email')" ref="email" expanded required></b-input>
+        </b-field>
+        <b-field horizontal v-bind:label="$i18n.t('users.login')" >
+          <b-input v-model="props.data.login" v-bind:placeholder="$i18n.t('users.login')" ref="login" expanded required></b-input>
+        </b-field>
+        <b-field horizontal v-bind:label="$i18n.t('users.password')" >
+          <b-input type="password" password-reveal v-model="props.data.password" v-bind:placeholder="$i18n.t('users.password')" ref="password" expanded required></b-input>
+          <b-input type="password" password-reveal v-model="props.data.password2" v-bind:placeholder="$i18n.t('users.password2')" ref="password2" expanded required></b-input>
+        </b-field>
+        <b-field horizontal v-bind:label="$i18n.t('users.roles')" >
+          <div class="columns is-multiline is-mobile">
+            <b-checkbox 
+              class="column is-one-quarter-desktop is-one-half-tablet is-12-mobile"
+              v-for="role in roles" 
+              v-bind:key="role.name"
+              v-model="props.data.roles" 
+              v-bind:native-value="role">{{role.label}}</b-checkbox>
+          </div>
+        </b-field>
+      </template>
+    </furet-ui-new>
+  </template>
+  <template id="UserPage">
+     <furet-ui-page
+       v-bind:title="$i18n.t('users.title.page')"
+       v-bind:rest_api_url="getRestApiUrl"
+       can_modify="true"
+       v-on:go-to-edit="goToEdit"
+       v-on:go-to-page="goToPage"
+       v-on:go-to-list="goToList"
+     >
+      <template slot="head_actions" slot-scope="props">
+        <div class="field is-grouped">
+          <p class="control">
+            <a class="button is-primary is-outlined" v-on:click="open_modal">{{ $t('users.update_password.open') }}</a>
+          </p>
+        </div>
+      </template>
+       <template slot-scope="props">
+         <b-modal :active.sync="isCardModalActive" :width="640" scroll="keep">
+           <form v-on:submit="update_password">
+             <div class="modal-card" style="width: auto">
+               <header class="modal-card-head">
+                 <p class="modal-card-title">{{ $t('users.update_password.header') }}</p>
+               </header>
+               <section class="modal-card-body">
+                 <b-loading v-bind:active.sync="loading"></b-loading>
+                 <div class="columns">
+                   <div class="column">
+                     <b-field v-bind:label="$i18n.t('users.password')"
+                        v-bind:type="empty_message ? 'is-danger': 'is-success'"
+                        v-bind:message="empty_message">
+                       <b-input type="password" password-reveal v-model="password" expanded required></b-input>
+                     </b-field>
+                   </div>
+                   <div class="column">
+                     <b-field v-bind:label="$i18n.t('users.password2')"
+                        v-bind:type="not_same_message ? 'is-danger': 'is-success'"
+                        v-bind:message="not_same_message">
+                       <b-input type="password" password-reveal v-model="password2" expanded required></b-input>
+                     </b-field>
+                   </div>
+                 </div>
+               </section>
+               <footer class="modal-card-foot">
+                 <button class="button" type="button" v-on:click="close_modal">{{$t('users.update_password.close') }}</button>
+                 <button class="button is-primary" v-bind:disabled="!password || password != password2">{{ $t('users.update_password.submit') }}</button>
+               </footer>
+             </div>
+         </b-modal>
+         <furet-ui-page-errors v-bind:errors="errors" />
+         <b-field horizontal v-bind:label="$i18n.t('users.name')" >
+           {{ props.data.name }}
+         </b-field>
+         <b-field horizontal v-bind:label="$i18n.t('users.email')" >
+           {{ props.data.email }}
+         </b-field>
+         <b-field horizontal v-bind:label="$i18n.t('users.roles')" >
+           <b-taglist >
+             <b-tag type="is-info" v-if="props.data.roles.length" v-for="role in props.data.roles" v-bind:key="role.name">{{ role.label }}</b-tag>
+           </b-taglist>
+         </b-field>
+       </template>
+     </furet-ui-page>
+  </template>
+  <template id="UserEdit">
+    <furet-ui-edit
+      v-bind:title="$i18n.t('users.title.edit')"
+      v-bind:rest_api_url="getRestApiUrl"
+      v-bind:get_body="get_body"
+      v-on:go-to-page="goToPage"
+      v-on:go-to-list="goToList"
+    >
+      <template slot-scope="props">
+        <div class="box">
+          <b-field grouped>
+            <b-field expanded v-bind:label="$i18n.t('users.name')" >
+              <b-input v-model="props.data.first_name" v-bind:placeholder="$i18n.t('users.first_name')" expanded required></b-input>
+            </b-field>
+            <b-field expanded v-bind:label="$i18n.t('users.last_name')" >
+              <b-input v-model="props.data.last_name" v-bind:placeholder="$i18n.t('users.last_name')" expanded required></b-input>
+            </b-field>
+          </b-field>
+          <b-field expanded v-bind:label="$i18n.t('users.email')" >
+            <b-input type="email" v-model="props.data.email" v-bind:placeholder="$i18n.t('users.email')" expanded required></b-input>
+          </b-field>
+          <b-field expanded v-bind:label="$i18n.t('users.roles')" >
+            <div class="columns is-multiline is-mobile">
+              <b-checkbox 
+                class="column is-one-quarter-desktop is-one-half-tablet is-12-mobile"
+                v-for="role in roles" 
+                v-bind:key="role.name"
+                v-model="props.data.roles" 
+                v-bind:native-value="role">{{role.label}}</b-checkbox>
+            </div>
+          </b-field>
+        </div>
+      </template>
+    </furet-ui-edit>
+  </template>
+</templates>
