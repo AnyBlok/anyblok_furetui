@@ -49,6 +49,16 @@ class SqlMixin:
 
         return cls.adapter_
 
+    @classmethod
+    def get_default_values(
+        cls,
+        request=None,
+        authenticated_userid=None,
+        resource=None,
+        **data
+    ):
+        return {}
+
     @exposed_method(
         is_classmethod=True,
         request="request",
@@ -58,18 +68,53 @@ class SqlMixin:
     )
     def default_values(
         cls,
-        *args,
         request=None,
         authenticated_userid=None,
         resource=None,
-        **kwargs
+        uuid=None,
     ):
         """This method aims to be called by client on model before creating
         a new object to define it's default values.
 
         It return a dict with default values.
         """
-        return []
+        res = []
+        values = cls.get_default_values(
+            request=request, authenticated_userid=authenticated_userid,
+            resource=resource, uuid=uuid)
+        fd = cls.fields_description()
+        for key, value in values.items():
+            if fd[key]['type'] in ('Many2One', 'One2One'):
+                res.extend([
+                    {
+                        "type": "UPDATE_CHANGE",
+                        "model": cls.__registry_name__,
+                        "uuid": uuid,
+                        "fieldname": key,
+                        "value": value.to_primary_keys(),
+                    },
+                    {
+                        "type": "UPDATE_DATA",
+                        "model": value.__registry_name__,
+                        "pk": value.to_primary_keys(),
+                        "data": {
+                            **{x: getattr(value, x)
+                               for x in value.get_display_fields()},
+                            **value.to_primary_keys(),
+                        },
+                    },
+                ])
+            elif fd[key]['type'] in ('One2Many', 'Many2Many'):
+                pass
+            else:
+                res.append({
+                    "type": "UPDATE_CHANGE",
+                    "model": cls.__registry_name__,
+                    "uuid": uuid,
+                    "fieldname": key,
+                    "value": value,
+                })
+        return res
 
 
 @Declarations.register(Declarations.Core)
