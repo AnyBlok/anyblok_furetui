@@ -1006,6 +1006,7 @@ class PolymorphicForm():
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
+    label = String()
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -1045,10 +1046,21 @@ class Set(Declarations.Model.FuretUI.Resource):
             else:
                 definition['can_%s' % acl] = False
 
+        options = {}
+        if self.form.polymorphic_columns:
+            options['forms'] = forms = []
+            for form in self.form.forms:
+                forms.append({
+                    'waiting_value': form.polymorphic_values,
+                    'resource_id': form.resource.id,
+                    'label': form.label or form.model.__registry_name__,
+                })
+
         definition.update({
             'pks': self.form.get_primary_keys_for(),
             'form': self.form.id,
             'multi': getattr(self, self.multi_type).id,
+            **options
         })
         res = [definition]
         res.extend(self.form.get_definitions(
