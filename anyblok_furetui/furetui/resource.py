@@ -1053,7 +1053,7 @@ class Set(Declarations.Model.FuretUI.Resource):
                 forms.append({
                     'waiting_value': form.polymorphic_values,
                     'resource_id': form.resource.id,
-                    'label': form.label or form.model.__registry_name__,
+                    'label': form.label or form.resource.model,
                 })
 
         definition.update({

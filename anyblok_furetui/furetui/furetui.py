@@ -166,42 +166,43 @@ class FuretUI:
     @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
-        if call not in cls.registry.exposed_methods.get(model, {}):
-            raise HTTPForbidden(f"the method '{call}' is not exposed")
-
-        def apply_value(value):
-            return value() if callable(value) else value
-
-        options = {}
-        definition = cls.registry.exposed_methods[model][call]
-        permission = definition['permission']
-        userId = request.authenticated_userid
-        if permission is not None:
-            if not cls.check_acl(
-                request.authenticated_userid, model, permission
-            ):
-                raise HTTPForbidden(
-                    f"User '{userId}' has to be granted '{permission}' "
-                    f"permission in order to call this method '{call}' on "
-                    f"model '{model}'."
-                )
-
-        obj = cls.registry.get(model)
-        if definition['is_classmethod'] is False:
-            obj = obj.from_primary_keys(**pks)
-
-        for (key, value) in cls.get_exposed_method_options(
-            request, permission, resource, model, call, data, pks
-        ):
-            if definition[key] is True:
-                options[key] = apply_value(value)
-            elif definition[key]:
-                options[definition[key]] = apply_value(value)
-
         res = None
-        if not data:
-            data = {}
         with saved_errors_in_request(request):
+            if call not in cls.registry.exposed_methods.get(model, {}):
+                raise HTTPForbidden(f"the method '{call}' is not exposed")
+
+            def apply_value(value):
+                return value() if callable(value) else value
+
+            options = {}
+            definition = cls.registry.exposed_methods[model][call]
+            permission = definition['permission']
+            userId = request.authenticated_userid
+            if permission is not None:
+                if not cls.check_acl(
+                    request.authenticated_userid, model, permission
+                ):
+                    raise HTTPForbidden(
+                        f"User '{userId}' has to be granted '{permission}' "
+                        f"permission in order to call this method '{call}' on "
+                        f"model '{model}'."
+                    )
+
+            obj = cls.registry.get(model)
+            if definition['is_classmethod'] is False:
+                obj = obj.from_primary_keys(**pks)
+
+            for (key, value) in cls.get_exposed_method_options(
+                request, permission, resource, model, call, data, pks
+            ):
+                if definition[key] is True:
+                    options[key] = apply_value(value)
+                elif definition[key]:
+                    options[definition[key]] = apply_value(value)
+
+            if not data:
+                data = {}
+
             res = getattr(obj, call)(**options, **data)
 
         return res
