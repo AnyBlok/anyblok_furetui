@@ -30,7 +30,7 @@ class Mixin:
             Menu.Resource.insert(label="Resource 1", resource=resource),
             Menu.Url.insert(label="Resource 2", url="http://anyblok.org"),
             Menu.Call.insert(label="Resource 3", model="Model.System.Blok",
-                             method="install"),
+                             method="furetui_install"),
         ])
         node2 = Menu.Node.insert(label="Node 2")
         node2.children.extend([
@@ -46,7 +46,7 @@ class Mixin:
             Menu.Resource.insert(label="Resource 7", resource=resource),
             Menu.Url.insert(label="Resource 8", url="http://anyblok.org"),
             Menu.Call.insert(label="Resource 9", model="Model.System.Blok",
-                             method="install"),
+                             method="furetui_install"),
         ])
         return space if with_space else resource
 
@@ -109,7 +109,7 @@ class Mixin:
                         'icon_type': None,
                         'id': call_id('Resource 9'),
                         'label': 'Resource 9',
-                        'method': 'install',
+                        'method': 'furetui_install',
                         'model': 'Model.System.Blok',
                         'order': 100,
                         'resource': resource.id if with_resource else None,
@@ -157,7 +157,7 @@ class Mixin:
                                 'icon_type': None,
                                 'id': call_id('Resource 3'),
                                 'label': 'Resource 3',
-                                'method': 'install',
+                                'method': 'furetui_install',
                                 'model': 'Model.System.Blok',
                                 'order': 100,
                                 'resource': (
