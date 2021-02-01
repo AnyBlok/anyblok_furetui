@@ -874,7 +874,7 @@ class Thumbnail(
     title = String()
     model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use('name'))
-    template = String(nullable=False)
+    template = String()
 
     def get_definitions(self, **kwargs):
         Model = self.registry.get(self.model)
