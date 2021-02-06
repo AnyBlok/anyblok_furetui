@@ -15,6 +15,8 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+from pyramid.httpexceptions import HTTPForbidden
+from ..security import exposed_method
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -544,6 +546,7 @@ class Resource:
             'Model.FuretUI.Resource.Set': 'Set',
             'Model.FuretUI.Resource.List': 'List',
             'Model.FuretUI.Resource.Thumbnail': 'Thumbnail',
+            'Model.FuretUI.Resource.Kanban': 'Kanban',
             'Model.FuretUI.Resource.Form': 'Form',
             'Model.FuretUI.Resource.Dashboard': 'Dashboard',
         }
@@ -943,6 +946,165 @@ class Thumbnail(
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
+class Kanban(
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
+    id = Integer(primary_key=True,
+                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+    title = String()
+    model = String(nullable=False, size=256,
+                   foreign_key=Declarations.Model.System.Model.use('name'))
+    template = String()
+    field_identity = String(nullable=False)
+    field_order = String(nullable=False)
+    options = Json(default={})
+
+    def return_modified_entries(self, entries):
+        Model = entries[0].__class__
+        fd = Model.fields_description(self.field_identity)
+        need_related_entries = False
+        if fd[self.field_identity]['type'] in ('Many2One', 'One2One'):
+            need_related_entries = True
+
+        res = []
+        for value in entries:
+            identity = getattr(value, self.field_identity)
+            res.append({
+                "type": "UPDATE_DATA",
+                "model": value.__registry_name__,
+                "pk": value.to_primary_keys(),
+                "data": {
+                    self.field_identity: (
+                        identity.to_primary_keys() if need_related_entries
+                        else identity
+                    ),
+                    self.field_order: getattr(value, self.field_order),
+                    **value.to_primary_keys(),
+                },
+            })
+
+        return res
+
+    @exposed_method(is_classmethod=False, authenticated_userid='userId')
+    def change_column(self, userId=None, pks=None, identity=None, index=None):
+        if not self.registry.FuretUI.check_acl(
+            userId, self.model, 'update'
+        ):
+            raise HTTPForbidden(
+                f"User '{userId}' has to be granted 'update' "
+                f"permission in order to call this method 'change_column' on "
+                f"model '{self.model}'."
+            )
+        entries = []
+        entry = self.registry.get(self.model).from_primary_keys(**pks)
+        entries.append(entry)
+        # TODO UPDATE METH
+        values = {self.field_identity: identity, self.field_order: index}
+        # TODO update orderof other thumbnail
+        entry.update(**values)
+        return self.return_modified_entries(entries)
+
+    @exposed_method(is_classmethod=False, authenticated_userid='userId')
+    def change_position(self, userId=None, pks=None, fromIndex=None,
+                        toIndex=None):
+        if not self.registry.FuretUI.check_acl(
+            userId, self.model, 'update'
+        ):
+            raise HTTPForbidden(
+                f"User '{userId}' has to be granted 'update' "
+                f"permission in order to call this method 'change_column' on "
+                f"model '{self.model}'."
+            )
+
+        entries = []
+        entry = self.registry.get(self.model).from_primary_keys(**pks)
+        entries.append(entry)
+        # TODO UPDATE METH
+        values = {self.field_order: toIndex}
+        # TODO update orderof other thumbnail
+        entry.update(**values)
+        return self.return_modified_entries(entries)
+
+    def get_definitions(self, **kwargs):
+        Model = self.registry.get(self.model)
+        fd = Model.fields_description()
+        pks = Model.get_primary_keys()
+        userid = kwargs.get('authenticated_userid')
+        buttons = []
+
+        headers = {}
+        if self.options.get('headers', 'identity') == 'identity':
+            # TODO check what append for other values
+            fs = self.registry.loaded_namespaces_first_step[self.model][
+                self.field_identity]
+            headers = [
+                {'value': k, 'label': v}
+                for k, v in fs.selections.items()
+            ]
+
+        if self.template:
+            template = self.registry.FuretUI.get_template(
+                self.template, tostring=False)
+            template.tag = 'div'
+            fields = [el.attrib.get('name')
+                      for el in template.findall('.//field')]
+        else:
+            fields = [x for x in fd.keys()
+                      if fd[x]['type'] not in ('FakeColumn', 'Function')]
+            fields.sort()
+            template = etree.Element("div")
+            template.set('class', "columns is-multiline is-mobile")
+            for field_name in fields:
+                column = etree.SubElement(template, "div")
+                column.set('class',
+                           "column is-4-desktop is-6-tablet is-12-mobile")
+                field = etree.SubElement(column, "field")
+                field.set('name', field_name)
+
+        res = {
+            'id': self.id,
+            'type': self.type.label.lower(),
+            'title': self.title,
+            'model': self.model,
+            'pks': pks,
+            'filters': self.registry.FuretUI.Resource.Filter.get_for_resource(
+                kanban=self),
+            'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
+                kanban=self),
+            'buttons': buttons,
+            'headers': headers,
+            'field_identity': self.field_identity,
+            'field_order': self.field_order,  # TODO check must be an integer
+        }
+        fields2read = []
+        fields2read.extend(pks)
+        for tag in ('header', 'footer'):
+            sub_template = template.find('./%s' % tag)
+            if not sub_template:
+                continue
+
+            sub_template.tag = 'div'
+            template.remove(sub_template)
+            res['%s_template' % tag] = self.encode_to_furetui(
+                userid, sub_template, fields, fields2read,
+                template_tag=tag,
+                template_class=f'card-{tag}',
+                button_tag=f'furet-ui-thumbnail-{tag}-button'
+            )
+
+        body_template = self.encode_to_furetui(
+            userid, template, fields, fields2read)
+        fields2read = list(set(fields2read))
+        fields2read.sort()
+        res.update({
+            'body_template': body_template,
+            'fields': fields2read,
+        })
+        return [res]
+
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
 class Filter:
     id = Integer(primary_key=True)
     key = String(nullable=False)
@@ -950,6 +1112,8 @@ class Filter:
                     one2many="filters")
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail,
                          one2many="filters")
+    kanban = Many2One(model=Declarations.Model.FuretUI.Resource.Kanban,
+                      one2many="filters")
     mode = Selection(selections={'include': 'Include', 'exclude': 'Exclude'},
                      default='include', nullable=False)
     op = Selection(selections={x: x for x in FILTER_OPERATORS},
@@ -975,6 +1139,8 @@ class Tags:
                     one2many="tags")
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail,
                          one2many="tags")
+    kanban = Many2One(model=Declarations.Model.FuretUI.Resource.Kanban,
+                      one2many="tags")
 
     @classmethod
     def get_for_resource(cls, **resource):
@@ -1102,11 +1268,19 @@ class Set(Declarations.Model.FuretUI.Resource):
     form = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                     nullable=False)
     multi_type = Selection(
-        selections={'list': 'List', 'thumbnail': 'Thumbnail'},
-        nullable=False, default="list")
+        selections="get_selections", nullable=False, default="list")
     list = Many2One(model=Declarations.Model.FuretUI.Resource.List)
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail)
+    kanban = Many2One(model=Declarations.Model.FuretUI.Resource.Kanban)
     # TODO add checkonstraint on multi + select
+
+    @classmethod
+    def get_selections(cls):
+        return {
+            'list': 'List',
+            'thumbnail': 'Thumbnail',
+            'kanban': 'Kanban',
+        }
 
     def get_definitions(self, authenticated_userid=None, **kwargs):
         definition = self.to_dict('id', 'type')
