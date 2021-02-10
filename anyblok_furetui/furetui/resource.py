@@ -986,6 +986,36 @@ class Kanban(
 
         return res
 
+    def update_index_for(self, identity=None, fromIndex=None, toIndex=None):
+        Model = self.registry.get(self.model)
+        query = Model.query().filter(
+            getattr(Model, self.field_identity) == identity)
+
+        field_order = getattr(Model, self.field_order)
+        res = []
+        if toIndex is None:
+            query = query.filter(field_order >= fromIndex)
+            for entry in query:
+                res.append(entry)
+                setattr(entry, self.field_order,
+                        getattr(entry, self.field_order) + 1)
+        elif fromIndex < toIndex:
+            query = query.filter(field_order > fromIndex)
+            query = query.filter(field_order <= toIndex)
+            for entry in query:
+                res.append(entry)
+                setattr(entry, self.field_order,
+                        getattr(entry, self.field_order) - 1)
+        elif fromIndex > toIndex:
+            query = query.filter(field_order < fromIndex)
+            query = query.filter(field_order >= toIndex)
+            for entry in query:
+                res.append(entry)
+                setattr(entry, self.field_order,
+                        getattr(entry, self.field_order) + 1)
+
+        return res
+
     @exposed_method(is_classmethod=False, authenticated_userid='userId')
     def change_column(self, userId=None, pks=None, identity=None, index=None):
         if not self.registry.FuretUI.check_acl(
@@ -999,10 +1029,24 @@ class Kanban(
         entries = []
         entry = self.registry.get(self.model).from_primary_keys(**pks)
         entries.append(entry)
-        # TODO UPDATE METH
-        values = {self.field_identity: identity, self.field_order: index}
-        # TODO update orderof other thumbnail
-        entry.update(**values)
+
+        if self.options.get('before_change_column'):
+            getattr(entry, 'before_change_column')(
+                userId=userId, identity=identity, index=index)
+
+        if self.options.get('change_column'):
+            getattr(entry, 'change_column')(
+                userId=userId, identity=identity, index=index)
+        else:
+            values = {self.field_identity: identity, self.field_order: index}
+            entries.extend(self.update_index_for(
+                identity=identity, fromIndex=index))
+            entry.update(**values)
+
+        if self.options.get('after_change_column'):
+            getattr(entry, 'after_change_column')(
+                userId=userId, identity=identity, index=index)
+
         return self.return_modified_entries(entries)
 
     @exposed_method(is_classmethod=False, authenticated_userid='userId')
@@ -1020,10 +1064,25 @@ class Kanban(
         entries = []
         entry = self.registry.get(self.model).from_primary_keys(**pks)
         entries.append(entry)
-        # TODO UPDATE METH
-        values = {self.field_order: toIndex}
-        # TODO update orderof other thumbnail
-        entry.update(**values)
+
+        if self.options.get('before_change_position'):
+            getattr(entry, 'before_change_position')(
+                userId=userId, fromIndex=fromIndex, toIndex=toIndex)
+
+        if self.options.get('change_position'):
+            getattr(entry, 'change_position')(
+                userId=userId, fromIndex=fromIndex, toIndex=toIndex)
+        else:
+            values = {self.field_order: toIndex}
+            entries.extend(self.update_index_for(
+                identity=getattr(entry, self.field_identity),
+                fromIndex=fromIndex, toIndex=toIndex))
+            entry.update(**values)
+
+        if self.options.get('after_change_position'):
+            getattr(entry, 'after_change_position')(
+                userId=userId, fromIndex=fromIndex, toIndex=toIndex)
+
         return self.return_modified_entries(entries)
 
     def get_definitions(self, **kwargs):
@@ -1076,6 +1135,7 @@ class Kanban(
             'headers': headers,
             'field_identity': self.field_identity,
             'field_order': self.field_order,  # TODO check must be an integer
+            'draganddrop': self.options.get('draganddrop', True),
         }
         fields2read = []
         fields2read.extend(pks)
