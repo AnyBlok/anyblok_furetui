@@ -122,7 +122,11 @@ class SqlBase(SqlMixin):
 
     @classmethod
     def furetui_insert(cls, **kwargs):
-        return cls.insert(**kwargs)
+        res = cls.insert(**kwargs)
+        if res is None:
+            raise Exception('No instance returned by %r.insert' % cls)
+
+        return res
 
     def furetui_update(self, **kwargs):
         return self.update(**kwargs)
