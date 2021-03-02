@@ -1055,6 +1055,7 @@ class Form(
         res.append(definition)
         for form in self.forms:
             forms.append({
+                'label': form.label or form.resource.model,
                 'waiting_value': form.polymorphic_values,
                 'resource_id': form.resource.id,
             })
@@ -1079,6 +1080,7 @@ class Form(
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class PolymorphicForm():
     id = Integer(primary_key=True)
+    label = String()
     parent = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
@@ -1122,14 +1124,20 @@ class Set(Declarations.Model.FuretUI.Resource):
             else:
                 definition['can_%s' % acl] = False
 
+        form_definitions = self.form.get_definitions(
+            authenticated_userid=authenticated_userid)
+        forms = []
+        if self.form.polymorphic_columns:
+            forms.extend(form_definitions[0]['forms'])
+
         definition.update({
+            'forms': forms,
             'pks': self.form.get_primary_keys_for(),
             'form': self.form.id,
             'multi': getattr(self, self.multi_type).id,
         })
         res = [definition]
-        res.extend(self.form.get_definitions(
-            authenticated_userid=authenticated_userid))
+        res.extend(form_definitions)
         res.extend(getattr(self, self.multi_type).get_definitions(
             authenticated_userid=authenticated_userid))
         return res
