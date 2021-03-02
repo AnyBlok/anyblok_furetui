@@ -10,7 +10,7 @@
 from anyblok.blok import Blok
 from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
-from anyblok_pyramid import PERM_WRITE
+from anyblok_pyramid import PERM_WRITE, merge
 from .i18n import fr, en
 
 
@@ -82,7 +82,7 @@ class FuretUIAuthBlok(Blok, BlokImporter):
                 {
                     "code": "role-admin-system-blok",
                     "model": "Model.System.Blok",
-                    "perms": PERM_WRITE,
+                    "perms": merge(PERM_WRITE, {'admin': {'matched': True}}),
                 },
             ],
             label="Administrator"

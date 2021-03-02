@@ -260,10 +260,10 @@ class Template:
         return self.get_field_for_(field, 'StatusBar', description, fields2read)
 
     def replace_buttons(self, userid, template, fields_description,
-                        fields2read):
+                        fields2read, **kwargs):
         buttons = template.findall('.//button')
         for el in buttons:
-            el.tag = 'furet-ui-form-button'
+            el.tag = kwargs.get('button_tag', 'furet-ui-form-button')
             config = {
                 'label': el.attrib['label'],
                 'class': el.attrib.get('class', '').split(),
@@ -493,7 +493,7 @@ class Template:
         self.apply_roles_attributes_write_only_for_roles(roles, template)
 
     def _encode_to_furetui(self, userid, template, fields_description,
-                           fields2read):
+                           fields2read, **kwargs):
         nsmap = {'v-bind': 'https://vuejs.org/'}
         etree.cleanup_namespaces(
             template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
@@ -504,13 +504,22 @@ class Template:
         self.replace_tabs(template, fields2read)
         self.replace_tab(template, fields2read)
         self.replace_fields(template, fields_description, fields2read)
-        self.replace_buttons(userid, template, fields_description, fields2read)
+        self.replace_buttons(userid, template, fields_description, fields2read,
+                             **kwargs)
 
-    def encode_to_furetui(self, userid, template, fields, fields2read):
+    def encode_to_furetui(self, userid, template, fields, fields2read,
+                          **kwargs):
         Model = self.registry.get(self.model)
         fields_description = Model.fields_description(fields)
         self._encode_to_furetui(
-            userid, template, fields_description, fields2read)
+            userid, template, fields_description, fields2read, **kwargs)
+
+        if 'template_tag' in kwargs:
+            template.tag = kwargs['template_tag']
+
+        if 'template_class' in kwargs:
+            template.set('class', kwargs['template_class'])
+
         return self.registry.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
 
@@ -856,13 +865,81 @@ class List(Declarations.Model.FuretUI.Resource):
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
-class Thumbnail(Declarations.Model.FuretUI.Resource):
+class Thumbnail(
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+    title = String()
     model = String(nullable=False, size=256,
                    foreign_key=Declarations.Model.System.Model.use('name'))
-    template = String(nullable=False)
-    # TODO criteria of filter
+    template = String()
+
+    def get_definitions(self, **kwargs):
+        Model = self.registry.get(self.model)
+        fd = Model.fields_description()
+        pks = Model.get_primary_keys()
+        userid = kwargs.get('authenticated_userid')
+        buttons = []
+
+        if self.template:
+            template = self.registry.FuretUI.get_template(
+                self.template, tostring=False)
+            template.tag = 'div'
+            fields = [el.attrib.get('name')
+                      for el in template.findall('.//field')]
+        else:
+            fields = [x for x in fd.keys()
+                      if fd[x]['type'] not in ('FakeColumn', 'Function')]
+            fields.sort()
+            template = etree.Element("div")
+            template.set('class', "columns is-multiline is-mobile")
+            for field_name in fields:
+                column = etree.SubElement(template, "div")
+                column.set('class',
+                           "column is-4-desktop is-6-tablet is-12-mobile")
+                field = etree.SubElement(column, "field")
+                field.set('name', field_name)
+
+        res = {
+            'id': self.id,
+            'type': self.type.label.lower(),
+            'title': self.title,
+            'model': self.model,
+            'pks': pks,
+            'filters': self.registry.FuretUI.Resource.Filter.get_for_resource(
+                thumbnail=self),
+            'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
+                thumbnail=self),
+            'buttons': buttons,
+            # 'on_selected_buttons': [],  # TODO
+        }
+        fields2read = []
+        fields2read.extend(pks)
+        for tag in ('header', 'footer'):
+            sub_template = template.find('./%s' % tag)
+            if not sub_template:
+                continue
+
+            sub_template.tag = 'div'
+            template.remove(sub_template)
+            res['%s_template' % tag] = self.encode_to_furetui(
+                userid, sub_template, fields, fields2read,
+                template_tag=tag,
+                template_class=f'card-{tag}',
+                button_tag=f'furet-ui-thumbnail-{tag}-button'
+            )
+
+        body_template = self.encode_to_furetui(
+            userid, template, fields, fields2read)
+        fields2read = list(set(fields2read))
+        fields2read.sort()
+        res.update({
+            'body_template': body_template,
+            'fields': fields2read,
+        })
+        return [res]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)

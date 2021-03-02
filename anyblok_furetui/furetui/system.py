@@ -14,16 +14,16 @@ from ..security import exposed_method
 class Blok:
 
     @exposed_method(is_classmethod=False, permission='admin')
-    def install(self):
-        super(Blok, self).install()
-        # MAIBE reload UI
+    def furetui_install(self):
+        self.registry.upgrade(install=(self.name,))
+        return [{'type': 'RELOAD'}]
 
     @exposed_method(is_classmethod=False, permission='admin')
-    def uninstall(self):
-        super(Blok, self).uninstall()
-        # MAIBE reload UI
+    def furetui_uninstall(self):
+        self.registry.upgrade(uninstall=(self.name,))
+        return [{'type': 'RELOAD'}]
 
     @exposed_method(is_classmethod=False, permission='admin')
-    def upgrade(self):
-        super(Blok, self).upgrade()
-        # MAIBE reload UI
+    def furetui_update(self):
+        self.registry.upgrade(update=(self.name,))
+        return [{'type': 'RELOAD'}]

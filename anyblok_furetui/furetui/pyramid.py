@@ -8,6 +8,7 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from enum import Enum
 from cornice.renderer import CorniceRenderer
+from colour import Color
 from anyblok_pyramid.adapter import (
     datetime_adapter, timedelta_adapter_factory, date_adapter,
     uuid_adapter, bytes_adapter, decimal_adapter, enum_adapter)
@@ -27,6 +28,15 @@ except ImportError:
     pass
 
 
+def color_adapter(obj, request):
+    """Format the fields.Color to return String
+    """
+    if not obj:
+        return obj
+
+    return obj.hex
+
+
 def country_adapter(country, request):
     if country is None:
         return None
@@ -42,6 +52,7 @@ def add_adapters(obj):
     obj.add_adapter(UUID, uuid_adapter)
     obj.add_adapter(bytes, bytes_adapter)
     obj.add_adapter(Decimal, decimal_adapter)
+    obj.add_adapter(Color, color_adapter)
     obj.add_adapter(python_pycountry_type, country_adapter)
 
 
