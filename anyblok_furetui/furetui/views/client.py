@@ -148,21 +148,26 @@ def oic_callback(request):
     # get redirection before before connection as session is invalidate
     # once user is successfully logged
     redirect = request.session.get("redirect")
-    _, headers = oidc.log_user(request)
+    user_info, headers = oidc.log_user(request)
     if headers is None:
         # TODO find a way to display a nice error message to enduser
         # probably using session
-        return
+        request.errors.add('cookies', 'OpenID connect',
+                           'Impossible toconnect to oidc')
+        request.errors.add('cookies', 'OpenID connect',
+                           str(user_info))
+        request.session.update({"init_redirect_uri": 'login'})
+    else:
+        request.session.update(
+            {
+                "init_redirect_uri": (
+                    redirect if redirect else
+                    request.anyblok.registry.FuretUI.get_default_path(
+                        request.authenticated_userid)
+                ),
+            }
+        )
 
-    request.session.update(
-        {
-            "init_redirect_uri": (
-                redirect if redirect else
-                request.anyblok.registry.FuretUI.get_default_path(
-                    request.authenticated_userid)
-            ),
-        }
-    )
     return HTTPFound(
         location=urlparse(
             request.environ.get("HTTP_X_FORWARDED_HOST"),
