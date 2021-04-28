@@ -46,7 +46,7 @@ class FuretUI:
         logger.info('Preload furet UI component')
         templates = Template()
         i18n = {}
-        Blok = cls.registry.System.Blok
+        Blok = cls.anyblok.System.Blok
         for blok in Blok.list_by_state('installed'):
             b = BlokManager.get(blok)
             bpath = BlokManager.getPath(blok)
@@ -60,8 +60,8 @@ class FuretUI:
                     update_translation(node, translations)
 
         templates.compile()
-        cls.registry.furetui_templates = templates
-        cls.registry.furetui_i18n = i18n
+        cls.anyblok.furetui_templates = templates
+        cls.anyblok.furetui_i18n = i18n
 
     @classmethod
     def get_template(cls, *args, **kwargs):
@@ -69,7 +69,7 @@ class FuretUI:
         if reload_at_change:
             cls.pre_load()
 
-        return cls.registry.furetui_templates.get_template(*args, **kwargs)
+        return cls.anyblok.furetui_templates.get_template(*args, **kwargs)
 
     @classmethod
     def get_default_path(cls, authenticated_userid):
@@ -131,7 +131,7 @@ class FuretUI:
             {'type': 'SET_LOCALE', 'locale': locale},
             {'type': 'UPDATE_LOCALES', 'locales': [
                 {'locale': locale,
-                 'messages': cls.registry.furetui_i18n.get(locale, {})}
+                 'messages': cls.anyblok.furetui_i18n.get(locale, {})}
                 for locale in locales]},
             {'type': 'SET_LOGIN_PAGE',
              'login_page': Configuration.get('furetui_login_page', 'password')}
@@ -150,7 +150,7 @@ class FuretUI:
             if resource == '0':
                 return None
 
-            return cls.registry.FuretUI.Resource.query().get(int(resource))
+            return cls.anyblok.FuretUI.Resource.query().get(int(resource))
 
         res = [
             ('request', request),
@@ -161,19 +161,19 @@ class FuretUI:
 
     @classmethod
     def check_acl(cls, userid, resource, permission):
-        return cls.registry.Pyramid.check_acl(userid, resource, permission)
+        return cls.anyblok.Pyramid.check_acl(userid, resource, permission)
 
     @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
-        if call not in cls.registry.exposed_methods.get(model, {}):
+        if call not in cls.anyblok.exposed_methods.get(model, {}):
             raise HTTPForbidden(f"the method '{call}' is not exposed")
 
         def apply_value(value):
             return value() if callable(value) else value
 
         options = {}
-        definition = cls.registry.exposed_methods[model][call]
+        definition = cls.anyblok.exposed_methods[model][call]
         permission = definition['permission']
         userId = request.authenticated_userid
         if permission is not None:
@@ -186,7 +186,7 @@ class FuretUI:
                     f"model '{model}'."
                 )
 
-        obj = cls.registry.get(model)
+        obj = cls.anyblok.get(model)
         if definition['is_classmethod'] is False:
             obj = obj.from_primary_keys(**pks)
 
@@ -216,7 +216,7 @@ class FuretUI:
     @classmethod
     def validate_form_resources(cls):
         res = []
-        Form = cls.registry.FuretUI.Resource.Form
+        Form = cls.anyblok.FuretUI.Resource.Form
         for resource in Form.query().filter(Form.template.isnot(None)):
             try:
                 resource.get_definitions()
@@ -232,7 +232,7 @@ class FuretUI:
     @classmethod
     def validate_list_resources(cls):
         res = []
-        List = cls.registry.FuretUI.Resource.List
+        List = cls.anyblok.FuretUI.Resource.List
         for resource in List.query().filter(List.template.isnot(None)):
             try:
                 resource.get_definitions()
