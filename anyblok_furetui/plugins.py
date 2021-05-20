@@ -34,3 +34,18 @@ class ExposedMethod(ModelPluginBase):
         if getattr(method, "is_an_exposed_method", False) is True:
             model = self.registry.exposed_methods.setdefault(namespace, {})
             model.update({method.__name__: method.exposure_description})
+
+    def after_model_construction(self, base, namespace,
+                                 transformation_properties):
+        """Do some action with the constructed Model
+
+        :param base: the Model class
+        :param namespace: the namespace of the model
+        :param transformation_properties: the properties of the model
+        """
+        model = self.registry.exposed_methods.setdefault(namespace, {})
+        for depend in base.__depends__:
+            model2 = self.registry.exposed_methods.setdefault(depend, {})
+            for key in model2:
+                if key not in model:
+                    model[key] = model2[key]
