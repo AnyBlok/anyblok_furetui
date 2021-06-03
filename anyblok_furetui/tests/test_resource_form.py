@@ -56,11 +56,11 @@ if has_furl:
     PARAMS.append((URL, 'url', {}))
 
 
-if has_phonenumbers:
+if has_phonenumbers and False:
     PARAMS.append((PhoneNumber, 'phonenumber', {}))
 
 
-if has_pycountry:
+if has_pycountry and False:
     PARAMS.append((Country, 'country', {}))
 
 

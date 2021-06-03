@@ -137,7 +137,7 @@ def one2many_with_required_fk_and_multi_primary_key(**kwargs):  # noqa F811
         @classmethod
         def define_table_args(cls):
             table_args = super(Line, cls).define_table_args()
-            Order = cls.registry.Order
+            Order = cls.anyblok.Order
             return table_args + (ForeignKeyConstraint(
                 [cls.order_id, cls.order_name], [Order.uuid, Order.name],
                 ondelete="CASCADE"),)

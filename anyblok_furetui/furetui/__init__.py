@@ -61,10 +61,10 @@ class FuretUIBlok(Blok):
     }
 
     def load(self):
-        self.registry.FuretUI.pre_load()
+        self.anyblok.FuretUI.pre_load()
         logger.info('Preload Models.field_description')
         test_mode = Configuration.get('pyramid.reload_all', False)
-        for Model in self.registry.loaded_namespaces.values():
+        for Model in self.anyblok.loaded_namespaces.values():
             if Model.is_sql:
                 try:
                     Model.fields_description()
@@ -72,7 +72,7 @@ class FuretUIBlok(Blok):
                     test_mode = False
 
         if test_mode:
-            self.registry.FuretUI.validate_resources()
+            self.anyblok.FuretUI.validate_resources()
 
     @classmethod
     def import_declaration_module(cls):

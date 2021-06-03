@@ -26,7 +26,7 @@ class CRUD:
         """
         def add_field(data, field, model, userid):
 
-            if not cls.registry.FuretUI.check_acl(
+            if not cls.anyblok.FuretUI.check_acl(
                 userid, model, "read"
             ):
                 raise HTTPForbidden(
@@ -35,7 +35,7 @@ class CRUD:
                     f"model '{model}'."
                 )
             f = field.split(".", 1)
-            fd = cls.registry.get(model).fields_description()
+            fd = cls.anyblok.get(model).fields_description()
             if len(f) == 1:
                 if fd[field]['type'] not in ('Many2One', 'One2One',
                                              'One2Many', 'Many2Many'):
@@ -54,7 +54,7 @@ class CRUD:
     def add_options(cls, fields, model_name):
         """Limit query object to requested fields on any joins
         """
-        model = cls.registry.get(model_name)
+        model = cls.anyblok.get(model_name)
         fd = model.fields_description()
         load = load_only(*[
             f
@@ -86,10 +86,10 @@ class CRUD:
         )
 
         # TODO complex case of relationship
-        Model = cls.registry.get(model)
+        Model = cls.anyblok.get(model)
         adapter = Model.get_furetui_adapter()
         qs = QueryString(request, Model, adapter=adapter)
-        query = cls.registry.Pyramid.restrict_query_by_user(
+        query = cls.anyblok.Pyramid.restrict_query_by_user(
             qs.Model.query(),
             request.authenticated_userid
         )
@@ -108,7 +108,7 @@ class CRUD:
         pks = []
 
         def append_result(fields, model_name, entry):
-            model = cls.registry.get(model_name)
+            model = cls.anyblok.get(model_name)
             fd = model.fields_description()
             current_fields = fields.pop("__fields")
             current_fields.extend(fields.keys())
@@ -150,7 +150,7 @@ class CRUD:
         linked_data = []
         for field in data:
             if fd[field]['type'] in ('Many2One', 'One2One'):
-                M2 = cls.registry.get(fd[field]['model'])
+                M2 = cls.anyblok.get(fd[field]['model'])
                 data[field] = M2.from_primary_keys(**data[field])
             if fd[field]['type'] in ('One2Many', 'Many2Many'):
                 linked_data.append({
@@ -167,7 +167,7 @@ class CRUD:
 
     @classmethod
     def create(cls, model, uuid, changes, authenticated_userid):
-        if not cls.registry.FuretUI.check_acl(
+        if not cls.anyblok.FuretUI.check_acl(
             authenticated_userid, model, "create"
         ):
             raise HTTPForbidden(
@@ -183,7 +183,7 @@ class CRUD:
     def create_or_update(
         cls, model, pks, changes, authenticated_userid, **remote
     ):
-        Model = cls.registry.get(model)
+        Model = cls.anyblok.get(model)
         data = {}
         new = True
         # TODO: rename uuid or document that primary key should not use
@@ -232,7 +232,7 @@ class CRUD:
 
     @classmethod_cache()
     def get_linked_column(cls, model, column):
-        Model = cls.registry.get(model)
+        Model = cls.anyblok.get(model)
         col = [x for x in Model.__mapper__.columns if x.name == column][0]
         fk = list(col.foreign_keys)[0]
         return fk.column.name
@@ -272,7 +272,7 @@ class CRUD:
         cls, new_obj, linked_data, changes, authenticated_userid
     ):
         for linked_field in linked_data:
-            linked_model = cls.registry.get(linked_field["model"])
+            linked_model = cls.anyblok.get(linked_field["model"])
             linked_model_pks = set(linked_model.get_primary_keys())
             for linked_instance in linked_field["data"]:
                 state = linked_instance.get("__x2m_state", None)
@@ -325,7 +325,7 @@ class CRUD:
 
     @classmethod
     def update(cls, model, pks, changes, authenticated_userid):
-        if not cls.registry.FuretUI.check_acl(
+        if not cls.anyblok.FuretUI.check_acl(
             authenticated_userid, model, "update"
         ):
             raise HTTPForbidden(
@@ -337,7 +337,7 @@ class CRUD:
 
     @classmethod
     def delete(cls, model, pks, authenticated_userid):
-        if not cls.registry.FuretUI.check_acl(
+        if not cls.anyblok.FuretUI.check_acl(
             authenticated_userid, model, "delete"
         ):
             raise HTTPForbidden(
@@ -345,7 +345,7 @@ class CRUD:
                 f"'delete' permission in order to delete this object: "
                 f"'{model}({pks})'."
             )
-        Model = cls.registry.get(model)
+        Model = cls.anyblok.get(model)
         obj = cls.ensure_object_access(
             Model,
             pks,
@@ -357,7 +357,7 @@ class CRUD:
 
     @classmethod
     def ensure_object_access(cls, Model, pks, authenticated_userid, msg):
-        query = cls.registry.Pyramid.restrict_query_by_user(
+        query = cls.anyblok.Pyramid.restrict_query_by_user(
             Model.query_from_primary_keys(**pks),
             authenticated_userid
         )
