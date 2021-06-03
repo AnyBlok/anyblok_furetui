@@ -17,6 +17,16 @@ from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
 
 
+pycountry = None
+try:
+    import pycountry
+    if not pycountry.countries._is_loaded:
+        pycountry.countries._load()
+
+except ImportError:
+    pass
+
+
 @Declarations.register(Declarations.Mixin)  # noqa
 class Template:
 
@@ -67,6 +77,9 @@ class Template:
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
         })
+        return self.get_field_for_(field, 'String', description, fields2read)
+
+    def get_field_for_PhoneNumber(self, field, description, fields2read):
         return self.get_field_for_(field, 'String', description, fields2read)
 
     def get_field_for_Sequence(self, field, description, fields2read):
@@ -238,6 +251,20 @@ class Template:
 
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
+
+        return self.get_field_for_(field, 'Selection', description, fields2read)
+
+    def get_field_for_Country(self, field, description, fields2read):
+        if pycountry is None:
+            return self.get_field_for_(
+                field, 'String', description, fields2read)
+
+        description = deepcopy(description)
+        mode = self.anyblok.loaded_namespaces_first_step[
+            self.model][description['id']].mode
+        description['selections'] = {
+            getattr(country, mode): country.name
+            for country in pycountry.countries}
 
         return self.get_field_for_(field, 'Selection', description, fields2read)
 
@@ -520,7 +547,12 @@ class Template:
         if 'template_class' in kwargs:
             template.set('class', kwargs['template_class'])
 
-        return self.registry.furetui_templates.decode(
+        if not self.anyblok.furetui_templates:
+            import ipdb
+            ipdb.set_trace()
+            pass
+
+        return self.anyblok.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
 
     def add_template_bind(self, field):
@@ -738,6 +770,20 @@ class List(Declarations.Model.FuretUI.Resource):
                 f[key] = dict(f[key])
 
         return self.field_for_(f, fields2read, **kwargs)
+
+    def field_for_Country(self, field, fields2read, **kwargs):
+        if pycountry is None:
+            return self.field_for_Selection(
+                field, fields2read, widget="String", **kwargs)
+
+        mode = self.anyblok.loaded_namespaces_first_step[
+            self.model][field['id']].mode
+        selections = {getattr(country, mode): country.name
+                      for country in pycountry.countries}
+
+        return self.field_for_Selection(
+            field, fields2read, widget="Selection", selections=str(selections),
+            **kwargs)
 
     def field_for_StatusBar(self, field, fields2read, **kwargs):
         f = field.copy()

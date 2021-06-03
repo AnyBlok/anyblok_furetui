@@ -63,11 +63,14 @@ class FuretUIBlok(Blok):
     def load(self):
         self.registry.FuretUI.pre_load()
         logger.info('Preload Models.field_description')
+        test_mode = Configuration.get('pyramid.reload_all', False)
         for Model in self.registry.loaded_namespaces.values():
             if Model.is_sql:
-                Model.fields_description()
+                try:
+                    Model.fields_description()
+                except Exception:
+                    test_mode = False
 
-        test_mode = Configuration.get('pyramid.reload_all', False)
         if test_mode:
             self.registry.FuretUI.validate_resources()
 
