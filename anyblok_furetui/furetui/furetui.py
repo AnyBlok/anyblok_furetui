@@ -78,6 +78,7 @@ class FuretUI:
 
     @classmethod
     def get_user_informations(cls, authenticated_userid):
+        query = cls.anyblok.FuretUI.Space.get_for_user(authenticated_userid)
         return [
             {
                 'type': 'LOGIN',
@@ -91,6 +92,22 @@ class FuretUI:
                         'component': 'furet-ui-appbar-user-dropmenu',
                     },
                 ],
+            },
+            {
+              'type': 'UPDATE_SPACE_MENUS',
+              'menus': [
+                  {
+                      'code': x.code,
+                      'label': x.label,
+                      'icon': {
+                          'code': x.icon_code,
+                          'type': x.icon_type,
+                      },
+                      'description': x.description,
+                      'path': x.get_path(),
+                  }
+                  for x in query
+              ],
             },
         ]
 
@@ -110,6 +127,7 @@ class FuretUI:
             },
             {'type': 'LOGOUT'},
             {'type': 'UPDATE_ROUTE', 'path': '/'},
+            {'type': 'UPDATE_SPACE_MENUS', 'menus': []}
         ]
 
     @classmethod
