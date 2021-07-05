@@ -28,10 +28,6 @@ def get_resource(request):
                     'definitions': resource.get_definitions(
                         authenticated_userid=userId),
                 },
-                {
-                    'type': 'UPDATE_CURRENT_RIGHT_MENUS',
-                    'menus': resource.get_menus(userId),
-                },
             ]
 
         return res
@@ -75,10 +71,6 @@ def post_open_resource(request):
                 'type': 'UPDATE_RESOURCES',
                 'definitions': resource.get_definitions(
                     authenticated_userid=userId),
-            },
-            {
-                'type': 'UPDATE_CURRENT_RIGHT_MENUS',
-                'menus': resource.get_menus(userId),
             },
             {
                 'type': 'UPDATE_ROUTE',

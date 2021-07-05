@@ -85,16 +85,11 @@ class FuretUI:
                 'userName': authenticated_userid,
             },
             {
-                'type': 'UPDATE_MENUS',
-                'user': [
-                    {
-                        'name': authenticated_userid,
-                        'component': 'furet-ui-appbar-user-dropmenu',
-                    },
-                ],
+                'type': 'UPDATE_USER_MENUS',
+                'menus': [],
             },
             {
-              'type': 'UPDATE_SPACE_MENUS',
+              'type': 'UPDATE_ROOT_MENUS',
               'menus': [
                   {
                       'code': x.code,
@@ -114,20 +109,10 @@ class FuretUI:
     @classmethod
     def get_logout(cls):
         return [
-            {
-                'type': 'UPDATE_MENUS',
-                'user': [
-                    {
-                        'name': 'login',
-                        'component': 'furet-ui-appbar-head-router-link-button',
-                        'props': {'to': '/login',
-                                  'label': 'components.login.appbar'},
-                    },
-                ],
-            },
+            {'type': 'UPDATE_USER_MENUS', 'menus': []},
+            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
             {'type': 'LOGOUT'},
             {'type': 'UPDATE_ROUTE', 'path': '/'},
-            {'type': 'UPDATE_SPACE_MENUS', 'menus': []}
         ]
 
     @classmethod
