@@ -659,7 +659,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
-                    'hidden', 'sticky'):
+                    'hidden', 'sticky', 'width'):
             if key in kwargs:
                 value = kwargs[key]
                 if value == '':
