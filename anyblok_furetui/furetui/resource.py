@@ -30,6 +30,17 @@ except ImportError:
 @Declarations.register(Declarations.Mixin)  # noqa
 class Template:
 
+    def extract_slot(self, field, attributes):
+        if not (bool(field.getchildren()) or bool(field.text)):
+            return
+
+        slot = deepcopy(field)
+        slot.tag = 'div'
+        for x in slot.attrib.keys():
+            del slot.attrib[x]
+
+        attributes['slot'] = etree.tostring(slot).decode('utf-8')
+
     def get_field_for_(self, field, _type, description, fields2read):
 
         required = field.attrib.get(
@@ -45,6 +56,7 @@ class Template:
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
         }
+        self.extract_slot(field, config)
 
         for key in ('readonly', 'writable', 'hidden'):
             value = description.get(key, field.attrib.get(key, '0'))
@@ -645,7 +657,7 @@ class List(Declarations.Model.FuretUI.Resource):
                        'name').options(ondelete='cascade'))
     template = String()
 
-    def field_for_(cls, field, fields2read, **kwargs):
+    def field_for_(self, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
         res = {
             'hidden': False,
@@ -657,6 +669,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'numeric': (
                 True if widget in ('integer', 'float', 'decimal') else False),
             'tooltip': kwargs.get('tooltip'),
+            'slot': kwargs.get('slot'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
                     'hidden', 'sticky', 'width'):
@@ -844,6 +857,17 @@ class List(Declarations.Model.FuretUI.Resource):
         attributes['pks'] = pks
         return attributes
 
+    def extract_slot(self, field, attributes):
+        if not (bool(field.getchildren()) or bool(field.text)):
+            return
+
+        slot = deepcopy(field)
+        slot.tag = 'div'
+        for x in slot.attrib.keys():
+            del slot.attrib[x]
+
+        attributes['slot'] = etree.tostring(slot).decode('utf-8')
+
     def get_definitions(self, **kwargs):
         Model = self.anyblok.get(self.model)
         fd = Model.fields_description()
@@ -858,6 +882,8 @@ class List(Declarations.Model.FuretUI.Resource):
             # FIXME button in header
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
+                self.extract_slot(field, attributes)
+
                 field = fd[attributes.pop('name')]
                 _type = attributes.get('widget', field['type'])
                 meth = 'field_for_' + _type
