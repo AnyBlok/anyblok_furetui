@@ -12,6 +12,7 @@ from colour import Color
 from anyblok_pyramid.adapter import (
     datetime_adapter, timedelta_adapter_factory, date_adapter,
     uuid_adapter, bytes_adapter, decimal_adapter, enum_adapter)
+from sqlalchemy_utils.types.phone_number import PhoneNumber
 from pyramid.renderers import JSON
 from datetime import datetime, date, timedelta
 from uuid import UUID
@@ -44,6 +45,13 @@ def country_adapter(country, request):
     return country.alpha_3
 
 
+def phonenumber_adapter(phone, request):
+    if phone is None:
+        return None
+
+    return phone.international
+
+
 def add_adapters(obj):
     obj.add_adapter(datetime, datetime_adapter)
     obj.add_adapter(Enum, enum_adapter)
@@ -54,6 +62,7 @@ def add_adapters(obj):
     obj.add_adapter(Decimal, decimal_adapter)
     obj.add_adapter(Color, color_adapter)
     obj.add_adapter(python_pycountry_type, country_adapter)
+    obj.add_adapter(PhoneNumber, phonenumber_adapter)
 
 
 class FuretUIRender(CorniceRenderer):

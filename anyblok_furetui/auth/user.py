@@ -18,12 +18,12 @@ class FuretUI:
     def get_authenticated_userid_locale(cls, authenticated_userid):
         res = super(FuretUI, cls).get_authenticated_userid_locale(
             authenticated_userid)
-        user = cls.registry.Pyramid.User.query().get(authenticated_userid)
+        user = cls.anyblok.Pyramid.User.query().get(authenticated_userid)
         return user.lang or res
 
     @classmethod
     def user_management(cls, login, password, roles):
-        Pyramid = cls.registry.Pyramid
+        Pyramid = cls.anyblok.Pyramid
         user = Pyramid.User.query().get(login)
         if user is None:
             user = Pyramid.User.insert(login=login)
@@ -55,11 +55,11 @@ class User:
         return ['en', 'fr']
 
     def fget_active(self):
-        credential = self.registry.Pyramid.CredentialStore.query().filter_by(
+        credential = self.anyblok.Pyramid.CredentialStore.query().filter_by(
             login=self.login).one_or_none()
 
         return True if credential else False
 
     @classmethod
     def fexpr_active(cls):
-        return cls.registry.Pyramid.CredentialStore.login == cls.login
+        return cls.anyblok.Pyramid.CredentialStore.login == cls.login

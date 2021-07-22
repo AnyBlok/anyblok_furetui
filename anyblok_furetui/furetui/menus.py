@@ -75,8 +75,8 @@ class Menu:
     @classmethod
     def get_menus_from(cls, authenticated_userid, space=None, resource=None):
         menus = []
-        Menu = cls.registry.FuretUI.Menu
-        MRo = cls.registry.FuretUI.Menu.Root
+        Menu = cls.anyblok.FuretUI.Menu
+        MRo = cls.anyblok.FuretUI.Menu.Root
         mros = MRo.query()
 
         if space is not None:
@@ -217,6 +217,6 @@ class Call(
 
         :exception: AuthorizationValidationException
         """
-        if self.method not in self.registry.exposed_methods.get(self.model, {}):
+        if self.method not in self.anyblok.exposed_methods.get(self.model, {}):
             raise Exception(
                 f"'{self.model}=>{self.method}' is not an exposed method")

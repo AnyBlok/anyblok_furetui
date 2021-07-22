@@ -50,7 +50,7 @@ def add_model_in_registry():
 
             @restrict_query_by_user()
             def restric_by_user_team(cls, query, user):
-                User = cls.registry.Pyramid.User
+                User = cls.anyblok.Pyramid.User
                 return (
                     query.join(cls.team)
                     .join(User)

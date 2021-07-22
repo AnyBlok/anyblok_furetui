@@ -72,15 +72,15 @@ class Space:
         """)
 
         # take the first default found
-        res = self.registry.execute(
+        res = self.anyblok.execute(
             query.bindparams(space_code=self.code, default=True)).fetchone()
         if res is None:
-            res = self.registry.execute(query.bindparams(
+            res = self.anyblok.execute(query.bindparams(
                 space_code=self.code, default=False)).fetchone()
 
         query = []
         if res:
-            mre = self.registry.FuretUI.Menu.query().get(res[0])
+            mre = self.anyblok.FuretUI.Menu.query().get(res[0])
             if mre.order_by:
                 query.append('orders=%s' % mre.order_by)
             if mre.tags:
@@ -94,12 +94,12 @@ class Space:
 
     @classmethod
     def get_for_user(cls, authenticated_userid):
-        roles = cls.registry.Pyramid.get_roles(authenticated_userid)
+        roles = cls.anyblok.Pyramid.get_roles(authenticated_userid)
         query = cls.query().order_by(cls.order.asc())
         query = query.filter(or_(
             cls.role.in_(roles), cls.role.is_(None), cls.role == ''))
         return query
 
     def get_menus(self, authenticated_userid):
-        return self.registry.FuretUI.Menu.get_menus_from(
+        return self.anyblok.FuretUI.Menu.get_menus_from(
             authenticated_userid, space=self)

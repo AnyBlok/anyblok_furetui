@@ -17,6 +17,16 @@ from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
 
 
+pycountry = None
+try:
+    import pycountry
+    if not pycountry.countries._is_loaded:
+        pycountry.countries._load()
+
+except ImportError:
+    pass
+
+
 @Declarations.register(Declarations.Mixin)  # noqa
 class Template:
 
@@ -60,13 +70,16 @@ class Template:
         field.attrib['{%s}config' % field.nsmap['v-bind']] = json.dumps(config)
 
     def get_field_for_String(self, field, description, fields2read):
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         description.update({
-            'maxlength': Model.registry.loaded_namespaces_first_step[
+            'maxlength': Model.anyblok.loaded_namespaces_first_step[
                 self.model][description['id']].size,
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
         })
+        return self.get_field_for_(field, 'String', description, fields2read)
+
+    def get_field_for_PhoneNumber(self, field, description, fields2read):
         return self.get_field_for_(field, 'String', description, fields2read)
 
     def get_field_for_Sequence(self, field, description, fields2read):
@@ -74,9 +87,9 @@ class Template:
         return self.get_field_for_String(field, description, fields2read)
 
     def get_field_for_Password(self, field, description, fields2read):
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         description.update({
-            'maxlength': Model.registry.loaded_namespaces_first_step[
+            'maxlength': Model.anyblok.loaded_namespaces_first_step[
                 self.model][description['id']].size,
             'placeholder': field.attrib.get('placeholder', ''),
             'icon': field.attrib.get('icon', ''),
@@ -116,7 +129,7 @@ class Template:
     def get_field_for_Many2One(  # noqa: C901
         self, field, description, fields2read, relation="Many2One"
     ):
-        Model = self.registry.get(description['model'])
+        Model = self.anyblok.get(description['model'])
         description = description.copy()
         display = field.attrib.get('display')
         if display:
@@ -147,18 +160,18 @@ class Template:
         if eval(field.attrib.get('no-link', 'False') or 'True'):
             pass
         elif menu:
-            menu = self.registry.IO.Mapping.get(
+            menu = self.anyblok.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', menu)
             resource = menu.resource
         elif resource:
             for type_ in ('set', 'form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
-                resource = self.registry.IO.Mapping.get(
+                resource = self.anyblok.IO.Mapping.get(
                     resource_model, resource)
                 if resource:
                     break
         else:
-            query = self.registry.FuretUI.Resource.Form.query()
+            query = self.anyblok.FuretUI.Resource.Form.query()
             query = query.filter_by(model=description['model'])
             resource = query.one_or_none()
 
@@ -175,18 +188,18 @@ class Template:
         model = description['model']
         resource = field.attrib.get('resource-external_id')
         if not resource:
-            query = self.registry.FuretUI.Resource.List.query()
+            query = self.anyblok.FuretUI.Resource.List.query()
             query = query.filter_by(model=model)
             resource = query.one_or_none()
         else:
             resource_type = field.attrib.get('resource-type', 'set')
             resource_model = 'Model.FuretUI.Resource.%s' % (
                 resource_type.capitalize())
-            resource = self.registry.IO.Mapping.get(resource_model, resource)
+            resource = self.anyblok.IO.Mapping.get(resource_model, resource)
             if not resource:
                 for type_ in ('set', 'list', 'thumbnail'):
                     resource_model = 'Model.FuretUI.Resource.%s' % type_
-                    resource = self.registry.IO.Mapping.get(
+                    resource = self.anyblok.IO.Mapping.get(
                         resource_model, resource)
                     if resource:
                         break
@@ -194,7 +207,7 @@ class Template:
         if resource:
             description['resource'] = resource.id
 
-        fields = self.registry.get(model).get_primary_keys()
+        fields = self.anyblok.get(model).get_primary_keys()
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
@@ -241,6 +254,20 @@ class Template:
 
         return self.get_field_for_(field, 'Selection', description, fields2read)
 
+    def get_field_for_Country(self, field, description, fields2read):
+        if pycountry is None:
+            return self.get_field_for_(
+                field, 'String', description, fields2read)
+
+        description = deepcopy(description)
+        mode = self.anyblok.loaded_namespaces_first_step[
+            self.model][description['id']].mode
+        description['selections'] = {
+            getattr(country, mode): country.name
+            for country in pycountry.countries}
+
+        return self.get_field_for_(field, 'Selection', description, fields2read)
+
     def get_field_for_StatusBar(self, field, description, fields2read):
         description = deepcopy(description)
         for key in ('selections',):
@@ -270,17 +297,17 @@ class Template:
             }
             if 'call' in el.attrib:
                 call = el.attrib['call']
-                if call not in self.registry.exposed_methods.get(self.model,
-                                                                 {}):
+                if call not in self.anyblok.exposed_methods.get(self.model,
+                                                                {}):
                     raise ResourceTemplateRendererException(
                         f"On resource {self.identity} : The button "
                         f"{config} define an unexposed method '{call}'"
                     )
 
-                definition = self.registry.exposed_methods[self.model][call]
+                definition = self.anyblok.exposed_methods[self.model][call]
                 permission = definition['permission']
                 if permission is not None:
-                    if not self.registry.Pyramid.check_acl(
+                    if not self.anyblok.Pyramid.check_acl(
                         userid, self.model, permission
                     ):
                         el.getparent().remove(el)
@@ -290,7 +317,7 @@ class Template:
             elif 'open-resource' in el.attrib:
                 resource = None
                 for model in self.__class__.get_resource_types().keys():
-                    resource = self.registry.IO.Mapping.get(
+                    resource = self.anyblok.IO.Mapping.get(
                         model, el.attrib['open-resource'])
                     if resource:
                         break
@@ -412,7 +439,7 @@ class Template:
                     config[key] = el.attrib[key]
 
             if 'model' in el.attrib:
-                Model = self.registry.get(el.attrib['model'])
+                Model = self.anyblok.get(el.attrib['model'])
                 query = Model.query()
                 code = el.attrib['field_code']
                 label = el.attrib['field_label']
@@ -486,7 +513,7 @@ class Template:
                 el.attrib['readonly'] = '1'
 
     def apply_roles_attributes(self, userid, template):
-        roles = set(self.registry.Pyramid.get_roles(userid))
+        roles = set(self.anyblok.Pyramid.get_roles(userid))
         self.apply_roles_attributes_only_for_roles(roles, template)
         self.apply_roles_attributes_not_for_roles(roles, template)
         self.apply_roles_attributes_readonly_for_roles(roles, template)
@@ -509,7 +536,7 @@ class Template:
 
     def encode_to_furetui(self, userid, template, fields, fields2read,
                           **kwargs):
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         fields_description = Model.fields_description(fields)
         self._encode_to_furetui(
             userid, template, fields_description, fields2read, **kwargs)
@@ -520,7 +547,12 @@ class Template:
         if 'template_class' in kwargs:
             template.set('class', kwargs['template_class'])
 
-        return self.registry.furetui_templates.decode(
+        if not self.anyblok.furetui_templates:
+            import ipdb
+            ipdb.set_trace()
+            pass
+
+        return self.anyblok.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
 
     def add_template_bind(self, field):
@@ -561,7 +593,7 @@ class Resource:
 
     @property
     def identity(self):
-        Mapping = self.registry.IO.Mapping
+        Mapping = self.anyblok.IO.Mapping
         mapping = Mapping.get_from_model_and_primary_keys(
             self.__registry_name__, {'id': self.id})
         if mapping is not None:
@@ -584,11 +616,11 @@ class Resource:
             return True
 
         type_ = self.type.label.lower()
-        return self.registry.FuretUI.check_acl(
+        return self.anyblok.FuretUI.check_acl(
             authenticated_userid, self.code, type_)
 
     def get_menus(self, authenticated_userid):
-        return self.registry.FuretUI.Menu.get_menus_from(
+        return self.anyblok.FuretUI.Menu.get_menus_from(
             authenticated_userid, resource=self)
 
 
@@ -627,7 +659,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
-                    'hidden', 'sticky'):
+                    'hidden', 'sticky', 'width'):
             if key in kwargs:
                 value = kwargs[key]
                 if value == '':
@@ -668,8 +700,8 @@ class List(Declarations.Model.FuretUI.Resource):
 
     def field_for_relationship(self, field, fields2read, **kwargs):
         f = field.copy()
-        Model = self.registry.get(f['model'])
-        # Mapping = cls.registry.IO.Mapping
+        Model = self.anyblok.get(f['model'])
+        # Mapping = cls.anyblok.IO.Mapping
         if 'display' in kwargs:
             display = kwargs['display']
             for op in ('!=', '==', '<', '<=', '>', '>='):
@@ -692,18 +724,18 @@ class List(Declarations.Model.FuretUI.Resource):
         if eval(kwargs.get('no-link', 'False') or 'True'):
             pass
         elif 'menu' in kwargs:
-            menu = self.registry.IO.Mapping.get(
+            menu = self.anyblok.IO.Mapping.get(
                 'Model.FuretUI.Menu.Resource', kwargs['menu'])
             resource = menu.resource
         elif 'resource' in kwargs:
             for type_ in ('Set', 'Form'):
                 resource_model = 'Model.FuretUI.Resource.%s' % type_
-                resource = self.registry.IO.Mapping.get(
+                resource = self.anyblok.IO.Mapping.get(
                     resource_model, kwargs['resource'])
                 if resource:
                     break
         else:
-            query = self.registry.FuretUI.Resource.Form.query()
+            query = self.anyblok.FuretUI.Resource.Form.query()
             query = query.filter_by(model=f['model'])
             resource = query.one_or_none()
 
@@ -739,6 +771,20 @@ class List(Declarations.Model.FuretUI.Resource):
 
         return self.field_for_(f, fields2read, **kwargs)
 
+    def field_for_Country(self, field, fields2read, **kwargs):
+        if pycountry is None:
+            return self.field_for_Selection(
+                field, fields2read, widget="String", **kwargs)
+
+        mode = self.anyblok.loaded_namespaces_first_step[
+            self.model][field['id']].mode
+        selections = {getattr(country, mode): country.name
+                      for country in pycountry.countries}
+
+        return self.field_for_Selection(
+            field, fields2read, widget="Selection", selections=str(selections),
+            **kwargs)
+
     def field_for_StatusBar(self, field, fields2read, **kwargs):
         f = field.copy()
         for key in ('selections',):
@@ -763,16 +809,16 @@ class List(Declarations.Model.FuretUI.Resource):
         if 'call' in attributes:
             call = attributes['call']
             model = Model.__registry_name__
-            if call not in self.registry.exposed_methods.get(model, {}):
+            if call not in self.anyblok.exposed_methods.get(model, {}):
                 raise ResourceTemplateRendererException(
                     f"On resource {self.identity} : The button "
                     f"{attributes} define an unexposed method '{call}'"
                 )
 
-            definition = self.registry.exposed_methods[model][call]
+            definition = self.anyblok.exposed_methods[model][call]
             permission = definition['permission']
             if permission is not None:
-                if not self.registry.Pyramid.check_acl(
+                if not self.anyblok.Pyramid.check_acl(
                     userid, model, permission
                 ):
                     return None
@@ -780,7 +826,7 @@ class List(Declarations.Model.FuretUI.Resource):
         elif 'open-resource' in attributes:
             resource = None
             for model in self.__class__.get_resource_types().keys():
-                resource = self.registry.IO.Mapping.get(
+                resource = self.anyblok.IO.Mapping.get(
                     model, attributes['open-resource'])
                 if resource:
                     break
@@ -799,7 +845,7 @@ class List(Declarations.Model.FuretUI.Resource):
         return attributes
 
     def get_definitions(self, **kwargs):
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         fd = Model.fields_description()
         headers = []
         fields2read = []
@@ -807,7 +853,7 @@ class List(Declarations.Model.FuretUI.Resource):
         fields2read.extend(pks)
         buttons = []
         if self.template:
-            template = self.registry.FuretUI.get_template(
+            template = self.anyblok.FuretUI.get_template(
                 self.template, tostring=False)
             # FIXME button in header
             for field in template.findall('.//field'):
@@ -852,9 +898,9 @@ class List(Declarations.Model.FuretUI.Resource):
             'type': self.type.label.lower(),
             'title': self.title,
             'model': self.model,
-            'filters': self.registry.FuretUI.Resource.Filter.get_for_resource(
+            'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
                 list=self),
-            'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
+            'tags': self.anyblok.FuretUI.Resource.Tags.get_for_resource(
                 list=self),
             'buttons': buttons,
             # 'on_selected_buttons': [],  # TODO
@@ -877,14 +923,14 @@ class Thumbnail(
     template = String()
 
     def get_definitions(self, **kwargs):
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         fd = Model.fields_description()
         pks = Model.get_primary_keys()
         userid = kwargs.get('authenticated_userid')
         buttons = []
 
         if self.template:
-            template = self.registry.FuretUI.get_template(
+            template = self.anyblok.FuretUI.get_template(
                 self.template, tostring=False)
             template.tag = 'div'
             fields = [el.attrib.get('name')
@@ -908,9 +954,9 @@ class Thumbnail(
             'title': self.title,
             'model': self.model,
             'pks': pks,
-            'filters': self.registry.FuretUI.Resource.Filter.get_for_resource(
+            'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
                 thumbnail=self),
-            'tags': self.registry.FuretUI.Resource.Tags.get_for_resource(
+            'tags': self.anyblok.FuretUI.Resource.Tags.get_for_resource(
                 thumbnail=self),
             'buttons': buttons,
             # 'on_selected_buttons': [],  # TODO
@@ -1000,10 +1046,10 @@ class Form(
     def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
         userid = kwargs.get('authenticated_userid')
-        Model = self.registry.get(self.model)
+        Model = self.anyblok.get(self.model)
         fd = Model.fields_description()
         if self.template:
-            template = self.registry.FuretUI.get_template(
+            template = self.anyblok.FuretUI.get_template(
                 self.template, tostring=False)
             template.tag = 'div'
             fields = [el.attrib.get('name')
@@ -1064,7 +1110,7 @@ class Form(
         return res
 
     def get_primary_keys_for(self):
-        return self.registry.get(self.model).get_primary_keys()
+        return self.anyblok.get(self.model).get_primary_keys()
 
     def get_definitions(self, **kwargs):
         if self.polymorphic_columns:
@@ -1112,7 +1158,7 @@ class Set(Declarations.Model.FuretUI.Resource):
 
     def get_definitions(self, authenticated_userid=None, **kwargs):
         definition = self.to_dict('id', 'type')
-        check_acl = self.registry.FuretUI.check_acl
+        check_acl = self.anyblok.FuretUI.check_acl
         for acl in ('create', 'read', 'update', 'delete'):
             if getattr(self, 'can_%s' % acl):
                 if not self.code:

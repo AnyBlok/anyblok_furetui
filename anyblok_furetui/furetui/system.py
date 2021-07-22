@@ -15,15 +15,15 @@ class Blok:
 
     @exposed_method(is_classmethod=False, permission='admin')
     def furetui_install(self):
-        self.registry.upgrade(install=(self.name,))
+        self.anyblok.upgrade(install=(self.name,))
         return [{'type': 'RELOAD'}]
 
     @exposed_method(is_classmethod=False, permission='admin')
     def furetui_uninstall(self):
-        self.registry.upgrade(uninstall=(self.name,))
+        self.anyblok.upgrade(uninstall=(self.name,))
         return [{'type': 'RELOAD'}]
 
     @exposed_method(is_classmethod=False, permission='admin')
     def furetui_update(self):
-        self.registry.upgrade(update=(self.name,))
+        self.anyblok.upgrade(update=(self.name,))
         return [{'type': 'RELOAD'}]

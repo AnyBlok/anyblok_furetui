@@ -33,7 +33,7 @@ class FuretUIFilterIPBlok(Blok):
     ]
 
     def load(self):
-        self.registry.FuretUI.define_authorized_ips()
+        self.anyblok.FuretUI.define_authorized_ips()
 
     @classmethod
     def import_declaration_module(cls):

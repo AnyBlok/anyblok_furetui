@@ -61,7 +61,7 @@ class FuretUIAuthBlok(Blok, BlokImporter):
         self.update_admin_role()
 
     def update_admin_role(self):
-        self.registry.Pyramid.Role.ensure_exists(
+        self.anyblok.Pyramid.Role.ensure_exists(
             "admin",
             [
                 {
