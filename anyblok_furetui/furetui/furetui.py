@@ -104,7 +104,7 @@ class FuretUI:
                   for x in query
               ],
             },
-            {
+            {  # TODO use for deprecated menu
               'type': 'UPDATE_SPACE_MENUS',
               'menus': [
                   {

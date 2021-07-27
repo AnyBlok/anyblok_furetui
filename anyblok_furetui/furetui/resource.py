@@ -15,6 +15,7 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+import re
 
 
 pycountry = None
@@ -25,6 +26,11 @@ try:
 
 except ImportError:
     pass
+
+
+def get_fields_from_string(string):
+    return [x.split('.')[1]  # noqa: W605
+            for x in re.findall("fields\.\w*", string)]
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -133,15 +139,7 @@ class Template:
         description = description.copy()
         display = field.attrib.get('display')
         if display:
-            for op in ('!=', '==', '<', '<=', '>', '>='):
-                display = display.replace(op, ' ')
-
-            display = display.replace('!', '')
-            fields = []
-            for d in display.split():
-                if 'fields.' in d:
-                    fields.append(d.split('.')[1])
-
+            fields = get_fields_from_string(display)
         else:
             fields = Model.get_display_fields()
             display = " + ', ' + ".join(['fields.' + x for x in fields])
@@ -374,16 +372,7 @@ class Template:
 
             if not value:
                 continue
-
-            fields = value
-            for op in ('!=', '==', '<', '<=', '>', '>='):
-                fields = fields.replace(op, ' ')
-
-            fields = fields.replace('!', '')
-            fields = [d.strip().split('.')[1]
-                      for d in fields.split(' ')
-                      if 'fields.' in d]
-
+            fields = get_fields_from_string(value)
             config[key] = value
             fields2read.extend(fields)
 
@@ -704,15 +693,7 @@ class List(Declarations.Model.FuretUI.Resource):
         # Mapping = cls.anyblok.IO.Mapping
         if 'display' in kwargs:
             display = kwargs['display']
-            for op in ('!=', '==', '<', '<=', '>', '>='):
-                display = display.replace(op, ' ')
-
-            display = display.replace('!', '')
-            fields = []
-            for d in display.split():
-                if 'fields.' in d:
-                    fields.append(d.split('.')[1])
-
+            fields = get_fields_from_string(display)
             f['display'] = kwargs['display']
             del kwargs['display']
         else:
