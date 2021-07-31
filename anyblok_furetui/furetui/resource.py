@@ -36,7 +36,7 @@ def get_fields_from_string(string):
 @Declarations.register(Declarations.Mixin)  # noqa
 class Template:
 
-    def extract_slot(self, field, attributes):
+    def extract_slot(self, field, attributes, fields2read):
         if not (bool(field.getchildren()) or bool(field.text)):
             return
 
@@ -45,7 +45,9 @@ class Template:
         for x in slot.attrib.keys():
             del slot.attrib[x]
 
-        attributes['slot'] = etree.tostring(slot).decode('utf-8')
+        slot_str = etree.tostring(slot).decode('utf-8')
+        fields2read.extend(get_fields_from_string(slot_str))
+        attributes['slot'] = slot_str
 
     def get_field_for_(self, field, _type, description, fields2read):
 
@@ -62,7 +64,7 @@ class Template:
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
         }
-        self.extract_slot(field, config)
+        self.extract_slot(field, config, fields2read)
 
         for key in ('readonly', 'writable', 'hidden'):
             value = description.get(key, field.attrib.get(key, '0'))
@@ -72,6 +74,7 @@ class Template:
                 value = '1'
 
             config[key] = value
+            fields2read.extend(get_fields_from_string(value))
 
         field.tag = 'furet-ui-field'
         attribs = list(description.keys())
@@ -668,6 +671,7 @@ class List(Declarations.Model.FuretUI.Resource):
                     res[key] = True
                 else:
                     res[key] = value
+                    fields2read.extend(get_fields_from_string(value))
 
         fields2read.append(field['id'])
         for k in field:
@@ -838,7 +842,7 @@ class List(Declarations.Model.FuretUI.Resource):
         attributes['pks'] = pks
         return attributes
 
-    def extract_slot(self, field, attributes):
+    def extract_slot(self, field, attributes, fields2read):
         if not (bool(field.getchildren()) or bool(field.text)):
             return
 
@@ -847,7 +851,9 @@ class List(Declarations.Model.FuretUI.Resource):
         for x in slot.attrib.keys():
             del slot.attrib[x]
 
-        attributes['slot'] = etree.tostring(slot).decode('utf-8')
+        slot_str = etree.tostring(slot).decode('utf-8')
+        fields2read.extend(get_fields_from_string(slot_str))
+        attributes['slot'] = slot_str
 
     def get_definitions(self, **kwargs):
         Model = self.anyblok.get(self.model)
@@ -863,7 +869,7 @@ class List(Declarations.Model.FuretUI.Resource):
             # FIXME button in header
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
-                self.extract_slot(field, attributes)
+                self.extract_slot(field, attributes, fields2read)
 
                 field = fd[attributes.pop('name')]
                 _type = attributes.get('widget', field['type'])
