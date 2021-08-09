@@ -46,8 +46,20 @@ class Template:
             del slot.attrib[x]
 
         slot_str = etree.tostring(slot).decode('utf-8')
-        fields2read.extend(get_fields_from_string(slot_str))
+        fields = get_fields_from_string(slot_str)
+        if fields:
+            fields2read.extend(fields)
+            for f in fields:
+                slot_str = slot_str.replace('fields.%s' % f, 'data.%s' % f)
+
         attributes['slot'] = slot_str
+        attributes['slot_fields'] = list(set(
+            get_fields_from_string(slot_str, prefix='relation')))
+        children = field.getchildren()
+        for child in children:
+            field.remove(child)
+
+        field.text = ''
 
     def get_field_for_(self, field, _type, description, fields2read):
 
@@ -63,8 +75,8 @@ class Template:
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
+            'slot': description.get('slot'),
         }
-        self.extract_slot(field, config, fields2read)
 
         for key in ('readonly', 'writable', 'hidden'):
             value = description.get(key, field.attrib.get(key, '0'))
@@ -153,10 +165,14 @@ class Template:
         Model = self.anyblok.get(description['model'])
         description = description.copy()
         display = field.attrib.get('display')
+        fields = []
+        if description.get('slot'):
+            fields.extend(description.pop('slot_fields'))
+
         if display:
-            fields = get_fields_from_string(display)
+            fields.extend(get_fields_from_string(display))
         else:
-            fields = Model.get_display_fields()
+            fields.extend(Model.get_display_fields())
             display = " + ', ' + ".join(['fields.' + x for x in fields])
 
         fields = list(set(fields))
@@ -368,6 +384,7 @@ class Template:
             if _type == 'FakeColumn':
                 continue
 
+            self.extract_slot(el, fd, fields2read)
             meth = 'get_field_for_' + _type
             if hasattr(self, meth):
                 getattr(self, meth)(el, fd, fields2read)
