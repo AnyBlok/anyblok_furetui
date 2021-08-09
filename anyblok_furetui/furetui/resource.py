@@ -28,9 +28,9 @@ except ImportError:
     pass
 
 
-def get_fields_from_string(string):
+def get_fields_from_string(string, prefix='fields'):
     return [x.split('.')[1]  # noqa: W605
-            for x in re.findall("fields\.\w*", string)]
+            for x in re.findall("%s\.\w*" % prefix, string)]
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -708,7 +708,10 @@ class List(Declarations.Model.FuretUI.Resource):
         f = field.copy()
         Model = self.anyblok.get(f['model'])
         # Mapping = cls.anyblok.IO.Mapping
-        if 'display' in kwargs:
+        if 'slot' in kwargs:
+            f['slot'] = kwargs.pop('slot')
+            fields = kwargs.pop('slot_fields')
+        elif 'display' in kwargs:
             display = kwargs['display']
             fields = get_fields_from_string(display)
             f['display'] = kwargs['display']
@@ -852,8 +855,15 @@ class List(Declarations.Model.FuretUI.Resource):
             del slot.attrib[x]
 
         slot_str = etree.tostring(slot).decode('utf-8')
-        fields2read.extend(get_fields_from_string(slot_str))
+        fields = get_fields_from_string(slot_str)
+        if fields:
+            fields2read.extend(fields)
+            for f in fields:
+                slot_str = slot_str.replace('fields.%s' % f, 'data.%s' % f)
+
         attributes['slot'] = slot_str
+        attributes['slot_fields'] = list(set(
+            get_fields_from_string(slot_str, prefix='relation')))
 
     def get_definitions(self, **kwargs):
         Model = self.anyblok.get(self.model)
