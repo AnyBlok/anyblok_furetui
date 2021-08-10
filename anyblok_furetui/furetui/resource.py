@@ -238,6 +238,10 @@ class Template:
             description['resource'] = resource.id
 
         fields = self.anyblok.get(model).get_primary_keys()
+
+        if description.get('slot'):
+            fields.extend(description.pop('slot_fields'))
+
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
