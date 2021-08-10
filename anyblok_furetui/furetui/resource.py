@@ -209,6 +209,7 @@ class Template:
         description['fields'] = fields
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
+        description['maxheight'] = field.attrib.get('max-height')
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
@@ -568,13 +569,17 @@ class Template:
         if 'template_class' in kwargs:
             template.set('class', kwargs['template_class'])
 
-        if not self.anyblok.furetui_templates:
-            import ipdb
-            ipdb.set_trace()
-            pass
-
-        return self.anyblok.furetui_templates.decode(
+        tmpl = self.anyblok.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
+
+        fields2data = re.findall(  # noqa: W605
+            "\{\{\s*fields\.\w*\s*\}\}", tmpl)
+        for field2data in fields2data:
+            field = get_fields_from_string(field2data)[0]
+            tmpl = tmpl.replace(field2data, '{{ data.%s }}' % field)
+            fields2read.append(field)
+
+        return tmpl
 
     def add_template_bind(self, field):
         field.attrib['{%s}resource' % field.nsmap['v-bind']] = "resource"
