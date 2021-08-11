@@ -93,4 +93,5 @@ class FuretUIBlok(Blok):
         config.add_static_view('furet-ui/css', join(path, 'css'))
         config.add_static_view('/js', join(path, 'js'))
         config.add_static_view('/css', join(path, 'css'))
+        config.add_static_view('/images', join(path, 'images'))
         config.scan(cls.__module__ + '.views')

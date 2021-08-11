@@ -2,3 +2,7 @@ include doc/*.rst
 recursive-include anyblok_furetui */*.rst
 recursive-include anyblok_furetui */*.xml
 recursive-include anyblok_furetui */static/images/*.png
+recursive-include anyblok_furetui */static/css/*
+recursive-include anyblok_furetui */static/js/*
+recursive-include anyblok_furetui */static/*/css/*
+recursive-include anyblok_furetui */static/*/js/*

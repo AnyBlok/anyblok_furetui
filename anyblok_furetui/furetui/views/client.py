@@ -43,7 +43,7 @@ logo = Service(name='logo',
 
 @logo.get()
 def get_logo(request):
-    return HTTPFound('/furetui/static/logo.png')
+    return HTTPFound('/furetui/static/images/logo.png')
 
 
 init = Service(name='init_furet_ui',
