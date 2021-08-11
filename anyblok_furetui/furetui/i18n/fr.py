@@ -2,17 +2,13 @@ fr = {
     'error': 'Erreurs',
     'components': {
         'login': {
+            'appbar': 'Se connecter',
             'button': 'Se connecter',
+            'username': 'Identifiant',
+            'password': 'Mot de passe',
         },
         'logout': {
             'button': 'Se déconnecter',
-            'appbar': {
-                'about': 'A propos',
-            },
-        },
-        'spaces': {
-            'title': 'Espace fonctionnel',
-            'search': 'Filtrer',
         },
         'header': {
             'search': 'Rechercher',
@@ -35,10 +31,19 @@ fr = {
             'unlinked': 'délié',
         },
         'fields': {
-            'notFound': 'Aucun résultat',
+            'common': {
+                'required': 'Ce champ est requis',
+            },
             'yesno': {
                 'yes': 'Oui',
                 'no': 'Non',
+            },
+            'json': {
+                'invalid': 'Ce Json est invalide',
+            },
+            'relationship': {
+                'no_more': 'Tous les résultats sont trouvés.',
+                'not_found': 'Aucun résultat.',
             },
         }
     },
