@@ -252,3 +252,7 @@ class FuretUI:
     @classmethod
     def user_management(cls, login, password, roles):
         raise NotImplementedError('This method must be overwrite')
+
+    @classmethod
+    def get_logo_path(cls):
+        return '/furetui/static/images/logo.png'
