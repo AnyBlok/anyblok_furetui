@@ -1241,6 +1241,94 @@ class TestResourceFormMany2One:
                 'type': 'form'
             }]
 
+    def test_get_definition_with_maxheight(self, registry_many2one):
+        registry, local_columns, remote_name, required = registry_many2one
+        resource = registry.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address" max-height="400px"/>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": '
+                    '"address", "type": "many2one", "label": "Address", '
+                    '"tooltip": null, "model": "Model.Address", "required": '
+                    f'"{required}", "readonly": "0", "writable": "0", '
+                    '"hidden": "0", "display": "fields.id", "fields": ["id"], '
+                    '"filter_by": ["id"], "limit": 10, "local_columns": '
+                    f'["{", ".join(local_columns)}"], "maxheight": "400px", '
+                    '"menu": null, "remote_columns": ["id"], "remote_name": '
+                    f'"{remote_name}", '
+                    '"resource": null}\' v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['address.id'],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'type': 'form'
+            }]
+
+    def test_get_definition_with_slot(self, registry_many2one):
+        registry, local_columns, remote_name, required = registry_many2one
+        resource = registry.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Person', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="address">
+                        Test {{ relation.city }}
+                    </field>
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config="{&quot;name&quot;: &quot;address&quot;, '
+                    '&quot;type&quot;: &quot;many2one&quot;, '
+                    '&quot;label&quot;: '
+                    '&quot;Address&quot;, &quot;tooltip&quot;: null, '
+                    '&quot;model&quot;: &quot;Model.Address&quot;, '
+                    f'&quot;required&quot;: &quot;{required}&quot;, '
+                    '&quot;slot&quot;: '
+                    '&quot;&lt;div&gt;Test {{ relation.city '
+                    '}}&lt;/div&gt;\\n                &quot;, '
+                    '&quot;readonly&quot;: &quot;0&quot;, '
+                    '&quot;writable&quot;: '
+                    '&quot;0&quot;, &quot;hidden&quot;: &quot;0&quot;, '
+                    "&quot;display&quot;: &quot;fields.city + ', ' + "
+                    'fields.id&quot;, &quot;fields&quot;: [&quot;city&quot;, '
+                    '&quot;id&quot;], &quot;filter_by&quot;: '
+                    '[&quot;id&quot;], &quot;limit&quot;: 10, '
+                    '&quot;local_columns&quot;: [&quot;'
+                    f'{"&quot;, &quot;".join(local_columns)}&quot;], '
+                    '&quot;menu&quot;: null, &quot;remote_columns&quot;: '
+                    '[&quot;id&quot;], &quot;remote_name&quot;: '
+                    f'&quot;{remote_name}&quot;, &quot;resource&quot;: '
+                    'null}" v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['address.city', 'address.id'],
+                'id': resource.id,
+                'model': 'Model.Person',
+                'type': 'form'
+            }]
+
 
 class TestResourceFormMany2Many:
 

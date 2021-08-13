@@ -75,8 +75,10 @@ class Template:
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
-            'slot': description.get('slot'),
         }
+
+        if description.get('slot'):
+            config['slot'] = description['slot']
 
         for key in ('readonly', 'writable', 'hidden'):
             value = description.get(key, field.attrib.get(key, '0'))
@@ -176,6 +178,7 @@ class Template:
             display = " + ', ' + ".join(['fields.' + x for x in fields])
 
         fields = list(set(fields))
+        fields.sort()
         description['display'] = display
 
         filter_by = field.attrib.get('filter_by')
@@ -209,7 +212,10 @@ class Template:
         description['fields'] = fields
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
-        description['maxheight'] = field.attrib.get('max-height')
+
+        if 'max-height' in field.attrib:
+            description['maxheight'] = field.attrib.get('max-height')
+
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
@@ -687,10 +693,9 @@ class List(Declarations.Model.FuretUI.Resource):
             'numeric': (
                 True if widget in ('integer', 'float', 'decimal') else False),
             'tooltip': kwargs.get('tooltip'),
-            'slot': kwargs.get('slot'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
-                    'hidden', 'sticky', 'width'):
+                    'hidden', 'sticky', 'width', 'slot'):
             if key in kwargs:
                 value = kwargs[key]
                 if value == '':
