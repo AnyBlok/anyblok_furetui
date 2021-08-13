@@ -104,22 +104,6 @@ class FuretUI:
                   for x in query
               ],
             },
-            {  # TODO use for deprecated menu
-              'type': 'UPDATE_SPACE_MENUS',
-              'menus': [
-                  {
-                      'code': x.code,
-                      'label': x.label,
-                      'icon': {
-                          'code': x.icon_code,
-                          'type': x.icon_type,
-                      },
-                      'description': x.description,
-                      'path': x.get_path(),
-                  }
-                  for x in query
-              ],
-            },
         ]
 
     @classmethod
@@ -268,3 +252,7 @@ class FuretUI:
     @classmethod
     def user_management(cls, login, password, roles):
         raise NotImplementedError('This method must be overwrite')
+
+    @classmethod
+    def get_logo_path(cls):
+        return '/furetui/static/images/logo.png'

@@ -2,17 +2,13 @@ en = {
     'error': 'Errors',
     'components': {
         'login': {
+            'appbar': 'Log in',
             'button': 'Log in',
+            'username': 'User name',
+            'password': 'Password',
         },
         'logout': {
             'button': 'Log out',
-            'appbar': {
-                'about': 'About',
-            },
-        },
-        'spaces': {
-            'title': 'Space',
-            'search': 'Filter',
         },
         'header': {
           'search': 'Search',
@@ -35,11 +31,20 @@ en = {
           'unlinked': 'Unlinked',
         },
         'fields': {
-            'notFound': 'No result found',
+            'common': {
+                'required': 'This is a required field',
+            },
             'yesno': {
                 'yes': 'Yes',
                 'no': 'No',
             },
-        }
+            'json': {
+                'invalid': 'Json is invalid',
+            },
+            'relationship': {
+                'no_more': 'No more datas found.',
+                'not_found': 'No data found with current filter.',
+            },
+        },
     },
 }

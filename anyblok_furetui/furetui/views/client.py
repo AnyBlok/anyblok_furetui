@@ -41,9 +41,19 @@ logo = Service(name='logo',
                installed_blok=current_blok())
 
 
+logo2 = Service(name='logo2',
+                path='undefined/furet-ui/logo',
+                description='Redirect to static logo',
+                cors_origins=('*',),
+                installed_blok=current_blok())
+
+
 @logo.get()
+@logo2.get()
 def get_logo(request):
-    return HTTPFound('/furetui/static/logo.png')
+    return HTTPFound(
+        request.anyblok.registry.FuretUI.get_logo_path()
+    )
 
 
 init = Service(name='init_furet_ui',

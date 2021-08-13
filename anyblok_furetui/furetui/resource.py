@@ -28,13 +28,38 @@ except ImportError:
     pass
 
 
-def get_fields_from_string(string):
+def get_fields_from_string(string, prefix='fields'):
     return [x.split('.')[1]  # noqa: W605
-            for x in re.findall("fields\.\w*", string)]
+            for x in re.findall("%s\.\w*" % prefix, string)]
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
 class Template:
+
+    def extract_slot(self, field, attributes, fields2read):
+        if not (bool(field.getchildren()) or bool(field.text)):
+            return
+
+        slot = deepcopy(field)
+        slot.tag = 'div'
+        for x in slot.attrib.keys():
+            del slot.attrib[x]
+
+        slot_str = etree.tostring(slot).decode('utf-8')
+        fields = get_fields_from_string(slot_str)
+        if fields:
+            fields2read.extend(fields)
+            for f in fields:
+                slot_str = slot_str.replace('fields.%s' % f, 'data.%s' % f)
+
+        attributes['slot'] = slot_str
+        attributes['slot_fields'] = list(set(
+            get_fields_from_string(slot_str, prefix='relation')))
+        children = field.getchildren()
+        for child in children:
+            field.remove(child)
+
+        field.text = ''
 
     def get_field_for_(self, field, _type, description, fields2read):
 
@@ -52,6 +77,9 @@ class Template:
             'required': required,
         }
 
+        if description.get('slot'):
+            config['slot'] = description['slot']
+
         for key in ('readonly', 'writable', 'hidden'):
             value = description.get(key, field.attrib.get(key, '0'))
             if value == '':
@@ -60,6 +88,7 @@ class Template:
                 value = '1'
 
             config[key] = value
+            fields2read.extend(get_fields_from_string(value))
 
         field.tag = 'furet-ui-field'
         attribs = list(description.keys())
@@ -138,13 +167,18 @@ class Template:
         Model = self.anyblok.get(description['model'])
         description = description.copy()
         display = field.attrib.get('display')
+        fields = []
+        if description.get('slot'):
+            fields.extend(description.pop('slot_fields'))
+
         if display:
-            fields = get_fields_from_string(display)
+            fields.extend(get_fields_from_string(display))
         else:
-            fields = Model.get_display_fields()
+            fields.extend(Model.get_display_fields())
             display = " + ', ' + ".join(['fields.' + x for x in fields])
 
         fields = list(set(fields))
+        fields.sort()
         description['display'] = display
 
         filter_by = field.attrib.get('filter_by')
@@ -178,6 +212,10 @@ class Template:
         description['fields'] = fields
         description['filter_by'] = filter_by
         description['limit'] = field.attrib.get('limit', 10)
+
+        if 'max-height' in field.attrib:
+            description['maxheight'] = field.attrib.get('max-height')
+
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
@@ -206,6 +244,10 @@ class Template:
             description['resource'] = resource.id
 
         fields = self.anyblok.get(model).get_primary_keys()
+
+        if description.get('slot'):
+            fields.extend(description.pop('slot_fields'))
+
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
         return self.get_field_for_(field, relation, description, [])
 
@@ -353,6 +395,7 @@ class Template:
             if _type == 'FakeColumn':
                 continue
 
+            self.extract_slot(el, fd, fields2read)
             meth = 'get_field_for_' + _type
             if hasattr(self, meth):
                 getattr(self, meth)(el, fd, fields2read)
@@ -536,13 +579,17 @@ class Template:
         if 'template_class' in kwargs:
             template.set('class', kwargs['template_class'])
 
-        if not self.anyblok.furetui_templates:
-            import ipdb
-            ipdb.set_trace()
-            pass
-
-        return self.anyblok.furetui_templates.decode(
+        tmpl = self.anyblok.furetui_templates.decode(
             html.tostring(template).decode('utf-8'))
+
+        fields2data = re.findall(  # noqa: W605
+            "\{\{\s*fields\.\w*\s*\}\}", tmpl)
+        for field2data in fields2data:
+            field = get_fields_from_string(field2data)[0]
+            tmpl = tmpl.replace(field2data, '{{ data.%s }}' % field)
+            fields2read.append(field)
+
+        return tmpl
 
     def add_template_bind(self, field):
         field.attrib['{%s}resource' % field.nsmap['v-bind']] = "resource"
@@ -634,7 +681,7 @@ class List(Declarations.Model.FuretUI.Resource):
                        'name').options(ondelete='cascade'))
     template = String()
 
-    def field_for_(cls, field, fields2read, **kwargs):
+    def field_for_(self, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
         res = {
             'hidden': False,
@@ -648,13 +695,14 @@ class List(Declarations.Model.FuretUI.Resource):
             'tooltip': kwargs.get('tooltip'),
         }
         for key in ('sortable', 'column-can-be-hidden', 'hidden-column',
-                    'hidden', 'sticky', 'width'):
+                    'hidden', 'sticky', 'width', 'slot'):
             if key in kwargs:
                 value = kwargs[key]
                 if value == '':
                     res[key] = True
                 else:
                     res[key] = value
+                    fields2read.extend(get_fields_from_string(value))
 
         fields2read.append(field['id'])
         for k in field:
@@ -691,7 +739,10 @@ class List(Declarations.Model.FuretUI.Resource):
         f = field.copy()
         Model = self.anyblok.get(f['model'])
         # Mapping = cls.anyblok.IO.Mapping
-        if 'display' in kwargs:
+        if 'slot' in kwargs:
+            f['slot'] = kwargs.pop('slot')
+            fields = kwargs.pop('slot_fields')
+        elif 'display' in kwargs:
             display = kwargs['display']
             fields = get_fields_from_string(display)
             f['display'] = kwargs['display']
@@ -825,6 +876,26 @@ class List(Declarations.Model.FuretUI.Resource):
         attributes['pks'] = pks
         return attributes
 
+    def extract_slot(self, field, attributes, fields2read):
+        if not (bool(field.getchildren()) or bool(field.text)):
+            return
+
+        slot = deepcopy(field)
+        slot.tag = 'div'
+        for x in slot.attrib.keys():
+            del slot.attrib[x]
+
+        slot_str = etree.tostring(slot).decode('utf-8')
+        fields = get_fields_from_string(slot_str)
+        if fields:
+            fields2read.extend(fields)
+            for f in fields:
+                slot_str = slot_str.replace('fields.%s' % f, 'data.%s' % f)
+
+        attributes['slot'] = slot_str
+        attributes['slot_fields'] = list(set(
+            get_fields_from_string(slot_str, prefix='relation')))
+
     def get_definitions(self, **kwargs):
         Model = self.anyblok.get(self.model)
         fd = Model.fields_description()
@@ -839,6 +910,8 @@ class List(Declarations.Model.FuretUI.Resource):
             # FIXME button in header
             for field in template.findall('.//field'):
                 attributes = deepcopy(field.attrib)
+                self.extract_slot(field, attributes, fields2read)
+
                 field = fd[attributes.pop('name')]
                 _type = attributes.get('widget', field['type'])
                 meth = 'field_for_' + _type
