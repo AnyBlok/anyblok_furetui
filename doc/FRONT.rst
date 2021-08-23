@@ -1,6 +1,7 @@
 .. This file is a part of the AnyBlok project
 ..
 ..    Copyright (C) 2017 Jean-Sebastien SUZANNE <jssuzanne@anybox.fr>
+..    Copyright (C) 2021 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
 ..
 .. This Source Code Form is subject to the terms of the Mozilla Public License,
 .. v. 2.0. If a copy of the MPL was not distributed with this file,You can
@@ -57,14 +58,15 @@ Installation will add the ``anyblok`` commands to the environment.
 Unit Test
 ---------
 
-Run the framework test with ``nose``::
+To run framework tests with ``pytest``::
 
-    pip install nose
-    nosetests anyblok_furetui/tests
+    pip install pytest
+    ANYBLOK_DATABASE_DRIVER=postgresql ANYBLOK_DATABASE_NAME=test_anyblok py.test anyblok_furetui/tests
 
-Run all the installed bloks::
+To run tests of all installed bloks with demo data::
 
-    anyblok_nose -c config.file.cfg
+    anyblok_createdb --db-name test_anyblok --db-driver-name postgresql --install-bloks --with-demo furetui-auth furetui-filter-ip
+    ANYBLOK_DATABASE_DRIVER=postgresql ANYBLOK_DATABASE_NAME=test_anyblok py.test anyblok_furetui/furetui anyblok_furetui/ip anyblok_furetui/auth
 
 AnyBlok / FuretUIis tested using `Travis <https://travis-ci.org/AnyBlok/anyblok_furetui>`_
 
@@ -77,7 +79,9 @@ Anyblok / FuretUI is at a very early stage, feel free to fork, talk with core de
 Author
 ------
 
-Jean-Sébastien Suzanne
+* Jean-Sébastien Suzanne
+* Pierre Verkest
+* Hugo Quezada
 
 Contributors
 ------------

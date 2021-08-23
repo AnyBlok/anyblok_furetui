@@ -116,7 +116,7 @@ Bugs
 ----
 
 Bugs and features enhancements to AnyBlok should be reported on the `Issue
-tracker <http://issue.anyblok.org>`_.
+tracker <https://bitbucket.org/AnyBlok/anyblok_furetui/issues>`_.
 
 anyblok_furetui is released under the terms of the `Mozilla Public License`.
 

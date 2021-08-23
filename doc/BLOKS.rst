@@ -11,8 +11,8 @@
 Bloks
 =====
 
-Blok FuretUI
-------------
+Blok **furetui**
+----------------
 
 .. automodule:: anyblok_furetui.furetui
 .. autoclass:: FuretUIBlok
@@ -24,28 +24,54 @@ Blok FuretUI
 .. include:: ../anyblok_furetui/furetui/README.rst
 .. include:: ../anyblok_furetui/furetui/CODE.rst
 
-Blok ``Blok Mannager``
-----------------------
+Blok **furetui-auth**
+---------------------
 
-.. automodule:: anyblok_furetui.blok_manager
-.. autoclass:: BlokManager
+.. automodule:: anyblok_furetui.auth
+.. autoclass:: FuretUIAuthBlok
     :members:
     :undoc-members:
     :show-inheritance:
     :noindex:
 
-.. include:: ../anyblok_furetui/blok_manager/README.rst
-.. include:: ../anyblok_furetui/blok_manager/CODE.rst
+.. include:: ../anyblok_furetui/auth/README.rst
+.. include:: ../anyblok_furetui/auth/CODE.rst
 
-Blok low level
---------------
+Blok **furetui-address**
+------------------------
 
-.. automodule:: anyblok_furetui.low_level
-.. autoclass:: LowLevelBlok
+.. automodule:: anyblok_furetui.address
+.. autoclass:: FuretUIAddressBlok
     :members:
     :undoc-members:
     :show-inheritance:
     :noindex:
 
-.. include:: ../anyblok_furetui/low_level/README.rst
-.. include:: ../anyblok_furetui/low_level/CODE.rst
+.. include:: ../anyblok_furetui/address/README.rst
+.. include:: ../anyblok_furetui/address/CODE.rst
+
+Blok **furetui-delivery**
+-------------------------
+
+.. automodule:: anyblok_furetui.delivery
+.. autoclass:: FuretUIDeliveryBlok
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
+
+.. include:: ../anyblok_furetui/delivery/README.rst
+.. include:: ../anyblok_furetui/delivery/CODE.rst
+
+Blok **furetui-filter-ip**
+--------------------------
+
+.. automodule:: anyblok_furetui.ip
+.. autoclass:: FuretUIFilterIPBlok
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
+
+.. include:: ../anyblok_furetui/ip/README.rst
+.. include:: ../anyblok_furetui/ip/CODE.rst

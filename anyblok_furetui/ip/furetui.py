@@ -17,9 +17,11 @@ logger = getLogger(__name__)
 
 @Declarations.register(Declarations.Model)
 class FuretUI:
+    """ Improve security """
 
     @classmethod
     def define_authorized_ips(cls):
+        """Fill the class attribute IPS with the ip areas"""
         cls.IPS = []
         for network in Configuration.get(
             'furetui_authorized_networks', ''

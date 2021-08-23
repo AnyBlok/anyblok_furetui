@@ -21,7 +21,11 @@ def import_module(reload=None):
 
 
 class FuretUIFilterIPBlok(Blok):
-    """Setup FuretUI for AnyBlok"""
+    """ Added security validation for client IP
+
+    The goal is to allowed some ip to access of anyblok resource
+
+    """
     version = version
     author = 'Suzanne Jean-Sébastien'
     logo = 'static/images/logo.png'
