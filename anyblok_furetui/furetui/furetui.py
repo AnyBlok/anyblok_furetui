@@ -164,6 +164,10 @@ class FuretUI:
         return res
 
     @classmethod
+    def get_user_context(cls, authenticated_userid):
+        return {'user': authenticated_userid}
+
+    @classmethod
     def check_acl(cls, userid, resource, permission):
         return cls.anyblok.Pyramid.check_acl(userid, resource, permission)
 

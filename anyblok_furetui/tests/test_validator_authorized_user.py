@@ -80,11 +80,20 @@ def add_inherit_context_with_furetui():
     add_context_with_furetui()
 
     @register(Model)
+    class FuretUI:
+
+        @classmethod
+        def get_user_context(self, userId):
+            res = super().get_user_context(userId)
+            res['foo'] = 'bar'
+            return res
+
+    @register(Model)
     class Test:
 
         def on_method(self, param=None):
             res = super().on_method()
-            res['foo'] = 'bar'
+            res['foo'] = self.Env.get('foo')
             return res
 
 
@@ -173,11 +182,20 @@ def add_inherit_context_with_furetui_and_auth():
     add_context_with_furetui_and_auth()
 
     @register(Model)
+    class FuretUI:
+
+        @classmethod
+        def get_user_context(self, userId):
+            res = super().get_user_context(userId)
+            res['foo'] = 'bar'
+            return res
+
+    @register(Model)
     class Test:
 
         def on_method(self, param=None):
             res = super().on_method()
-            res['foo'] = 'bar'
+            res['foo'] = self.Env.get('foo')
             return res
 
 

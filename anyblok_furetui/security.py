@@ -8,6 +8,7 @@
 # obtain one at http://mozilla.org/MPL/2.0/.
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from anyblok.common import add_autodocs
+from anyblok.environment import EnvironmentManager
 
 
 def authorized_user(request, *a, **kw):
@@ -26,6 +27,11 @@ def authorized_user(request, *a, **kw):
         if not registry.FuretUI.check_security(request):
             request.errors.add('body', 'userid', 'The user is not allow')
             request.errors.status = 405
+
+        if request.errors.status != 405:
+            context = registry.FuretUI.get_user_context(userId)
+            for key, value in context.items():
+                EnvironmentManager.set(key, value)
 
 
 def exposed_method(**kwargs):
