@@ -165,7 +165,7 @@ class FuretUI:
 
     @classmethod
     def get_user_context(cls, authenticated_userid):
-        return {'user': authenticated_userid}
+        return {'userid': authenticated_userid}
 
     @classmethod
     def check_acl(cls, userid, resource, permission):

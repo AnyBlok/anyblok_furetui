@@ -34,7 +34,16 @@ def add_context_with_furetui():
 
         @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
-            return {'user': self.Env.get('user')}
+            return {
+                'userid': self.Env.get('userid'),
+            }
+
+        @exposed_method(is_classmethod=False)
+        def on_method2(self, param=None):
+            with self.Env.set(userid='foo'):
+                return {
+                    'userid': self.Env.get('userid'),
+                }
 
     @register(Model)
     class Pyramid:
@@ -69,11 +78,17 @@ def registry_context_with_furetui(request, webserver, bloks_loaded):  # noqa F81
 
 class TestContextWithFuretUI(Mixin):
 
-    def test_default_context_with_furetui(
+    def test_get_user_context(
         self, webserver, registry_context_with_furetui
     ):
         response = self.call(webserver, 'on_method')
-        assert response.json_body == {'user': 'test'}
+        assert response.json_body == {'userid': 'test'}
+
+    def test_get_user_context(
+        self, webserver, registry_context_with_furetui
+    ):
+        response = self.call(webserver, 'on_method2')
+        assert response.json_body == {'userid': 'foo'}
 
 
 def add_inherit_context_with_furetui():
@@ -118,11 +133,11 @@ def registry_inherit_context_with_furetui(request, webserver, bloks_loaded):
 
 class TestInheritContextWithFuretUI(Mixin):
 
-    def test_default_context_with_furetui(
+    def test_get_user_context(
         self, webserver, registry_inherit_context_with_furetui
     ):
         response = self.call(webserver, 'on_method')
-        assert response.json_body == {'user': 'test', 'foo': 'bar'}
+        assert response.json_body == {'userid': 'test', 'foo': 'bar'}
 
 
 def add_context_with_furetui_and_auth():
@@ -134,7 +149,8 @@ def add_context_with_furetui_and_auth():
         @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
             return {
-                'user': self.Env.get('user'),
+                'userid': self.Env.get('userid'),
+                'user': self.Env.get('user').login,
                 'lang': self.Env.get('lang'),
             }
 
@@ -148,9 +164,9 @@ def registry_context_with_furetui_and_auth(request, webserver, bloks_loaded):
     registry = init_registry_with_bloks(
         ["furetui", "furetui-auth"], add_context_with_furetui_and_auth
     )
-    registry.Pyramid.User.insert(login='test')
+    registry.Pyramid.User.insert(login='test', lang=request.param)
     registry.Pyramid.CredentialStore.insert(
-       login='test', password='test', lang=request.param)
+       login='test', password='test')
     registry.Test.insert(code='test')
     webserver.post_json(
         '/furet-ui/login', {'login': 'test', 'password': 'test'},
@@ -166,14 +182,15 @@ def registry_context_with_furetui_and_auth(request, webserver, bloks_loaded):
 
 class TestContextWithFuretUIAuth(Mixin):
 
-    def test_default_context_with_furetui(
+    def test_get_user_context(
         self, webserver, registry_context_with_furetui_and_auth
     ):
         response = self.call(webserver, 'on_method')
         user = registry_context_with_furetui_and_auth.Pyramid.User.query(
-        ).get('test'),
+        ).get('test')
         assert response.json_body == {
-            'user': user,
+            'userid': user.login,
+            'user': user.login,
             'lang': user.lang,
         }
 
@@ -187,7 +204,7 @@ def add_inherit_context_with_furetui_and_auth():
         @classmethod
         def get_user_context(self, userId):
             res = super().get_user_context(userId)
-            res['foo'] = 'bar'
+            res['foo'] = self.Env.get('foo')
             return res
 
     @register(Model)
@@ -207,9 +224,9 @@ def registry_inherit_context_with_furetui_and_auth(
     registry = init_registry_with_bloks(
         ["furetui", "furetui-auth"], add_inherit_context_with_furetui_and_auth
     )
-    registry.Pyramid.User.insert(login='test')
+    registry.Pyramid.User.insert(login='test', lang=request.param)
     registry.Pyramid.CredentialStore.insert(
-       login='test', password='test', lang=request.param)
+       login='test', password='test')
     registry.Test.insert(code='test')
     webserver.post_json(
         '/furet-ui/login', {'login': 'test', 'password': 'test'},
@@ -225,14 +242,16 @@ def registry_inherit_context_with_furetui_and_auth(
 
 class TestInheritContextWithFuretUIAuth(Mixin):
 
-    def test_default_context_with_furetui(
+    def test_get_user_context(
         self, webserver, registry_inherit_context_with_furetui_and_auth
     ):
         response = self.call(webserver, 'on_method')
-        user = registry_context_with_furetui_and_auth.Pyramid.User.query(
-        ).get('test'),
+        user = (
+            registry_inherit_context_with_furetui_and_auth.Pyramid.User.query(
+            ).get('test'))
         assert response.json_body == {
-            'user': user,
+            'userid': user.login,
+            'user': user.login,
             'lang': user.lang,
             'foo': 'bar',
         }
