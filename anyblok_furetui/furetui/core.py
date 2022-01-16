@@ -8,7 +8,7 @@ class Base:
 
     @classmethod
     @contextmanager
-    def set_context(cls, **context):
+    def set_env(cls, **context):
         old_context = {
             x: cls.Env.get(x)
             for x in context}
