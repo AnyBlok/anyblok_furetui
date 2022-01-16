@@ -40,7 +40,7 @@ def add_context_with_furetui():
 
         @exposed_method(is_classmethod=False)
         def on_method2(self, param=None):
-            with self.Env.set(userid='foo'):
+            with self.set_context(userid='foo'):
                 return {
                     'userid': self.Env.get('userid'),
                 }
@@ -84,7 +84,7 @@ class TestContextWithFuretUI(Mixin):
         response = self.call(webserver, 'on_method')
         assert response.json_body == {'userid': 'test'}
 
-    def test_get_user_context(
+    def test_get_user_context2(
         self, webserver, registry_context_with_furetui
     ):
         response = self.call(webserver, 'on_method2')
