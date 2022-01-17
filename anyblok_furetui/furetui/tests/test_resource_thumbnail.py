@@ -116,7 +116,7 @@ class TestResourceThumbnail:
                 ),
                 'header_template': (
                     '<header xmlns:v-bind="https://vuejs.org/" '
-                    'class="card-header"><h1>{{ fields.name }}</h1>\n'
+                    'class="card-header"><h1>{{\xa0data.name }}</h1>\n'
                     '                    </header>\n'
                     '                    '
                 ),
@@ -160,7 +160,7 @@ class TestResourceThumbnail:
                 ),
                 'footer_template': (
                     '<footer xmlns:v-bind="https://vuejs.org/" '
-                    'class="card-footer"><h1>{{ fields.name }}</h1>\n'
+                    'class="card-footer"><h1>{{\xa0data.name }}</h1>\n'
                     '                    </footer>\n'
                     '                    '
                 ),
