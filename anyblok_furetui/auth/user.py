@@ -41,14 +41,13 @@ class FuretUI:
             user.append(role)
 
     @classmethod
-    def get_user_context(cls, authenticated_userid):
-        res = super().get_user_context(authenticated_userid)
+    def set_user_context(cls, authenticated_userid):
+        super().set_user_context(authenticated_userid)
         user = cls.anyblok.Pyramid.User.query().get(authenticated_userid)
-        res.update({
+        cls.context.set({
             'user': user,
             'lang': user.lang,
         })
-        return res
 
 
 @Declarations.register(Declarations.Model.Pyramid)

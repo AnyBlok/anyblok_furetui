@@ -20,30 +20,52 @@ Model = Declarations.Model
 
 class Mixin:
 
+    @pytest.fixture(autouse=True)
+    def transact(self, request, clear_context):
+        return
+
     def call(self, webserver, call, status=200):
         url = f'/furet-ui/resource/0/model/Model.Test/call/{call}'
         params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
         return webserver.post_json(url, params, status=status)
 
 
-def add_context_with_furetui():
+def add_context():
     @register(Model)
     class Test:
 
         code = String(primary_key=True)
 
+        def return_context(self):
+            context = self.context.copy()
+            if 'user' in context:
+                context['user'] = context['user'].login
+
+            return context
+
         @exposed_method(is_classmethod=False)
         def on_method(self, param=None):
-            return {
-                'userid': self.Env.get('userid'),
-            }
+            return self.return_context()
 
         @exposed_method(is_classmethod=False)
         def on_method2(self, param=None):
-            with self.set_env(userid='foo'):
-                return {
-                    'userid': self.Env.get('userid'),
-                }
+            with self.context.set(userid='foo'):
+                return self.return_context()
+
+
+def add_inherit_context():
+
+    @register(Model)
+    class FuretUI:
+
+        @classmethod
+        def set_user_context(self, userId):
+            super().set_user_context(userId)
+            self.context.set(foo='bar')
+
+
+def add_context_with_furetui():
+    add_context()
 
     @register(Model)
     class Pyramid:
@@ -78,13 +100,13 @@ def registry_context_with_furetui(request, webserver, bloks_loaded):  # noqa F81
 
 class TestContextWithFuretUI(Mixin):
 
-    def test_get_user_context(
+    def test_set_user_context(
         self, webserver, registry_context_with_furetui
     ):
         response = self.call(webserver, 'on_method')
         assert response.json_body == {'userid': 'test'}
 
-    def test_set_user(
+    def test_context_set(
         self, webserver, registry_context_with_furetui
     ):
         response = self.call(webserver, 'on_method2')
@@ -93,23 +115,7 @@ class TestContextWithFuretUI(Mixin):
 
 def add_inherit_context_with_furetui():
     add_context_with_furetui()
-
-    @register(Model)
-    class FuretUI:
-
-        @classmethod
-        def get_user_context(self, userId):
-            res = super().get_user_context(userId)
-            res['foo'] = 'bar'
-            return res
-
-    @register(Model)
-    class Test:
-
-        def on_method(self, param=None):
-            res = super().on_method()
-            res['foo'] = self.Env.get('foo')
-            return res
+    add_inherit_context()
 
 
 @pytest.fixture(scope="class")
@@ -133,26 +139,17 @@ def registry_inherit_context_with_furetui(request, webserver, bloks_loaded):
 
 class TestInheritContextWithFuretUI(Mixin):
 
-    def test_get_user_context(
+    def test_set_user_context(
         self, webserver, registry_inherit_context_with_furetui
     ):
         response = self.call(webserver, 'on_method')
         assert response.json_body == {'userid': 'test', 'foo': 'bar'}
 
-
-def add_context_with_furetui_and_auth():
-    @register(Model)
-    class Test:
-
-        code = String(primary_key=True)
-
-        @exposed_method(is_classmethod=False)
-        def on_method(self, param=None):
-            return {
-                'userid': self.Env.get('userid'),
-                'user': self.Env.get('user').login,
-                'lang': self.Env.get('lang'),
-            }
+    def test_context_set(
+        self, webserver, registry_inherit_context_with_furetui
+    ):
+        response = self.call(webserver, 'on_method2')
+        assert response.json_body == {'userid': 'foo', 'foo': 'bar'}
 
 
 LANGS = ['fr', 'en']
@@ -162,7 +159,7 @@ LANGS = ['fr', 'en']
 def registry_context_with_furetui_and_auth(request, webserver, bloks_loaded):
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui", "furetui-auth"], add_context_with_furetui_and_auth
+        ["furetui", "furetui-auth"], add_context
     )
     registry.Pyramid.User.insert(login='test', lang=request.param)
     registry.Pyramid.CredentialStore.insert(
@@ -182,7 +179,7 @@ def registry_context_with_furetui_and_auth(request, webserver, bloks_loaded):
 
 class TestContextWithFuretUIAuth(Mixin):
 
-    def test_get_user_context(
+    def test_set_user_context(
         self, webserver, registry_context_with_furetui_and_auth
     ):
         response = self.call(webserver, 'on_method')
@@ -194,26 +191,17 @@ class TestContextWithFuretUIAuth(Mixin):
             'lang': user.lang,
         }
 
-
-def add_inherit_context_with_furetui_and_auth():
-    add_context_with_furetui_and_auth()
-
-    @register(Model)
-    class FuretUI:
-
-        @classmethod
-        def get_user_context(self, userId):
-            res = super().get_user_context(userId)
-            res['foo'] = self.Env.get('foo')
-            return res
-
-    @register(Model)
-    class Test:
-
-        def on_method(self, param=None):
-            res = super().on_method()
-            res['foo'] = self.Env.get('foo')
-            return res
+    def test_context_set(
+        self, webserver, registry_context_with_furetui_and_auth
+    ):
+        response = self.call(webserver, 'on_method2')
+        user = registry_context_with_furetui_and_auth.Pyramid.User.query(
+        ).get('test')
+        assert response.json_body == {
+            'userid': 'foo',
+            'user': user.login,
+            'lang': user.lang,
+        }
 
 
 @pytest.fixture(scope="class", params=LANGS)
@@ -222,7 +210,7 @@ def registry_inherit_context_with_furetui_and_auth(
 ):
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui", "furetui-auth"], add_inherit_context_with_furetui_and_auth
+        ["furetui", "furetui-auth"], add_inherit_context_with_furetui
     )
     registry.Pyramid.User.insert(login='test', lang=request.param)
     registry.Pyramid.CredentialStore.insert(
@@ -242,7 +230,7 @@ def registry_inherit_context_with_furetui_and_auth(
 
 class TestInheritContextWithFuretUIAuth(Mixin):
 
-    def test_get_user_context(
+    def test_set_user_context(
         self, webserver, registry_inherit_context_with_furetui_and_auth
     ):
         response = self.call(webserver, 'on_method')

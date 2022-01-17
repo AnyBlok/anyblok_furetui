@@ -251,7 +251,7 @@ def registry_call_method(request, webserver, bloks_loaded):  # noqa F811
 
 class TestCallMethod:
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_call_method):
+    def transact(self, request, registry_call_method, clear_context):
         transaction = registry_call_method.begin_nested()
         request.addfinalizer(transaction.rollback)
         return

@@ -117,7 +117,7 @@ def init_registry(
 
 
 @pytest.fixture(scope="function")
-def registry(request, init_registry):
+def registry(request, init_registry, clear_context):
     transaction = init_registry.begin_nested()
     request.addfinalizer(init_registry.System.Cache.invalidate_all)
     request.addfinalizer(transaction.rollback)

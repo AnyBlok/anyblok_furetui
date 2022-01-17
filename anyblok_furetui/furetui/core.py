@@ -1,25 +1,12 @@
 from anyblok.declarations import Declarations, classmethod_cache
 from anyblok_furetui import exposed_method
-from contextlib import contextmanager
+from ..context import context
 
 
 @Declarations.register(Declarations.Core)
 class Base:
 
-    @classmethod
-    @contextmanager
-    def set_env(cls, **context):
-        old_context = {
-            x: cls.Env.get(x)
-            for x in context}
-        for entry in context.items():
-            cls.Env.set(*entry)
-
-        try:
-            yield
-        finally:
-            for entry in old_context.items():
-                cls.Env.set(*entry)
+    context = context
 
 
 class SqlMixin:
