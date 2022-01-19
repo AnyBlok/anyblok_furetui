@@ -27,6 +27,7 @@ class TestResourceSet:
                 'can_read': acl,
                 'can_update': acl,
                 'form': resource_form.id,
+                'forms': [],
                 'multi': resource_list.id,
                 'pks': ['name'],
             },
