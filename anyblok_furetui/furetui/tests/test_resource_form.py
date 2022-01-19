@@ -110,8 +110,8 @@ class TestResourceForm:
                     '            '
                 ),
                 'header_template': (
-                    '<div xmlns:v-bind="https://vuejs.org/"><h1>{{ '
-                    'fields.name }}</h1>\n'
+                    '<div xmlns:v-bind="https://vuejs.org/"><h1>{{\xa0'
+                    'data.name }}</h1>\n'
                     '                    </div>\n'
                     '                    '
                 ),
@@ -150,8 +150,8 @@ class TestResourceForm:
                     '            '
                 ),
                 'footer_template': (
-                    '<div xmlns:v-bind="https://vuejs.org/"><h1>{{ '
-                    'fields.name }}</h1>\n'
+                    '<div xmlns:v-bind="https://vuejs.org/"><h1>{{\xa0'
+                    'data.name }}</h1>\n'
                     '                    </div>\n'
                     '                    '
                 ),
@@ -199,10 +199,12 @@ class TestResourceForm:
                     'fields': ['is_sql_model'],
                     'forms': [
                         {
+                            'label': 'Model.System.Model',
                             'resource_id': resource_sql.id,
                             'waiting_value': {'is_sql_model': True}
                         },
                         {
+                            'label': 'Model.System.Model',
                             'resource_id': resource_nosql.id,
                             'waiting_value': {'is_sql_model': False}
                         }

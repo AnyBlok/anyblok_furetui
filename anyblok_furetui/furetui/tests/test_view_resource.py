@@ -34,10 +34,6 @@ class TestViewResource:
                 ],
                 'type': 'UPDATE_RESOURCES'
             },
-            {
-                'menus': [],
-                'type': 'UPDATE_CURRENT_RIGHT_MENUS'
-            }
         ]
 
     def test_open_resource(self, webserver, rollback_registry):
@@ -62,10 +58,6 @@ class TestViewResource:
                     }
                 ],
                 'type': 'UPDATE_RESOURCES'
-            },
-            {
-                'menus': [],
-                'type': 'UPDATE_CURRENT_RIGHT_MENUS'
             },
             {
                 'name': 'route_name',
