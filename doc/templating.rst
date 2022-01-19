@@ -1,6 +1,5 @@
 .. This file is a part of the AnyBlok project
 ..
-..    Copyright (C) 2017 Jean-Sebastien SUZANNE <jssuzanne@anybox.fr>
 ..    Copyright (C) 2021 Jean-Sebastien SUZANNE <js.suzanne@gmail.com>
 ..
 .. This Source Code Form is subject to the terms of the Mozilla Public License,
@@ -454,8 +453,8 @@ Widget : **BarCode**
 Works with **vue-barcode** all the options can be used with a prefix **barecode-**
 
 
-Widget : **Integer**
-~~~~~~~~~~~~~~~~~~~~
+Widget : **Integer**, **BigInteger**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 +----------------------------+---------------------------------------------------------+
 | attribute                  | Description                                             |
@@ -463,4 +462,279 @@ Widget : **Integer**
 | min                        | min avalaible value                                     |
 +----------------------------+---------------------------------------------------------+
 | max                        | max avalaible value                                     |
++----------------------------+---------------------------------------------------------+
+
+Widget : **Many2One**, **Many2ManyTags**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is the option for all widget's type relationship 
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| display                    | Defined the field of the relationship to display        |
++----------------------------+---------------------------------------------------------+
+| no-link                    | If True, FuretUI will be no link to display a resource  |
++----------------------------+---------------------------------------------------------+
+| menu                       | AnyBlok.IO.Mapping key of the menu to select            |
++----------------------------+---------------------------------------------------------+
+| resource                   | AnyBlok.IO.Mapping key of the resource to select        |
++----------------------------+---------------------------------------------------------+
+| filter_by                  | Add additional filter for the model                     |
++----------------------------+---------------------------------------------------------+
+| limit                      | Define the number of data to display, default is 10     |
++----------------------------+---------------------------------------------------------+
+
+
+.. note::
+
+   the slot get the capability to display relationship fields with key word **relation**::
+
+      <field name="address">
+         <p>{{ relation.firstname }} {{ relation.lastname }}</p>
+         <p>{{ relation.street }}</p>
+         <p>{{ relation.zip }} {{ relation.city }}</p>
+      </field>
+
+Widget : **One2Many**, **Many2Many**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is the option for all widget's type relationship 
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| resource-external_id       | AnyBlok.IO.Mapping key of the resource to select        |
++----------------------------+---------------------------------------------------------+
+| resource-type              | Type of the resource define by the classname of the     |
+|                            | model : set (default), list, thumbnail                  |
++----------------------------+---------------------------------------------------------+
+
+
+.. note::
+
+   the slot get the capability to display relationship fields with key word **relation**::
+
+
+Widget : **DateTime**, **TimeStamp**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| placeholder                | The placeholder of the input                            |
++----------------------------+---------------------------------------------------------+
+| editable                   | default True, if True the input can be modified         |
+|                            | directly else the value is selected only by the picker  |
++----------------------------+---------------------------------------------------------+
+| icon                       | The icon to display in the field                        |
++----------------------------+---------------------------------------------------------+
+| show-week-number           | default True                                            |
++----------------------------+---------------------------------------------------------+
+| show-second                | default True                                            |
++----------------------------+---------------------------------------------------------+
+| hour-format                | the choices are 12 or 24 (default)                      |
++----------------------------+---------------------------------------------------------+
+
+
+Widget : **Selection**
+~~~~~~~~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| colors                     | json dict value to defined color for the values         |
++----------------------------+---------------------------------------------------------+
+
+
+Widget : **StatusBar**
+~~~~~~~~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| done-states                | json list of the state will display as final            |
++----------------------------+---------------------------------------------------------+
+| dangerous-states           | json list of the states, they are hidden, but if it is  |
+|                            | the current value, the value will be displaied with     |
+|                            | danger css class                                        |
++----------------------------+---------------------------------------------------------+
+
+Case of the buttons
+~~~~~~~~~~~~~~~~~~~
+
+::
+
+   <button ..../>
+
+Added buttons on the top of the list
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| call                       | exposed method name on the model of the resource        |
++----------------------------+---------------------------------------------------------+
+| open-resource              | AnyBlok.IO.Mapping key of the resource to select        |
++----------------------------+---------------------------------------------------------+
+
+
+Case of the div
+~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| hidden                     | Can be evaluate, if True the the column will not be     |
+|                            | displaied                                               |
++----------------------------+---------------------------------------------------------+
+| readonly                   | Can be evaluate, if True the the columns inside the     |
+|                            | node will be readonly                                   |
++----------------------------+---------------------------------------------------------+
+| class                      | CSS class                                               |
++----------------------------+---------------------------------------------------------+
+
+
+Case of the fieldset
+~~~~~~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| hidden                     | Can be evaluate, if True the the column will not be     |
+|                            | displaied                                               |
++----------------------------+---------------------------------------------------------+
+| readonly                   | Can be evaluate, if True the the columns inside the     |
+|                            | node will be readonly                                   |
++----------------------------+---------------------------------------------------------+
+| writable                   | Can be evaluate, if True the the columns inside the     |
+|                            | will be writable                                        |
++----------------------------+---------------------------------------------------------+
+| class                      | CSS class                                               |
++----------------------------+---------------------------------------------------------+
+| label                      | Legend of the fieldset                                  |
++----------------------------+---------------------------------------------------------+
+
+
+Case of the tabs
+~~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| hidden                     | Can be evaluate, if True the the column will not be     |
+|                            | displaied                                               |
++----------------------------+---------------------------------------------------------+
+| readonly                   | Can be evaluate, if True the the columns inside the     |
+|                            | node will be readonly                                   |
++----------------------------+---------------------------------------------------------+
+| writable                   | Can be evaluate, if True the the columns inside the     |
+|                            | will be writable                                        |
++----------------------------+---------------------------------------------------------+
+| class                      | CSS class                                               |
++----------------------------+---------------------------------------------------------+
+
+
+Case of the tab
+~~~~~~~~~~~~~~~
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| hidden                     | Can be evaluate, if True the the column will not be     |
+|                            | displaied                                               |
++----------------------------+---------------------------------------------------------+
+| readonly                   | Can be evaluate, if True the the columns inside the     |
+|                            | node will be readonly                                   |
++----------------------------+---------------------------------------------------------+
+| writable                   | Can be evaluate, if True the the columns inside the     |
+|                            | will be writable                                        |
++----------------------------+---------------------------------------------------------+
+| class                      | CSS class                                               |
++----------------------------+---------------------------------------------------------+
+| label                      | Legend of the fieldset                                  |
++----------------------------+---------------------------------------------------------+
+
+::
+
+   <tabs>
+      <tab label="Part 1">
+         <h1>Part 1</h1>
+      </tab>
+      <tab label="Part 2">
+         <h1>Part 2</h1>
+      </tab>
+   </tabs>
+
+
+Case of the selector
+~~~~~~~~~~~~~~~~~~~~
+
+selector are select input, with or without column and use only for the UI in the goal 
+to display or hide some part of the resource
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| hidden                     | Can be evaluate, if True the the column will not be     |
+|                            | displaied                                               |
++----------------------------+---------------------------------------------------------+
+| readonly                   | Can be evaluate, if True the the columns inside the     |
+|                            | node will be readonly                                   |
++----------------------------+---------------------------------------------------------+
+| selection                  | json dict value to give the available values to display |
+|                            | only if no model was selected                           |
++----------------------------+---------------------------------------------------------+
+| selection_colors           | json dict value to defined color for the values         |
++----------------------------+---------------------------------------------------------+
+| name                       | name of the selector to use ti identify it              |
++----------------------------+---------------------------------------------------------+
+| model                      | name of the model to use                                |
++----------------------------+---------------------------------------------------------+
+| field_code                 | name of the field to use as key                         |
++----------------------------+---------------------------------------------------------+
+| field_label                | name of the field to use as value                       |
++----------------------------+---------------------------------------------------------+
+| class                      | CSS class                                               |
++----------------------------+---------------------------------------------------------+
+
+::
+
+   <selector name="lang" selections="{'fr': 'France', 'jp': 'Japan'}" />
+   <br />
+   <tabs>
+      <tab label="translate : FR" hidden="selector.lang !== 'fr'">
+      </tab>
+      <tab label="translate : JP" hidden="selector.lang !== 'jp'">
+      </tab>
+   </tabs>
+
+Role
+~~~~
+
+If role model is defined, Some attribute can be use for all theses nodes:
+
+* field
+* div
+* fieldset
+* tabs
+* tab
+* selector
+* button
+
+
+.. note::
+
+   The roles are separated by a coma
+
++----------------------------+---------------------------------------------------------+
+| attribute                  | Description                                             |
++============================+=========================================================+
+| only-for-roles             | Hidden if the user has not got one of the wanted roles  |
++----------------------------+---------------------------------------------------------+
+| not-for-roles              | Hidden if the user has got one of the wanted roles      |
++----------------------------+---------------------------------------------------------+
+| readonly-for-roles         | Readonly if the user has got one of the wanted roles    |
++----------------------------+---------------------------------------------------------+
+| write-only-for-roles       | Readonly if the user has not got one of the wanted      |
+|                            | roles                                                   |
 +----------------------------+---------------------------------------------------------+

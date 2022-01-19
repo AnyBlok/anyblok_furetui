@@ -32,43 +32,9 @@ API : Models
 
  **CRUD**
 
-.. automodule:: anyblok_furetui.furetui.core
+.. automodule:: anyblok_furetui.furetui.crud
 
 .. autoanyblok-declaration:: CRUD
     :members:
     :show-inheritance:
     :noindex:
-
-API : Pyramid view
-~~~~~~~~~~~~~~~~~~
-
-.. automodule:: anyblok_furetui.furetui.views.main
-
-.. autofunction:: format_static
-    :noindex:
-
-.. autofunction:: get_static
-    :noindex:
-
-.. autofunction:: load_main
-    :noindex:
-
-.. automodule:: anyblok_furetui.furetui.views.required_data
-
-.. autoclass:: InitialisationMixin
-    :members:
-    :noindex:
-    :show-inheritance:
-    :inherited-members:
-
-.. autoclass:: DisconnectedInitialisation
-    :members:
-    :noindex:
-    :show-inheritance:
-    :inherited-members:
-
-.. autoclass:: ConnectedInitialisation
-    :members:
-    :noindex:
-    :show-inheritance:
-    :inherited-members:
