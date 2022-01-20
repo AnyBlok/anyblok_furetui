@@ -242,7 +242,7 @@ class TestMenuInSpace(Mixin):
 
     def test_get_menus(self, rollback_registry):
         space = self.import_space_definition(rollback_registry)
-        menus = space.get_menus('')
+        menus = space.get_menus()
         self.checkMenus(rollback_registry, menus)
 
     def test_for_user(self, rollback_registry):
@@ -257,5 +257,5 @@ class TestMenuInResource(Mixin):
     def test_get_menus(self, rollback_registry):
         resource = self.import_space_definition(
             rollback_registry, with_space=False)
-        menus = resource.get_menus('')
+        menus = resource.get_menus()
         self.checkMenus(rollback_registry, menus, with_resource=True)

@@ -26,9 +26,7 @@ class CRUD:
         """
         def add_field(data, field, model, userid):
 
-            if not cls.anyblok.FuretUI.check_acl(
-                userid, model, "read"
-            ):
+            if not cls.anyblok.FuretUI.check_acl(model, "read"):
                 raise HTTPForbidden(
                     f"User '{userid}' has to be granted "
                     f"'read' permission in order to read on "
@@ -167,9 +165,7 @@ class CRUD:
 
     @classmethod
     def create(cls, model, uuid, changes, authenticated_userid):
-        if not cls.anyblok.FuretUI.check_acl(
-            authenticated_userid, model, "create"
-        ):
+        if not cls.anyblok.FuretUI.check_acl(model, "create"):
             raise HTTPForbidden(
                 f"User '{authenticated_userid}' has to be granted "
                 f"'create' permission in order to create object on "
@@ -325,9 +321,7 @@ class CRUD:
 
     @classmethod
     def update(cls, model, pks, changes, authenticated_userid):
-        if not cls.anyblok.FuretUI.check_acl(
-            authenticated_userid, model, "update"
-        ):
+        if not cls.anyblok.FuretUI.check_acl(model, "update"):
             raise HTTPForbidden(
                 f"User '{authenticated_userid}' has to be granted "
                 f"'update' permission in order to update this object: "
@@ -337,9 +331,7 @@ class CRUD:
 
     @classmethod
     def delete(cls, model, pks, authenticated_userid):
-        if not cls.anyblok.FuretUI.check_acl(
-            authenticated_userid, model, "delete"
-        ):
+        if not cls.anyblok.FuretUI.check_acl(model, "delete"):
             raise HTTPForbidden(
                 f"User '{authenticated_userid}' has to be granted "
                 f"'delete' permission in order to delete this object: "

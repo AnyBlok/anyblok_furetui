@@ -100,6 +100,5 @@ class Space:
             cls.role.in_(roles), cls.role.is_(None), cls.role == ''))
         return query
 
-    def get_menus(self, authenticated_userid):
-        return self.anyblok.FuretUI.Menu.get_menus_from(
-            authenticated_userid, space=self)
+    def get_menus(self):
+        return self.anyblok.FuretUI.Menu.get_menus_from(space=self)

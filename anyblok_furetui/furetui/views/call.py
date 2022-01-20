@@ -17,7 +17,6 @@ def call_classmethod(request):
     registry = request.anyblok.registry
     params = request.matchdict
     body = request.json_body
-    # TODO call security hooks
 
     res = registry.FuretUI.call_exposed_method(request, **params, **body)
     if res is None:

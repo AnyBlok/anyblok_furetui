@@ -347,8 +347,8 @@ class Template:
                 definition = self.anyblok.exposed_methods[self.model][call]
                 permission = definition['permission']
                 if permission is not None:
-                    if not self.anyblok.Pyramid.check_acl(
-                        userid, self.model, permission
+                    if not self.anyblok.FuretUI.check_acl(
+                        self.model, permission
                     ):
                         el.getparent().remove(el)
                         return
@@ -647,17 +647,15 @@ class Resource:
 
         return res
 
-    def check_acl(self, authenticated_userid):
+    def check_acl(self):
         if not self.code:
             return True
 
         type_ = self.type.label.lower()
-        return self.anyblok.FuretUI.check_acl(
-            authenticated_userid, self.code, type_)
+        return self.anyblok.FuretUI.check_acl(self.code, type_)
 
-    def get_menus(self, authenticated_userid):
-        return self.anyblok.FuretUI.Menu.get_menus_from(
-            authenticated_userid, resource=self)
+    def get_menus(self):
+        return self.anyblok.FuretUI.Menu.get_menus_from(resource=self)
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -850,9 +848,7 @@ class List(Declarations.Model.FuretUI.Resource):
             definition = self.anyblok.exposed_methods[model][call]
             permission = definition['permission']
             if permission is not None:
-                if not self.anyblok.Pyramid.check_acl(
-                    userid, model, permission
-                ):
+                if not self.anyblok.FuretUI.check_acl(model, permission):
                     return None
 
         elif 'open-resource' in attributes:
@@ -1219,8 +1215,7 @@ class Set(Declarations.Model.FuretUI.Resource):
                     definition['can_%s' % acl] = True
                 else:
                     type_ = getattr(self, 'acl_%s' % acl)
-                    definition['can_%s' % acl] = check_acl(
-                        authenticated_userid, self.code, type_)
+                    definition['can_%s' % acl] = check_acl(self.code, type_)
             else:
                 definition['can_%s' % acl] = False
 
@@ -1242,6 +1237,6 @@ class Set(Declarations.Model.FuretUI.Resource):
             authenticated_userid=authenticated_userid))
         return res
 
-    def check_acl(self, authenticated_userid):
+    def check_acl(self):
         multi = getattr(self, self.multi_type)
-        return multi.check_acl(authenticated_userid)
+        return multi.check_acl()
