@@ -20,6 +20,17 @@ from anyblok_furetui.factory import RelatedModelFactory
 from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 
 
+# TODO Json, Password, Enum, JsonRelated
+# TODO Forbid Sequence, Function,
+# TODO Many2One, One2Many (1pk and 2 pk), forbid backref
+# TODO One2Many
+# TODO Many2Many
+# TODO test main model and identity model with 2 pk
+# TODO test with nullable=False 1 column and 2 columns
+# TODO find a better way to declare identity model
+# TODO find a good solution to select a fallback identity instance (lang)
+
+
 register = Declarations.register
 Model = Declarations.Model
 
