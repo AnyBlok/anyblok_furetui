@@ -8,3 +8,14 @@
 import pytest  # noqa
 from anyblok.conftest import *  # noqa
 from anyblok_pyramid.conftest import *  # noqa
+from anyblok.environment import EnvironmentManager
+from .context import ImmutableContextDict
+
+
+@pytest.fixture(scope="function")
+def clear_context(request):
+    def rollback_context():
+        EnvironmentManager.set('context', ImmutableContextDict({}))
+
+    request.addfinalizer(rollback_context)
+    return

@@ -27,6 +27,9 @@ def authorized_user(request, *a, **kw):
             request.errors.add('body', 'userid', 'The user is not allow')
             request.errors.status = 405
 
+        if request.errors.status != 405:
+            registry.FuretUI.set_user_context(userId)
+
 
 def exposed_method(**kwargs):
     """Decorator to expose a method from the api

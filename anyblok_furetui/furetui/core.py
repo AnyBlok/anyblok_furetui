@@ -1,5 +1,12 @@
 from anyblok.declarations import Declarations, classmethod_cache
 from anyblok_furetui import exposed_method
+from ..context import context
+
+
+@Declarations.register(Declarations.Core)
+class Base:
+
+    context = context
 
 
 class SqlMixin:
