@@ -56,6 +56,24 @@ class SqlMixin:
 
         return cls.adapter_
 
+
+@Declarations.register(Declarations.Core)
+class SqlBase(SqlMixin):
+
+    @classmethod
+    def furetui_insert(cls, **kwargs):
+        res = cls.insert(**kwargs)
+        if res is None:
+            raise Exception('No instance returned by %r.insert' % cls)
+
+        return res
+
+    def furetui_update(self, **kwargs):
+        return self.update(**kwargs)
+
+    def furetui_delete(self):
+        return self.delete()
+
     @classmethod
     def get_default_values(
         cls,
@@ -64,7 +82,11 @@ class SqlMixin:
         resource=None,
         **data
     ):
-        return {}
+        return {
+            x.name: x.default.arg(None)
+            for x in cls.__table__.columns
+            if x.default
+        }
 
     @exposed_method(
         is_classmethod=True,
@@ -122,24 +144,6 @@ class SqlMixin:
                     "value": value,
                 })
         return res
-
-
-@Declarations.register(Declarations.Core)
-class SqlBase(SqlMixin):
-
-    @classmethod
-    def furetui_insert(cls, **kwargs):
-        res = cls.insert(**kwargs)
-        if res is None:
-            raise Exception('No instance returned by %r.insert' % cls)
-
-        return res
-
-    def furetui_update(self, **kwargs):
-        return self.update(**kwargs)
-
-    def furetui_delete(self):
-        return self.delete()
 
 
 @Declarations.register(Declarations.Core)
