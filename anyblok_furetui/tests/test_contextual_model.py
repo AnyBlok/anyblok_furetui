@@ -148,7 +148,7 @@ def registry_contextual_model(request, bloks_loaded, column_definition):  # noqa
     return registry
 
 
-class TestRelateModel:
+class TestContextualModel:
 
     @pytest.fixture(autouse=True)
     def transact(self, request, registry_contextual_model, column_definition):
@@ -221,6 +221,35 @@ class TestRelateModel:
             del self.test.other
             assert not self.test.other
 
+    def test_delete_entry_from_query_1(self, registry_contextual_model,
+                                       column_definition):
+        registry = registry_contextual_model
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 2
+        registry.Test.query().filter_by(id=self.test.id).delete()
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 0
+
+    def test_delete_entry_from_query_2(self, registry_contextual_model,
+                                       column_definition):
+        registry = registry_contextual_model
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 2
+        Test = registry.Test
+        Test.execute_sql_statement(
+            Test.delete_sql_statement().where(Test.id == self.test.id))
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 0
+
+    def test_delete_entry_from_method(self, registry_contextual_model,
+                                      column_definition):
+        registry = registry_contextual_model
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 2
+        self.test.delete()
+        assert registry.Test.Project.query().filter_by(
+            relate=self.test).count() == 0
+
     def test_del_without_context(self, registry_contextual_model):
         with pytest.raises(FieldException):
             del self.test.other
@@ -292,7 +321,7 @@ def registry_contextual_model_multi_pk(request, bloks_loaded):  # noqa F811
     return registry
 
 
-class TestRelateModelMultiPk:
+class TestContextualModelMultiPk:
 
     @pytest.fixture(autouse=True)
     def transact(self, request, registry_contextual_model_multi_pk):
@@ -422,7 +451,7 @@ def registry_contextual_model_multi_fields(request, bloks_loaded):  # noqa F811
     return registry
 
 
-class TestRelateModelMultiFields:
+class TestContextualModelMultiFields:
 
     @pytest.fixture(autouse=True)
     def transact(self, request, registry_contextual_model_multi_fields):
@@ -542,7 +571,7 @@ def registry_contextual_model_many2one(request, bloks_loaded):  # noqa F811
     return registry
 
 
-class TestRelateModelMany2One:
+class TestContextualModelMany2One:
 
     @pytest.fixture(autouse=True)
     def transact(self, request, registry_contextual_model_many2one):
@@ -709,6 +738,141 @@ class TestRelateModelMany2One:
         fd2['other'].update({'identity': 'project',
                              'identity_model': 'Model.Test.Project'})
         assert fd == fd2
+
+
+def funct_contextual_model_fallback():
+
+    @Declarations.register(Declarations.Model)
+    class Lang:
+
+        code = String(primary_key=True)
+
+    @register(Model, factory=ContextualModelFactory)
+    class Test:
+
+        @classmethod
+        def define_contextual_models(cls):
+            res = super().define_contextual_models()
+            res.update({
+                'lang': {
+                    'model': cls.anyblok.Lang,
+                    'fallback': 'en',
+                    'fallback_adapter': lambda x: (
+                        cls.anyblok.Lang.query().filter_by(code=x).one())
+                },
+            })
+            return res
+
+        id = Integer(primary_key=True)
+        label = Contextual(field=String(nullable=False), identity='lang')
+
+
+@pytest.fixture(scope="class")
+def registry_contextual_model_fallback(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(
+        ["furetui"], funct_contextual_model_fallback)
+    request.addfinalizer(registry.close)
+    return registry
+
+
+class TestContextualModelFallback:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        transaction = registry.begin_nested()
+
+        self.lang1 = registry.Lang.insert(code='fr')
+        self.lang2 = registry.Lang.insert(code='en')
+        self.lang3 = registry.Lang.insert(code='de')
+
+        self.test = registry.Test.insert()
+
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_insert_on_fallback(self, registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang2):
+            test = registry.Test.insert(label="label2")
+            assert test.label == 'label2'
+
+        with registry.Lang.context.set(lang=self.lang1):
+            assert test.label == 'label2'
+
+        with registry.Lang.context.set(lang=self.lang3):
+            assert test.label == 'label2'
+
+    def test_insert_without_fallback_filled(
+        self, registry_contextual_model_fallback
+    ):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang1):
+            test = registry.Test.insert(label="label1")
+            assert test.label == 'label1'
+
+        with registry.Lang.context.set(lang=self.lang2):
+            assert test.label == 'label1'
+
+        with registry.Lang.context.set(lang=self.lang3):
+            assert test.label == 'label1'
+
+    def test_set_on_fallback(self, registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang1):
+            test = registry.Test.insert(label="label1")
+            assert test.label == 'label1'
+
+        with registry.Lang.context.set(lang=self.lang2):
+            test.label = 'label2'
+
+        with registry.Lang.context.set(lang=self.lang3):
+            assert test.label == 'label2'
+
+        with registry.Lang.context.set(lang=self.lang1):
+            assert test.label == 'label1'
+
+    def test_set_on_another_that_fallback(self,
+                                          registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang2):
+            test = registry.Test.insert(label="label2")
+            assert test.label == 'label2'
+
+        with registry.Lang.context.set(lang=self.lang1):
+            test.label == 'label1'
+
+        with registry.Lang.context.set(lang=self.lang3):
+            assert test.label == 'label2'
+
+        with registry.Lang.context.set(lang=self.lang2):
+            assert test.label == 'label2'
+
+    def test_del_on_fallback(self, registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang2):
+            test = registry.Test.insert(label="label2")
+            with pytest.raises(FieldException):
+                del test.label
+
+    def test_expr_on_fallback(self, registry_contextual_model_fallback):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang2):
+            test = registry.Test.insert(label="label2")
+            assert test is registry.Test.query().filter_by(
+                label='label2').one()
+
+    def test_expr_on_another_than_fallback(
+        self, registry_contextual_model_fallback
+    ):
+        registry = registry_contextual_model_fallback
+        with registry.Lang.context.set(lang=self.lang2):
+            test = registry.Test.insert(label="label2")
+
+        with registry.Lang.context.set(lang=self.lang1):
+            assert test is registry.Test.query().filter_by(
+                label='label2').one()
 
 
 class TestDefinition:

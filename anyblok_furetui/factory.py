@@ -19,30 +19,38 @@ class ContextualMixin:
         context_adapter = res.get('context_adapter', lambda x: x)
         context = context_adapter(
             self.context.get(res.get('context', identity)))
+
+        fallback = None
+        fallback_adapter = res.get('fallback_adapter', lambda x: x)
+        if res.get('fallback'):
+            fallback = fallback_adapter(res['fallback'])
+
         return {
             'context': context,
             'one2many': getattr(self, f'__{identity}'),
             'filter': {identity: context},
             'default': self.__class__.get_default_values().get(identity),
             'Model': getattr(self, identity.capitalize()),
+            'fallback': fallback,
+            'filter_fallback': {identity: fallback},
         }
 
     @classmethod
     def insert(cls, **kwargs):
-        related = {}
+        contextual = {}
         values = kwargs.copy()
 
         lnfs = cls.anyblok.loaded_namespaces_first_step[cls.__registry_name__]
         for field in kwargs:
             if field in cls.loaded_contextual_fields:
-                if lnfs[field].identity not in related:
-                    related[lnfs[field].identity] = {}
+                if lnfs[field].identity not in contextual:
+                    contextual[lnfs[field].identity] = {}
 
-                related[lnfs[field].identity][field] = values.pop(field)
+                contextual[lnfs[field].identity][field] = values.pop(field)
 
         res = super(ContextualMixin, cls).insert(**values)
 
-        for identity, values in related.items():
+        for identity, values in contextual.items():
             identity_values = res.get_identity_entries(identity)
             if not identity_values['context']:
                 raise FieldException('No valid context')
@@ -50,8 +58,22 @@ class ContextualMixin:
             values.update({identity: identity_values['context']})
             getattr(cls, identity.capitalize()).insert(
                 relate=res, **values)
+            if identity_values['fallback']:
+                if identity_values['fallback'] != identity_values['context']:
+                    values.update({identity: identity_values['fallback']})
+                    getattr(cls, identity.capitalize()).insert(
+                        relate=res, **values)
 
         return res
+
+    def delete(self, *a, **kw):
+        identities = self.__class__.define_contextual_models().keys()
+        for identity in identities:
+            Model = getattr(self, identity.capitalize())
+            Model.execute_sql_statement(
+                Model.delete_sql_statement().where(Model.relate == self))
+
+        super().delete(*a, **kw)
 
 
 class ContextualModelFactory(ModelFactory):
@@ -133,7 +155,8 @@ class ContextualModelFactory(ModelFactory):
                     self.declare_field_for(
                         'relate',
                         Many2One(model=properties['__registry_name__'],
-                                 nullable=False),
+                                 nullable=False,
+                                 foreign_key_options={'ondelete': 'cascade'}),
                         models[field.identity],
                         transformation_models[field.identity],
                     )

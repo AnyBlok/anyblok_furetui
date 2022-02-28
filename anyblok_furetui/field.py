@@ -141,7 +141,14 @@ class Contextual(Field):
             entry = o2m.filter_by(**identity_values['filter']).one_or_none()
 
             if entry is None:
-                return identity_values['default']
+                if not identity_values['fallback']:
+                    return identity_values['default']
+
+                if identity_values['fallback'] != identity_values['context']:
+                    entry = o2m.filter_by(
+                        **identity_values['filter_fallback']).one_or_none()
+                    if entry is None:
+                        return identity_values['default']
 
             return getattr(entry, self.fieldname)
 
@@ -165,6 +172,7 @@ class Contextual(Field):
                 values.update(identity_values['filter'])
                 entry = identity_values['Model'](**values)
                 model_self.anyblok.session.add(entry)
+
             else:
                 entry.update(**{self.fieldname: value})
 
@@ -176,6 +184,10 @@ class Contextual(Field):
 
             if not identity_values['context']:
                 raise FieldException('No valid context')
+
+            if identity_values['context'] == identity_values['fallback']:
+                raise FieldException(
+                    'It is forbidden to remove entry on the fallback')
 
             o2m = identity_values['one2many']
             entry = o2m.filter_by(**identity_values['filter']).one_or_none()
@@ -197,10 +209,25 @@ class Contextual(Field):
             Model = getattr(cls, self.identity.capitalize())
 
             filters = [getattr(Model, self.identity) == context]
-            filters.extend([
+            relate_filters = [
                 getattr(Model, x) == getattr(cls, x[len('relate_'):])
                 for x in Model.loaded_columns
-                if x.startswith("relate_")])
+                if x.startswith("relate_")]
+            filters.extend(relate_filters)
+
+            if res.get('fallback'):
+                fallback_adapter = res.get('fallback_adapter', lambda x: x)
+                fallback = fallback_adapter(res['fallback'])
+                if fallback != context:
+                    filters = or_(
+                        and_(*filters),
+                        and_(
+                            getattr(Model, self.identity) == fallback,
+                            *relate_filters,
+                        ),
+                    )
+                    return select(getattr(Model, self.fieldname)).filter(
+                        filters).limit(1).label(self.fieldname)
 
             return select(getattr(Model, self.fieldname)).filter(
                 and_(*filters)).limit(1).label(self.fieldname)
