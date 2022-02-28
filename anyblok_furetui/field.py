@@ -61,13 +61,13 @@ class Many2OneComparator(Comparator):
         return select(~expr)
 
 
-class Related(Field):
-    """ Json Related Field
+class Contextual(Field):
+    """ Json Contextual Field
 
     ::
 
         from anyblok.declarations import Declarations
-        from anyblok_furetui.field import Related
+        from anyblok_furetui.field import Contextual
         from anyblok.column import String
 
 
@@ -77,12 +77,15 @@ class Related(Field):
             code = String(primary_key=True)
 
 
-        @Declarations.register(Declarations.Model, factory=RelatedModelFactory)
+        @Declarations.register(
+            Declarations.Model,
+            factory=ContextualModelFactory
+        )
         class Test:
 
             @classmethod
-            def define_related_models(cls):
-                res = super().define_related_models()
+            def define_contextual_models(cls):
+                res = super().define_contextual_models()
                 res.update({
                     'project': {
                         'model': cls.anyblok.Project,
@@ -93,7 +96,7 @@ class Related(Field):
                 })
                 return res
 
-            code = Related(
+            code = Contextual(
                 field=String(),
                 identity='project',
             )
@@ -106,7 +109,7 @@ class Related(Field):
         for f in ['field', 'identity']:
             if getattr(self, f) is None:
                 raise FieldException(
-                    f"'{f}' is a required attribute for Related"
+                    f"'{f}' is a required attribute for Contextual"
                 )
 
         if isinstance(
@@ -125,7 +128,7 @@ class Related(Field):
                 f"'{f}' could not have one2many attribute"
             )
 
-        super(Related, self).__init__()
+        super(Contextual, self).__init__()
 
     def get_fget(self):
         def fget(model_self):
@@ -161,7 +164,7 @@ class Related(Field):
                 }
                 values.update(identity_values['filter'])
                 entry = identity_values['Model'](**values)
-                model_self.registry.session.add(entry)
+                model_self.anyblok.session.add(entry)
             else:
                 entry.update(**{self.fieldname: value})
 
@@ -183,7 +186,7 @@ class Related(Field):
 
     def get_fexpr(self):
         def fexpr(cls):
-            res = cls.define_related_models()[self.identity]
+            res = cls.define_contextual_models()[self.identity]
             context_adapter = res.get('context_adapter', lambda x: x)
             context = context_adapter(
                 cls.context.get(res.get('context', self.identity)))
@@ -206,7 +209,7 @@ class Related(Field):
 
     def get_fcomparator(self):
         def fcomparator(cls):
-            res = cls.define_related_models()[self.identity]
+            res = cls.define_contextual_models()[self.identity]
             context_adapter = res.get('context_adapter', lambda x: x)
             context = context_adapter(
                 cls.context.get(res.get('context', self.identity)))

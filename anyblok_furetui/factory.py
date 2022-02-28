@@ -5,17 +5,17 @@ from anyblok.column import Integer
 from anyblok.relationship import Many2One
 from anyblok.field import FieldException
 from anyblok.common import TypeList
-from .field import Related
+from .field import Contextual
 
 
-class RelatedMixin:
+class ContextualMixin:
 
     @classmethod
-    def define_related_models(cls):
+    def define_contextual_models(cls):
         return {}
 
     def get_identity_entries(self, identity):
-        res = self.__class__.define_related_models()[identity]
+        res = self.__class__.define_contextual_models()[identity]
         context_adapter = res.get('context_adapter', lambda x: x)
         context = context_adapter(
             self.context.get(res.get('context', identity)))
@@ -34,13 +34,13 @@ class RelatedMixin:
 
         lnfs = cls.anyblok.loaded_namespaces_first_step[cls.__registry_name__]
         for field in kwargs:
-            if field in cls.loaded_related_fields:
+            if field in cls.loaded_contextual_fields:
                 if lnfs[field].identity not in related:
                     related[lnfs[field].identity] = {}
 
                 related[lnfs[field].identity][field] = values.pop(field)
 
-        res = super(RelatedMixin, cls).insert(**values)
+        res = super(ContextualMixin, cls).insert(**values)
 
         for identity, values in related.items():
             identity_values = res.get_identity_entries(identity)
@@ -54,7 +54,7 @@ class RelatedMixin:
         return res
 
 
-class RelatedModelFactory(ModelFactory):
+class ContextualModelFactory(ModelFactory):
 
     def declare_field_for(self, fieldname, field, properties,
                           transformation_properties):
@@ -69,27 +69,27 @@ class RelatedModelFactory(ModelFactory):
 
     def insert_core_bases(self, bases, properties):
         if has_sql_fields(bases):
-            bases.append(RelatedMixin)
+            bases.append(ContextualMixin)
 
-        super(RelatedModelFactory, self).insert_core_bases(bases, properties)
+        super(ContextualModelFactory, self).insert_core_bases(bases, properties)
 
     def build_model(self, modelname, bases, properties):
         tmp_bases = [x for x in bases
                      if x is not self.registry.declarativebase]
 
-        res = super(RelatedModelFactory, self).build_model(
+        res = super(ContextualModelFactory, self).build_model(
             modelname, tmp_bases, properties)
 
-        related_models = res.define_related_models()
+        related_models = res.define_contextual_models()
 
         models = {}
         transformation_models = {}
         lnfs = self.registry.loaded_namespaces_first_step
-        properties['loaded_related_fields'] = set()
+        properties['loaded_contextual_fields'] = set()
         for fieldname in properties['loaded_fields']:
             field = lnfs[properties["__registry_name__"]][fieldname]
-            if isinstance(field, Related):
-                properties['loaded_related_fields'].add(fieldname)
+            if isinstance(field, Contextual):
+                properties['loaded_contextual_fields'].add(fieldname)
                 registry_name = (
                     f'{properties["__registry_name__"]}.'
                     f'{field.identity.capitalize()}')
@@ -185,5 +185,5 @@ class RelatedModelFactory(ModelFactory):
                 lazy='dynamic',
                 overlaps='__anyblok_field_relate')
 
-        return super(RelatedModelFactory, self).build_model(
+        return super(ContextualModelFactory, self).build_model(
             modelname, bases, properties)

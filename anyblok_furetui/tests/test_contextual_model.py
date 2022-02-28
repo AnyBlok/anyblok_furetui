@@ -14,8 +14,8 @@ from anyblok.column import (
     URL, PhoneNumber, Email, Country, TimeStamp)
 from anyblok.relationship import Many2One, One2One, One2Many, Many2Many
 from anyblok.field import FieldException, Function
-from anyblok_furetui.field import Related
-from anyblok_furetui.factory import RelatedModelFactory
+from anyblok_furetui.field import Contextual
+from anyblok_furetui.factory import ContextualModelFactory
 from anyblok.tests.conftest import init_registry_with_bloks, reset_db
 
 
@@ -27,19 +27,19 @@ register = Declarations.register
 Model = Declarations.Model
 
 
-def funct_related_model(ColumnType=None, **kwargs):
+def funct_contextual_model(ColumnType=None, **kwargs):
 
     @Declarations.register(Declarations.Model)
     class Project:
 
         id = Integer(primary_key=True)
 
-    @register(Model, factory=RelatedModelFactory)
+    @register(Model, factory=ContextualModelFactory)
     class Test:
 
         @classmethod
-        def define_related_models(cls):
-            res = super().define_related_models()
+        def define_contextual_models(cls):
+            res = super().define_contextual_models()
             res.update({
                 'project': {
                     'model': cls.anyblok.Project,
@@ -48,7 +48,7 @@ def funct_related_model(ColumnType=None, **kwargs):
             return res
 
         id = Integer(primary_key=True)
-        other = Related(field=ColumnType(**kwargs), identity='project')
+        other = Contextual(field=ColumnType(**kwargs), identity='project')
 
 
 def dt(day):
@@ -137,11 +137,11 @@ def column_definition(request, bloks_loaded):
 
 
 @pytest.fixture(scope="class")
-def registry_related_model(request, bloks_loaded, column_definition):  # noqa F811
+def registry_contextual_model(request, bloks_loaded, column_definition):  # noqa F811
     reset_db()
     column, value1, value2, value3, kwargs = column_definition
     registry = init_registry_with_bloks(
-        ["furetui"], funct_related_model,
+        ["furetui"], funct_contextual_model,
         ColumnType=column, **kwargs
     )
     request.addfinalizer(registry.close)
@@ -151,8 +151,8 @@ def registry_related_model(request, bloks_loaded, column_definition):  # noqa F8
 class TestRelateModel:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_related_model, column_definition):
-        registry = registry_related_model
+    def transact(self, request, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         transaction = registry.begin_nested()
 
@@ -168,88 +168,88 @@ class TestRelateModel:
         request.addfinalizer(transaction.rollback)
         return
 
-    def test_insert(self, registry_related_model, column_definition):
-        registry = registry_related_model
+    def test_insert(self, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project3):
             test = registry.Test.insert(other=value3)
             assert test.other == value3
 
-    def test_insert_without_context(self, registry_related_model,
+    def test_insert_without_context(self, registry_contextual_model,
                                     column_definition):
-        registry = registry_related_model
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with pytest.raises(FieldException):
             registry.Test.insert(other=value3)
 
-    def test_get(self, registry_related_model, column_definition):
-        registry = registry_related_model
+    def test_get(self, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == value1
 
-    def test_get_without_context(self, registry_related_model):
+    def test_get_without_context(self, registry_contextual_model):
         with pytest.raises(FieldException):
             self.test.other
 
-    def test_set_existing_value(self, registry_related_model,
+    def test_set_existing_value(self, registry_contextual_model,
                                 column_definition):
-        registry = registry_related_model
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project2):
             assert self.test.other == value2
             self.test.other = value3
             assert self.test.other == value3
 
-    def test_set_new_value(self, registry_related_model, column_definition):
-        registry = registry_related_model
+    def test_set_new_value(self, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project3):
             assert not self.test.other
             self.test.other = value3
             assert self.test.other == value3
 
-    def test_set_without_context(self, registry_related_model):
+    def test_set_without_context(self, registry_contextual_model):
         with pytest.raises(FieldException):
             self.test.other = 'bar2'
 
-    def test_del(self, registry_related_model, column_definition):
-        registry = registry_related_model
+    def test_del(self, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == value1
             del self.test.other
             assert not self.test.other
 
-    def test_del_without_context(self, registry_related_model):
+    def test_del_without_context(self, registry_contextual_model):
         with pytest.raises(FieldException):
             del self.test.other
 
-    def test_expr(self, registry_related_model, column_definition):
-        registry = registry_related_model
+    def test_expr(self, registry_contextual_model, column_definition):
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter_by(
                 other=value1).one()
 
-    def test_expr_with_another_context(self, registry_related_model,
+    def test_expr_with_another_context(self, registry_contextual_model,
                                        column_definition):
-        registry = registry_related_model
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with registry.Project.context.set(project=self.project2):
             assert registry.Test.query().filter_by(
                 other=value1).one_or_none() is None
 
-    def test_expr_without_context(self, registry_related_model,
+    def test_expr_without_context(self, registry_contextual_model,
                                   column_definition):
-        registry = registry_related_model
+        registry = registry_contextual_model
         column, value1, value2, value3, kwargs = column_definition
         with pytest.raises(FieldException):
             registry.Test.query().filter_by(other=value1).one_or_none()
 
-    def test_field_description(self, registry_related_model,
+    def test_field_description(self, registry_contextual_model,
                                column_definition):
-        registry = registry_related_model
+        registry = registry_contextual_model
         fd = registry.Test.fields_description("other")
         fd2 = registry.Test.Project.fields_description("other").copy()
         fd2['other'].update({'identity': 'project',
@@ -257,7 +257,7 @@ class TestRelateModel:
         assert fd == fd2
 
 
-def funct_related_model_multi_pk():
+def funct_contextual_model_multi_pk():
 
     @Declarations.register(Declarations.Model)
     class Project:
@@ -265,12 +265,12 @@ def funct_related_model_multi_pk():
         id = Integer(primary_key=True)
         code = String(primary_key=True)
 
-    @register(Model, factory=RelatedModelFactory)
+    @register(Model, factory=ContextualModelFactory)
     class Test:
 
         @classmethod
-        def define_related_models(cls):
-            res = super().define_related_models()
+        def define_contextual_models(cls):
+            res = super().define_contextual_models()
             res.update({
                 'project': {
                     'model': cls.anyblok.Project,
@@ -280,14 +280,14 @@ def funct_related_model_multi_pk():
 
         id = Integer(primary_key=True)
         code = String(primary_key=True)
-        other = Related(field=String(), identity='project')
+        other = Contextual(field=String(), identity='project')
 
 
 @pytest.fixture(scope="class")
-def registry_related_model_multi_pk(request, bloks_loaded):  # noqa F811
+def registry_contextual_model_multi_pk(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui"], funct_related_model_multi_pk)
+        ["furetui"], funct_contextual_model_multi_pk)
     request.addfinalizer(registry.close)
     return registry
 
@@ -295,8 +295,8 @@ def registry_related_model_multi_pk(request, bloks_loaded):  # noqa F811
 class TestRelateModelMultiPk:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def transact(self, request, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         transaction = registry.begin_nested()
 
         self.project1 = registry.Project.insert(code='test')
@@ -311,74 +311,75 @@ class TestRelateModelMultiPk:
         request.addfinalizer(transaction.rollback)
         return
 
-    def test_insert(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_insert(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project3):
             test = registry.Test.insert(code='test', other='foo-bar')
             assert test.other == 'foo-bar'
 
-    def test_insert_without_context(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_insert_without_context(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with pytest.raises(FieldException):
             registry.Test.insert(code='test', other='foo-bar')
 
-    def test_get(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_get(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == 'foo'
 
-    def test_get_without_context(self, registry_related_model_multi_pk):
+    def test_get_without_context(self, registry_contextual_model_multi_pk):
         with pytest.raises(FieldException):
             self.test.other
 
-    def test_set_existing_value(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_set_existing_value(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project2):
             assert self.test.other == 'bar'
             self.test.other = 'foo-bar'
             assert self.test.other == 'foo-bar'
 
-    def test_set_new_value(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_set_new_value(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project3):
             assert not self.test.other
             self.test.other = 'foo-bar'
             assert self.test.other == 'foo-bar'
 
-    def test_set_without_context(self, registry_related_model_multi_pk):
+    def test_set_without_context(self, registry_contextual_model_multi_pk):
         with pytest.raises(FieldException):
             self.test.other = 'bar2'
 
-    def test_del(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_del(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == 'foo'
             del self.test.other
             assert not self.test.other
 
-    def test_del_without_context(self, registry_related_model_multi_pk):
+    def test_del_without_context(self, registry_contextual_model_multi_pk):
         with pytest.raises(FieldException):
             del self.test.other
 
-    def test_expr(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_expr(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter_by(
                 other='foo').one()
 
-    def test_expr_with_another_context(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_expr_with_another_context(self,
+                                       registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with registry.Project.context.set(project=self.project2):
             assert registry.Test.query().filter_by(
                 other='foo').one_or_none() is None
 
-    def test_expr_without_context(self, registry_related_model_multi_pk):
-        registry = registry_related_model_multi_pk
+    def test_expr_without_context(self, registry_contextual_model_multi_pk):
+        registry = registry_contextual_model_multi_pk
         with pytest.raises(FieldException):
             registry.Test.query().filter_by(other='foo').one_or_none()
 
 
-def funct_related_model_multi_fields():
+def funct_contextual_model_multi_fields():
 
     @Declarations.register(Declarations.Model)
     class Project:
@@ -390,12 +391,12 @@ def funct_related_model_multi_fields():
 
         id = Integer(primary_key=True)
 
-    @register(Model, factory=RelatedModelFactory)
+    @register(Model, factory=ContextualModelFactory)
     class Test:
 
         @classmethod
-        def define_related_models(cls):
-            res = super().define_related_models()
+        def define_contextual_models(cls):
+            res = super().define_contextual_models()
             res.update({
                 'project': {
                     'model': cls.anyblok.Project,
@@ -407,16 +408,16 @@ def funct_related_model_multi_fields():
             return res
 
         id = Integer(primary_key=True)
-        other = Related(field=String(nullable=False), identity='project')
-        label = Related(field=String(nullable=False), identity='lang')
-        description = Related(field=String(nullable=False), identity='lang')
+        other = Contextual(field=String(nullable=False), identity='project')
+        label = Contextual(field=String(nullable=False), identity='lang')
+        description = Contextual(field=String(nullable=False), identity='lang')
 
 
 @pytest.fixture(scope="class")
-def registry_related_model_multi_fields(request, bloks_loaded):  # noqa F811
+def registry_contextual_model_multi_fields(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui"], funct_related_model_multi_fields)
+        ["furetui"], funct_contextual_model_multi_fields)
     request.addfinalizer(registry.close)
     return registry
 
@@ -424,8 +425,8 @@ def registry_related_model_multi_fields(request, bloks_loaded):  # noqa F811
 class TestRelateModelMultiFields:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def transact(self, request, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         transaction = registry.begin_nested()
 
         self.project1 = registry.Project.insert()
@@ -449,8 +450,8 @@ class TestRelateModelMultiFields:
         request.addfinalizer(transaction.rollback)
         return
 
-    def test_insert(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_insert(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project3,
                                           lang=self.lang2):
             test = registry.Test.insert(
@@ -458,51 +459,49 @@ class TestRelateModelMultiFields:
             assert test.label == 'label2'
             assert test.description == 'description2'
 
-    def test_insert_without_context(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_insert_without_context(self,
+                                    registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with pytest.raises(FieldException):
             registry.Test.insert(other='foo-bar', label="label2",
                                  description="description2")
 
-    def test_get(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_get(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project1,
                                           lang=self.lang1):
             assert self.test.other == 'foo'
             assert self.test.label == 'label1'
             assert self.test.description == 'description1'
 
-    def test_set_existing_value(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_set_existing_value(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project1,
                                           lang=self.lang1):
             assert self.test.label == 'label1'
             self.test.label = 'label3'
             assert self.test.label == 'label3'
 
-    def test_set_new_value(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_set_new_value(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project3,
                                           lang=self.lang2):
             self.test.label = 'label2'
 
-    def test_del(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_del(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project1):
             del self.test.other
 
-    def test_expr(self, registry_related_model_multi_fields):
-        registry = registry_related_model_multi_fields
+    def test_expr(self, registry_contextual_model_multi_fields):
+        registry = registry_contextual_model_multi_fields
         with registry.Project.context.set(project=self.project1,
                                           lang=self.lang1):
             assert self.test is registry.Test.query().filter_by(
                 other='foo', label='label1').one()
 
 
-def funct_related_model_many2one(multipk=False):
-    attrs = {}
-    if multipk:
-        attrs['primary_key'] = True
+def funct_contextual_model_many2one(multipk=False):
 
     @Declarations.register(Declarations.Model)
     class Project:
@@ -513,14 +512,14 @@ def funct_related_model_many2one(multipk=False):
     class Other:
 
         id = Integer(primary_key=True)
-        code = String(**attrs)
+        code = String(primary_key=multipk)
 
-    @register(Model, factory=RelatedModelFactory)
+    @register(Model, factory=ContextualModelFactory)
     class Test:
 
         @classmethod
-        def define_related_models(cls):
-            res = super().define_related_models()
+        def define_contextual_models(cls):
+            res = super().define_contextual_models()
             res.update({
                 'project': {
                     'model': cls.anyblok.Project,
@@ -529,15 +528,15 @@ def funct_related_model_many2one(multipk=False):
             return res
 
         id = Integer(primary_key=True)
-        other = Related(field=Many2One(model=Model.Other),
-                        identity='project')
+        other = Contextual(field=Many2One(model=Model.Other),
+                           identity='project')
 
 
 @pytest.fixture(scope="class", params=[True, False])
-def registry_related_model_many2one(request, bloks_loaded):  # noqa F811
+def registry_contextual_model_many2one(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
-        ["furetui"], funct_related_model_many2one,
+        ["furetui"], funct_contextual_model_many2one,
         multipk=request.param)
     request.addfinalizer(registry.close)
     return registry
@@ -546,8 +545,8 @@ def registry_related_model_many2one(request, bloks_loaded):  # noqa F811
 class TestRelateModelMany2One:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def transact(self, request, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         transaction = registry.begin_nested()
 
         self.project1 = registry.Project.insert()
@@ -567,143 +566,144 @@ class TestRelateModelMany2One:
         request.addfinalizer(transaction.rollback)
         return
 
-    def test_insert(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_insert(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project3):
             test = registry.Test.insert(other=self.other2)
             assert test.other == self.other2
 
-    def test_insert_without_context(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_insert_without_context(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with pytest.raises(FieldException):
             registry.Test.insert(other=self.other2)
 
-    def test_get(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_get(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == self.other1
 
-    def test_get_without_context(self, registry_related_model_many2one):
+    def test_get_without_context(self, registry_contextual_model_many2one):
         with pytest.raises(FieldException):
             self.test.other
 
-    def test_set_existing_value(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_set_existing_value(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project2):
             assert self.test.other == self.other2
             self.test.other = self.other1
             assert self.test.other == self.other1
 
-    def test_set_new_value(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_set_new_value(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project3):
             assert not self.test.other
             self.test.other = self.other2
             assert self.test.other == self.other2
 
-    def test_set_without_context(self, registry_related_model_many2one):
+    def test_set_without_context(self, registry_contextual_model_many2one):
         with pytest.raises(FieldException):
             self.test.other = self.other2
 
-    def test_del(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_del(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test.other == self.other1
             del self.test.other
             assert not self.test.other
 
-    def test_del_without_context(self, registry_related_model_many2one):
+    def test_del_without_context(self, registry_contextual_model_many2one):
         with pytest.raises(FieldException):
             del self.test.other
 
-    def test_expr(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other == self.other1).one()
 
-    def test_expr_2(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_2(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter_by(
                 other=self.other1).one()
 
-    def test_expr_3(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_3(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other.is_(self.other1)).one()
 
-    def test_expr_4(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_4(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other.isnot(self.other2)).one()
 
-    def test_expr_5(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_5(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert registry.Test.query().filter(
                 registry.Test.other.isnot(self.other1)).one_or_none(
                 ) is None
 
-    def test_expr_6(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_6(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert registry.Test.query().filter(
                 registry.Test.other != self.other1).one_or_none() is None
 
-    def test_expr_7(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_7(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other != self.other2).one_or_none()
 
-    def test_expr_8(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_8(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other.in_([self.other1])).one()
 
-    def test_expr_9(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_9(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other.in_([self.other1, self.other2])).one()
 
-    def test_expr_10(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_10(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert registry.Test.query().filter(
                 registry.Test.other.in_([self.other2])).one_or_none(
                 ) is None
 
-    def test_expr_11(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_11(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert registry.Test.query().filter(
                 registry.Test.other.notin([self.other1])).one_or_none(
                 ) is None
 
-    def test_expr_12(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_12(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project1):
             assert self.test is registry.Test.query().filter(
                 registry.Test.other.notin([self.other2])).one()
 
-    def test_expr_with_another_context(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_with_another_context(self,
+                                       registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with registry.Project.context.set(project=self.project2):
             assert registry.Test.query().filter(
                 registry.Test.other == self.other1).one_or_none() is None
 
-    def test_expr_without_context(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_expr_without_context(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         with pytest.raises(FieldException):
             registry.Test.query().filter_by(other=self.other1).one_or_none()
 
-    def test_field_description(self, registry_related_model_many2one):
-        registry = registry_related_model_many2one
+    def test_field_description(self, registry_contextual_model_many2one):
+        registry = registry_contextual_model_many2one
         fd = registry.Test.fields_description("other")
         fd2 = registry.Test.Project.fields_description("other").copy()
         fd2['other'].update({'identity': 'project',
@@ -716,38 +716,41 @@ class TestDefinition:
     def test_autodoc(self, column_definition):
         column, value1, value2, value3, kwargs = column_definition
         field = column(**kwargs)
-        col = Related(field=field, identity='foo')
+        col = Contextual(field=field, identity='foo')
         assert col.autodoc()
 
     def test_forbid_without_field(self):
         with pytest.raises(FieldException):
-            Related(identity='foo')
+            Contextual(identity='foo')
 
     def test_forbid_without_identity(self):
         with pytest.raises(FieldException):
-            Related(field=String())
+            Contextual(field=String())
 
     def test_forbid_function_field(self):
         with pytest.raises(FieldException):
-            Related(field=Function(fget='foo'), identity='foo')
+            Contextual(field=Function(fget='foo'), identity='foo')
 
     def test_forbid_function_sequence(self):
         with pytest.raises(FieldException):
-            Related(field=Sequence(), identity='foo')
+            Contextual(field=Sequence(), identity='foo')
 
     def test_forbid_many2one_with_many2one_backref(self):
         with pytest.raises(FieldException):
-            Related(field=Many2One(model='Model.System.Blok', one2many='foo'),
-                    identity='foo')
+            Contextual(field=Many2One(model='Model.System.Blok',
+                                      one2many='foo'),
+                       identity='foo')
 
     def test_forbid_many2one_with_one2one(self):
         with pytest.raises(FieldException):
-            Related(field=One2One(model='Model.System.Blok'), identity='foo')
+            Contextual(field=One2One(model='Model.System.Blok'), identity='foo')
 
     def test_forbid_many2one_with_many2many(self):
         with pytest.raises(FieldException):
-            Related(field=Many2Many(model='Model.System.Blok'), identity='foo')
+            Contextual(field=Many2Many(model='Model.System.Blok'),
+                       identity='foo')
 
     def test_forbid_many2one_with_one2many(self):
         with pytest.raises(FieldException):
-            Related(field=One2Many(model='Model.System.Blok'), identity='foo')
+            Contextual(field=One2Many(model='Model.System.Blok'),
+                       identity='foo')
