@@ -25,14 +25,14 @@ class Many2OneComparator(Comparator):
 
     def __eq__(self, m2o):
         clause = self.__clause_element__().subquery(name='subquery')
-        return select(self.eq_op(clause, m2o))
+        return select(self.eq_op(clause, m2o)).scalar_subquery()
 
     def is_(self, m2o):
         return self == m2o
 
     def __ne__(self, m2o):
         clause = self.__clause_element__().subquery(name='subquery')
-        return select(~self.eq_op(clause, m2o))
+        return select(~self.eq_op(clause, m2o)).scalar_subquery()
 
     def is_not(self, m2o):
         return self != m2o
@@ -53,12 +53,12 @@ class Many2OneComparator(Comparator):
     def in_(self, m2os):
         clause = self.__clause_element__().subquery(name='subquery')
         expr = self.in_op(clause, m2os)
-        return select(expr)
+        return select(expr).scalar_subquery()
 
     def notin(self, m2os):
         clause = self.__clause_element__().subquery(name='subquery')
         expr = self.in_op(clause, m2os)
-        return select(~expr)
+        return select(~expr).scalar_subquery()
 
 
 class Contextual(Field):
