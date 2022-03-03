@@ -17,6 +17,7 @@ from pyramid.renderers import JSON
 from datetime import datetime, date, timedelta
 from uuid import UUID
 from decimal import Decimal
+from furl import furl
 
 python_pycountry_type = None
 try:
@@ -52,6 +53,13 @@ def phonenumber_adapter(phone, request):
     return phone.international
 
 
+def furl_adapter(url, request):
+    if url is None:
+        return None
+
+    return url.url
+
+
 def add_adapters(obj):
     obj.add_adapter(datetime, datetime_adapter)
     obj.add_adapter(Enum, enum_adapter)
@@ -63,6 +71,7 @@ def add_adapters(obj):
     obj.add_adapter(Color, color_adapter)
     obj.add_adapter(python_pycountry_type, country_adapter)
     obj.add_adapter(PhoneNumber, phonenumber_adapter)
+    obj.add_adapter(furl, furl_adapter)
 
 
 class FuretUIRender(CorniceRenderer):
