@@ -83,7 +83,11 @@ class SqlBase(SqlMixin):
         **data
     ):
         return {
-            x.name: x.default.arg(None)
+            x.name: (
+                x.default.arg(None)
+                if callable(x.default.arg)
+                else x.default.arg
+            )
             for x in cls.__table__.columns
             if x.default
         }
