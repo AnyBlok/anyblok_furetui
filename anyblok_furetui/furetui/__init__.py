@@ -86,7 +86,7 @@ class FuretUIBlok(Blok):
     def pyramid_load_config(cls, config):
         json_data_adapter(config)
         blok_name, static_path = Configuration.get(
-            'furetui_client_static', 'furetui:static').split(':')
+            'furetui_client_static', 'furetui:static/furet-ui').split(':')
         blok_path = BlokManager.getPath(blok_name)
         path = join(blok_path, *static_path.split('/'))
         config.add_static_view('furet-ui/js', join(path, 'js'))
