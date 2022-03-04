@@ -127,7 +127,7 @@ def registry_core(request, bloks_loaded):  # noqa F811
 class TestCore:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_core, clear_context):
+    def transact(self, request, registry_core):
         registry, _ = registry_core
         transaction = registry.begin_nested()
         request.addfinalizer(transaction.rollback)
@@ -192,7 +192,7 @@ def registry_core_view(request, bloks_loaded):
 class TestCoreView:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_core_view, clear_context):
+    def transact(self, request, registry_core_view):
         transaction = registry_core_view.begin_nested()
         request.addfinalizer(transaction.rollback)
 

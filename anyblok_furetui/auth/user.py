@@ -40,6 +40,15 @@ class FuretUI:
             role = Pyramid.Role.query().filter_by(name=role_name).one()
             user.append(role)
 
+    @classmethod
+    def set_user_context(cls, authenticated_userid):
+        super().set_user_context(authenticated_userid)
+        user = cls.anyblok.Pyramid.User.query().get(authenticated_userid)
+        cls.context.set({
+            'user': user,
+            'lang': user.lang,
+        })
+
 
 @Declarations.register(Declarations.Model.Pyramid)
 class User:
