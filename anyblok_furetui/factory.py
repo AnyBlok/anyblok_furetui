@@ -1,27 +1,27 @@
 from anyblok.model.factory import BaseFactory
 from anyblok.column import Integer
-from .core import SqlMixin
+from anyblok.model import Model
 
 
-class SingletonMixin(SqlMixin):
-
-    is_sql = True
-
-    id = Integer(primary_key=True)
+class SingletonMixin:
 
     @classmethod
     def furetui_insert(cls, **kwargs):
-        res = cls.insert(**kwargs)
-        if res is None:
-            raise Exception('No instance returned by %r.insert' % cls)
-
-        return res
+        return cls.set(**kwargs)
 
     def furetui_update(self, **kwargs):
         return self.__class__.set(**kwargs)
 
     def furetui_delete(self):
-        return self.delete()
+        raise Exception('Delete is forbidden')
+
+    @classmethod
+    def get_default_values(cls, *a, **kw):
+        self = cls.get()
+        return {
+            field: getattr(self, field)
+            for field in cls.loaded_columns
+        }
 
     @classmethod
     def get(cls):
@@ -51,10 +51,22 @@ class SingletonMixin(SqlMixin):
 
 class SingletonModelFactory(BaseFactory):
 
+    def declare_field_for(self, fieldname, field, properties):
+        lnfs = self.registry.loaded_namespaces_first_step
+        registry_name = properties['__registry_name__']
+        lnfs[registry_name][fieldname] = field
+        Model.declare_field(
+            self.registry, fieldname, field,
+            registry_name,
+            properties,
+            {})
+
     def insert_core_bases(self, bases, properties):
         bases.append(SingletonMixin)
+        bases.extend([x for x in self.registry.loaded_cores['SqlBase']])
         bases.append(self.registry.declarativebase)
         bases.extend([x for x in self.registry.loaded_cores['Base']])
 
     def build_model(self, modelname, bases, properties):
+        self.declare_field_for('id', Integer(primary_key=True), properties)
         return type(modelname, tuple(bases), properties)
