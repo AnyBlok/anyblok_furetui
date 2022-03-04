@@ -613,6 +613,7 @@ class Resource:
             'Model.FuretUI.Resource.List': 'List',
             'Model.FuretUI.Resource.Thumbnail': 'Thumbnail',
             'Model.FuretUI.Resource.Form': 'Form',
+            'Model.FuretUI.Resource.Singleton': 'Singleton',
             'Model.FuretUI.Resource.Dashboard': 'Dashboard',
         }
 
@@ -1082,11 +1083,8 @@ class Tags:
         return [x.to_dict('key', 'label') for x in query]
 
 
-@Declarations.register(Declarations.Model.FuretUI.Resource)
-class Form(
-    Declarations.Model.FuretUI.Resource,
-    Declarations.Mixin.Template
-):
+@Declarations.register(Declarations.Mixin)  # noqa
+class MixinForm:
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use(
                     'id').options(ondelete='cascade'))
@@ -1094,8 +1092,6 @@ class Form(
                     'name').options(ondelete='cascade'),
                    nullable=False, size=256)
     template = String()
-    polymorphic_columns = String()
-    # TODO field Selection RO / RW / WO
 
     def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
@@ -1142,6 +1138,16 @@ class Form(
         })
         return [res]
 
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Form(
+    Declarations.Mixin.MixinForm,
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
+    polymorphic_columns = String()
+    # TODO field Selection RO / RW / WO
+
     def get_polymorphic_definitions(self, **kwargs):
         res = []
         forms = []
@@ -1178,13 +1184,24 @@ class Form(
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
-class PolymorphicForm():
+class PolymorphicForm:
     id = Integer(primary_key=True)
     label = String()
     parent = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
+
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Singleton(
+    Declarations.Mixin.MixinForm,
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
+
+    def get_definitions(self, **kwargs):
+        return self.get_classical_definitions(**kwargs)
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
