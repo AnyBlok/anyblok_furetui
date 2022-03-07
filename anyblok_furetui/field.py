@@ -142,13 +142,13 @@ class Contextual(Field):
 
             if entry is None:
                 if not identity_values['fallback']:
-                    return identity_values['default']
+                    return None
 
                 if identity_values['fallback'] != identity_values['context']:
                     entry = o2m.filter_by(
                         **identity_values['filter_fallback']).one_or_none()
                     if entry is None:
-                        return identity_values['default']
+                        return None
 
             return getattr(entry, self.fieldname)
 

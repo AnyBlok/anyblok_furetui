@@ -29,7 +29,6 @@ class ContextualMixin:
             'context': context,
             'one2many': getattr(self, f'__{identity}'),
             'filter': {identity: context},
-            'default': self.__class__.get_default_values().get(identity),
             'Model': getattr(self, identity.capitalize()),
             'fallback': fallback,
             'filter_fallback': {identity: fallback},
@@ -74,6 +73,14 @@ class ContextualMixin:
                 Model.delete_sql_statement().where(Model.relate == self))
 
         super().delete(*a, **kw)
+
+    def to_dict(self, *fields):
+        res = super().to_dict(*fields)
+        for field in fields:
+            if hasattr(res[field], '__registry_name__'):
+                res[field] = res[field].to_primary_keys()
+
+        return res
 
 
 class SingletonMixin:

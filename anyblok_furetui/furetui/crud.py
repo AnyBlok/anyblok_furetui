@@ -63,6 +63,9 @@ class CRUD:
         ])
         joins = []
         for field, data in fields.items():
+            if fd[field].get('identity'):
+                continue
+
             load_method = joinedload
             if fd[field]['type'] in ('One2Many', 'Many2Many'):
                 load_method = subqueryload
