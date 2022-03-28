@@ -186,6 +186,9 @@ class SqlBase(SqlMixin):
         fd = cls.fields_description()
         for key, value in values.items():
             if fd[key]['type'] in ('Many2One', 'One2One'):
+                if value is None:
+                    continue
+
                 res.extend([
                     {
                         "type": "UPDATE_CHANGE",
