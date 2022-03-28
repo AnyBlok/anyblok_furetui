@@ -286,6 +286,43 @@ class TestContextualModel:
         assert fd == fd2
 
 
+@pytest.fixture(scope="class")
+def registry_contextual_default_model(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(
+        ["furetui"], funct_contextual_model,
+        ColumnType=Integer, default='foo')
+    request.addfinalizer(registry.close)
+    return registry
+
+
+class TestContextualDefaultModel:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_contextual_default_model):
+        registry = registry_contextual_default_model
+        transaction = registry.begin_nested()
+
+        self.project1 = registry.Project.insert()
+
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_default(self, registry_contextual_default_model):
+        registry = registry_contextual_default_model
+        assert registry.Test.get_default_values().get('other') == 'foo'
+
+    def test_default2(self, registry_contextual_default_model):
+        registry = registry_contextual_default_model
+        assert registry.Test.Project.get_default_values().get('other') == 'foo'
+
+    def test_default3(self, registry_contextual_default_model):
+        registry = registry_contextual_default_model
+        with registry.Project.context.set(project=self.project1):
+            test = registry.Test.insert()
+            assert test.other == 'foo'
+
+
 def funct_contextual_model_multi_pk():
 
     @Declarations.register(Declarations.Model)

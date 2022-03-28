@@ -35,6 +35,20 @@ class ContextualMixin:
         }
 
     @classmethod
+    def get_default_values(cls, *a, **kw):
+        res = super().get_default_values(*a, **kw)
+        for contextual in cls.define_contextual_models():
+            Model = getattr(cls, contextual.capitalize())
+            contextual_default = Model.get_default_values(*a, **kw)
+            res.update({
+                x: contextual_default[x]
+                for x in cls.loaded_contextual_fields
+                if x in contextual_default
+            })
+
+        return res
+
+    @classmethod
     def insert(cls, **kwargs):
         contextual = {}
         values = kwargs.copy()
