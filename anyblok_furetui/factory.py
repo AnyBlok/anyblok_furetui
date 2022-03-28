@@ -249,6 +249,12 @@ class ContextualModelFactory(ModelFactory):
             bases_ = TypeList(
                 Model, self.registry, model_properties['__registry_name__'],
                 transformation_models[name])
+
+            mixins = related_models[name].get('mixins', [])
+            if not isinstance(mixins, list):
+                mixins = [mixins]
+
+            bases_.extend(mixins)
             bases_.extend([x for x in self.registry.loaded_cores['SqlBase']])
             bases_.append(self.registry.declarativebase)
             bases_.extend([x for x in self.registry.loaded_cores['Base']])

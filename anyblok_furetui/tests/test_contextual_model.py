@@ -29,6 +29,19 @@ Model = Declarations.Model
 
 def funct_contextual_model(ColumnType=None, **kwargs):
 
+    class ProjectMixin:
+
+        @classmethod
+        def get_others(cls):
+            return {
+                'foo': 'bar',
+                'bar': 'foo',
+            }
+
+        @classmethod
+        def get_other(cls):
+            return 'foo'
+
     @Declarations.register(Declarations.Model)
     class Project:
 
@@ -43,6 +56,9 @@ def funct_contextual_model(ColumnType=None, **kwargs):
             res.update({
                 'project': {
                     'model': cls.anyblok.Project,
+                    'mixins': [
+                        ProjectMixin,
+                    ]
                 },
             })
             return res
@@ -286,12 +302,19 @@ class TestContextualModel:
         assert fd == fd2
 
 
-@pytest.fixture(scope="class")
+DEFAULT = [
+    [String, {'default': 'foo'}],
+    [Selection, {'selections': 'get_others', 'default': 'foo'}],
+    [Selection, {'selections': 'get_others', 'default': 'get_other'}],
+]
+
+
+@pytest.fixture(scope="class", params=DEFAULT)
 def registry_contextual_default_model(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
         ["furetui"], funct_contextual_model,
-        ColumnType=Integer, default='foo')
+        ColumnType=request.param[0], **request.param[1])
     request.addfinalizer(registry.close)
     return registry
 
