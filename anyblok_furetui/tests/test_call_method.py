@@ -109,7 +109,7 @@ def add_mixin_in_registry():
 def add_model_in_registry():
     @register(Model)
     class Test(Mixin.MixinTest):
-        code = String(primary_key=True)
+        code = String(primary_key=True, default='foo')
 
         def not_decorated(cls):
             return True  # must be raised
@@ -251,7 +251,7 @@ def registry_call_method(request, webserver, bloks_loaded):  # noqa F811
 
 class TestCallMethod:
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_call_method, clear_context):
+    def transact(self, request, registry_call_method):
         transaction = registry_call_method.begin_nested()
         request.addfinalizer(transaction.rollback)
         return
@@ -261,6 +261,9 @@ class TestCallMethod:
         if not params:
             params = {'data': {'param': 1}, 'pks': {'code': 'test'}}
         return webserver.post_json(url, params, status=status)
+
+    def test_get_default_values(self, registry_call_method):
+        assert registry_call_method.Test.get_default_values() == {'code': 'foo'}
 
     def test_default_values_without_permission(
         self, webserver, registry_call_method

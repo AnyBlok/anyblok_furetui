@@ -211,6 +211,7 @@ class Template:
         description['menu'] = menu.id if menu else None
         description['fields'] = fields
         description['filter_by'] = filter_by
+        description['tags'] = field.attrib.get('tags', '')
         description['limit'] = field.attrib.get('limit', 10)
 
         if 'max-height' in field.attrib:
@@ -613,6 +614,7 @@ class Resource:
             'Model.FuretUI.Resource.List': 'List',
             'Model.FuretUI.Resource.Thumbnail': 'Thumbnail',
             'Model.FuretUI.Resource.Form': 'Form',
+            'Model.FuretUI.Resource.Singleton': 'Singleton',
             'Model.FuretUI.Resource.Dashboard': 'Dashboard',
         }
 
@@ -872,12 +874,61 @@ class List(Declarations.Model.FuretUI.Resource):
         attributes['pks'] = pks
         return attributes
 
+    def update_interface_attributes(self, el, fields2read, *attributes):
+        config = {}
+        for key in attributes:
+            value = el.attrib.get(key)
+            if value == '':
+                value = '1'
+            elif value == key:
+                value = '1'
+
+            if not value:
+                continue
+            fields = get_fields_from_string(value)
+            config[key] = value
+            fields2read.extend(fields)
+
+        if config:
+            config['props'] = initial_props = {}
+            for key in el.attrib:
+                if key in attributes:
+                    continue
+
+                initial_props[key] = el.attrib.get(key)
+
+        return config
+
+    def clean_unnecessary_attributes(self, el, *allows):
+        for key in el.attrib:
+            if key not in allows:
+                del el.attrib[key]
+
+    def replace_divs(self, template, fields2read):
+        nsmap = {'v-bind': 'https://vuejs.org/'}
+        etree.cleanup_namespaces(
+            template, top_nsmap=nsmap, keep_ns_prefixes=['v-bind'])
+        fields = template.findall('.//div')
+        for el in fields:
+            config = self.update_interface_attributes(
+                el, fields2read, 'hidden', 'readonly')
+            if not config:
+                continue
+
+            el.tag = 'furet-ui-div'
+            self.clean_unnecessary_attributes(el, 'class')
+            el.attrib['{%s}resource' % el.nsmap['v-bind']] = "resource"
+            el.attrib['{%s}data' % el.nsmap['v-bind']] = "data"
+            el.attrib['{%s}config' % el.nsmap['v-bind']] = str(config)
+
     def extract_slot(self, field, attributes, fields2read):
         if not (bool(field.getchildren()) or bool(field.text)):
             return
 
         slot = deepcopy(field)
         slot.tag = 'div'
+        self.replace_divs(slot, fields2read)
+
         for x in slot.attrib.keys():
             del slot.attrib[x]
 
@@ -1078,11 +1129,8 @@ class Tags:
         return [x.to_dict('key', 'label') for x in query]
 
 
-@Declarations.register(Declarations.Model.FuretUI.Resource)
-class Form(
-    Declarations.Model.FuretUI.Resource,
-    Declarations.Mixin.Template
-):
+@Declarations.register(Declarations.Mixin)  # noqa
+class MixinForm:
     id = Integer(primary_key=True,
                  foreign_key=Declarations.Model.FuretUI.Resource.use(
                     'id').options(ondelete='cascade'))
@@ -1090,8 +1138,6 @@ class Form(
                     'name').options(ondelete='cascade'),
                    nullable=False, size=256)
     template = String()
-    polymorphic_columns = String()
-    # TODO field Selection RO / RW / WO
 
     def get_classical_definitions(self, **kwargs):
         res = self.to_dict('id', 'type', 'model')
@@ -1138,6 +1184,16 @@ class Form(
         })
         return [res]
 
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Form(
+    Declarations.Mixin.MixinForm,
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
+    polymorphic_columns = String()
+    # TODO field Selection RO / RW / WO
+
     def get_polymorphic_definitions(self, **kwargs):
         res = []
         forms = []
@@ -1174,13 +1230,24 @@ class Form(
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
-class PolymorphicForm():
+class PolymorphicForm:
     id = Integer(primary_key=True)
     label = String()
     parent = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
+
+
+@Declarations.register(Declarations.Model.FuretUI.Resource)
+class Singleton(
+    Declarations.Mixin.MixinForm,
+    Declarations.Model.FuretUI.Resource,
+    Declarations.Mixin.Template
+):
+
+    def get_definitions(self, **kwargs):
+        return self.get_classical_definitions(**kwargs)
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
