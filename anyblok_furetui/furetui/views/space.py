@@ -18,7 +18,6 @@ def get_space(request):
     # check user is disconnected
     # check user has access right
     with saved_errors_in_request(request):
-        userId = request.authenticated_userid
         registry = request.anyblok.registry
         code = request.matchdict['code']
         space = registry.FuretUI.Space.query().get(code)
@@ -27,7 +26,7 @@ def get_space(request):
             res = [
                 {
                     'type': 'UPDATE_CURRENT_LEFT_MENUS',
-                    'menus': space.get_menus(userId),
+                    'menus': space.get_menus(),
                 },
             ]
         return res

@@ -41,22 +41,21 @@ class Menu:
 
         return mapper_args
 
-    def check_acl(self, authenticated_userid):
+    def check_acl(self):
         return True
 
     @classmethod
-    def rec_get_children_menus(cls, children, authenticated_userid,
-                               resource=None):
+    def rec_get_children_menus(cls, children, resource=None):
         res = []
         for child in children:
-            if child.check_acl(authenticated_userid):
+            if child.check_acl():
                 children = []
                 definition = child.to_dict(
                     'id', 'order', 'label', 'icon_code', 'icon_type')
 
                 if child.menu_type == 'Model.FuretUI.Menu.Node':
                     children = cls.rec_get_children_menus(
-                        child.children, authenticated_userid, resource=resource)
+                        child.children, resource=resource)
                 elif child.menu_type == 'Model.FuretUI.Menu.Resource':
                     definition['resource'] = child.resource.id
                     definition.update(child.to_dict(
@@ -73,7 +72,7 @@ class Menu:
         return res
 
     @classmethod
-    def get_menus_from(cls, authenticated_userid, space=None, resource=None):
+    def get_menus_from(cls, space=None, resource=None):
         menus = []
         Menu = cls.anyblok.FuretUI.Menu
         MRo = cls.anyblok.FuretUI.Menu.Root
@@ -93,7 +92,7 @@ class Menu:
                 continue
 
             mres = cls.rec_get_children_menus(
-                mro.children, authenticated_userid, resource=resource)
+                mro.children, resource=resource)
 
             if not mres:
                 continue
@@ -178,8 +177,8 @@ class Resource(
     order_by = String()
     filters = Json(default={})
 
-    def check_acl(self, authenticated_userid):
-        return self.resource.check_acl(authenticated_userid)
+    def check_acl(self):
+        return self.resource.check_acl()
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)

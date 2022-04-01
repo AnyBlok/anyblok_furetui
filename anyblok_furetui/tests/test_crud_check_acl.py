@@ -166,20 +166,22 @@ def test_check_acl_read_forbidden(
 ):
     for perm in perms:
         set_authz(registry, model=perm["model"], **perm["perms"])
-    with pytest.raises(HTTPForbidden) as ex:
-        registry.FuretUI.CRUD.read(
-            DummyRequest(
-                "user-test",
-                {
-                    "QUERY_STRING": urlencode(
-                        query={
-                            "context[model]": model,
-                            "context[fields]": fields,
-                        }
-                    )
-                },
+    with registry.FuretUI.context.set(userid="user-test"):
+        with pytest.raises(HTTPForbidden) as ex:
+            registry.FuretUI.CRUD.read(
+                DummyRequest(
+                    "user-test",
+                    {
+                        "QUERY_STRING": urlencode(
+                            query={
+                                "context[model]": model,
+                                "context[fields]": fields,
+                            }
+                        )
+                    },
+                )
             )
-        )
+
     assert expected_error == ex.value.detail
 
 
@@ -241,22 +243,23 @@ def test_check_acl_read_forbidden(
 def test_check_acl_read(registry, model, fields, expected_total, perms):
     for perm in perms:
         set_authz(registry, model=perm["model"], **perm["perms"])
-    assert (
-        registry.FuretUI.CRUD.read(
-            DummyRequest(
-                "user-test",
-                {
-                    "QUERY_STRING": urlencode(
-                        query={
-                            "context[model]": model,
-                            "context[fields]": fields,
-                        }
-                    )
-                },
-            )
-        )["total"]
-        == expected_total
-    )
+    with registry.FuretUI.context.set(userid="user-test"):
+        assert (
+            registry.FuretUI.CRUD.read(
+                DummyRequest(
+                    "user-test",
+                    {
+                        "QUERY_STRING": urlencode(
+                            query={
+                                "context[model]": model,
+                                "context[fields]": fields,
+                            }
+                        )
+                    },
+                )
+            )["total"]
+            == expected_total
+        )
 
 
 def test_check_acl_update_forbidden(registry, record):
@@ -278,14 +281,15 @@ def test_check_acl_update_forbidden(registry, record):
 
 def test_check_acl_update(registry, record):
     set_authz(registry, update=True)
-    assert registry.FuretUI.CRUD.update(
-        "Model.Pet",
-        {"id": record.id},
-        {
-            "Model.Pet": {f'[["id",{record.id}]]': {"name": "renamed"}},
-        },
-        "user-test",
-    )
+    with registry.FuretUI.context.set(userid="user-test"):
+        assert registry.FuretUI.CRUD.update(
+            "Model.Pet",
+            {"id": record.id},
+            {
+                "Model.Pet": {f'[["id",{record.id}]]': {"name": "renamed"}},
+            },
+            "user-test",
+        )
 
 
 def test_check_acl_delete_forbidden(registry, record):
@@ -304,11 +308,12 @@ def test_check_acl_delete_forbidden(registry, record):
 
 def test_check_acl_delete(registry, record):
     set_authz(registry, delete=True)
-    assert (
-        registry.FuretUI.CRUD.delete(
-            "Model.Pet",
-            {"id": record.id},
-            "user-test",
+    with registry.FuretUI.context.set(userid="user-test"):
+        assert (
+            registry.FuretUI.CRUD.delete(
+                "Model.Pet",
+                {"id": record.id},
+                "user-test",
+            )
+            is None
         )
-        is None
-    )

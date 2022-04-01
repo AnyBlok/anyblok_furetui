@@ -168,7 +168,8 @@ class FuretUI:
         cls.context.set({'userid': authenticated_userid})
 
     @classmethod
-    def check_acl(cls, userid, resource, permission):
+    def check_acl(cls, resource, permission):
+        userid = cls.context.get('userid')
         return cls.anyblok.Pyramid.check_acl(userid, resource, permission)
 
     @classmethod
@@ -185,9 +186,7 @@ class FuretUI:
         permission = definition['permission']
         userId = request.authenticated_userid
         if permission is not None:
-            if not cls.check_acl(
-                request.authenticated_userid, model, permission
-            ):
+            if not cls.check_acl(model, permission):
                 raise HTTPForbidden(
                     f"User '{userId}' has to be granted '{permission}' "
                     f"permission in order to call this method '{call}' on "

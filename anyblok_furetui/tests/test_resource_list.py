@@ -1348,8 +1348,9 @@ class TestResourceListMany2Many:
 class TestResourceListButtons:
 
     @pytest.fixture(autouse=True)
-    def transact(self, request, registry_with_buttons):
+    def transact(self, request, registry_with_buttons, clear_context):
         transaction = registry_with_buttons.begin_nested()
+        registry_with_buttons.FuretUI.context.set(userid='test')
         request.addfinalizer(transaction.rollback)
         return
 
