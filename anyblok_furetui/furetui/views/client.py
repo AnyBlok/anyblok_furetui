@@ -27,8 +27,8 @@ client = Service(name='client_furet_ui',
 
 @client.get()
 def get_client_file(request):
-    blok_name, static_path = Configuration.get('furetui_client_static',
-                                               'furetui:static').split(':')
+    blok_name, static_path = Configuration.get(
+        'furetui_client_static', 'furetui:static/furet-ui').split(':')
     blok_path = BlokManager.getPath(blok_name)
     path = join(blok_path, *static_path.split('/'), 'index.html')
     return FileResponse(path, request=request, content_type='text/html')
