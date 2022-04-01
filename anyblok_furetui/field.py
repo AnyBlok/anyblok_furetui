@@ -311,3 +311,9 @@ class Contextual(Field):
         field = Field.query().filter_by(model=model2, name=self.fieldname).one()
         res.update(field._description())
         res.update({'identity': self.identity, 'identity_model': model2})
+
+    def __getattr__(self, key):
+        if key in self.field.__dict__:
+            return getattr(self.field, key)
+
+        return super().__getattr__(key)

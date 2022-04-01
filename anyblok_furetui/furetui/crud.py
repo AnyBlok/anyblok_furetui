@@ -57,7 +57,11 @@ class CRUD:
         load = load_only(*[
             f
             for f in fields.pop("__fields")
-            if fd[f]['type'] != 'Function'
+            if (
+                fd[f]['type'] != 'Function' and
+                not fd[f].get('identity')
+            )
+
         ])
         joins = []
         for field, data in fields.items():
