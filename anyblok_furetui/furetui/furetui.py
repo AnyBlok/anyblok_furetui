@@ -42,7 +42,7 @@ def update_translation(i18n, translations, path=""):
 class FuretUI:
 
     @classmethod
-    def pre_load(cls):
+    def pre_load(cls, lang='en'):
         logger.info('Preload furet UI component')
         templates = Template()
         i18n = {}
@@ -59,17 +59,19 @@ class FuretUI:
                     node = i18n.setdefault(local, {})
                     update_translation(node, translations)
 
-        templates.compile()
+        templates.compile(lang=lang)
         cls.anyblok.furetui_templates = templates
         cls.anyblok.furetui_i18n = i18n
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        lang = cls.context.get('lang', 'en')
         reload_at_change = Configuration.get('pyramid.reload_all', False)
         if reload_at_change:
-            cls.pre_load()
+            cls.pre_load(lang=lang)
 
-        return cls.anyblok.furetui_templates.get_template(*args, **kwargs)
+        return cls.anyblok.furetui_templates.get_template(
+            *args, lang=lang, **kwargs)
 
     @classmethod
     def get_default_path(cls, authenticated_userid):

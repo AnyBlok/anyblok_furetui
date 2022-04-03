@@ -38,22 +38,26 @@ class Template:
         self.compiled = {}
         self.known = {}
 
-    def get_all_template(self):
+    def get_all_template(self, lang='en'):
         """ Return all the template in string format """
         res = []
-        for tmpl in self.compiled.keys():
-            res.append(self.get_template(tmpl))
+        for tmpl in self.compiled.get(lang, {}).keys():
+            res.append(self.get_template(tmpl, lang=lang))
 
         res = ''.join(res)
         return res.strip()
 
-    def get_template(self, name, tostring=True, first_children=False):
+    def get_template(self, name, lang='en', tostring=True,
+                     first_children=False):
         """return a specific template
 
         :param name: name of the template
         :rtype: str
         """
-        tmpl = deepcopy(self.compiled[name])
+        if lang not in self.compiled:
+            self.compile(lang=lang)
+
+        tmpl = deepcopy(self.compiled[lang][name])
         if self.forclient:
             tmpl.tag = 'script'
             if tmpl.attrib.get('type') is None:
@@ -184,15 +188,15 @@ class Template:
 
         return res
 
-    def xpath(self, name, expression, mult):
+    def xpath(self, lang, name, expression, mult):
         """ Apply the xpath """
-        tmpl = self.compiled[name]
+        tmpl = self.compiled[lang][name]
         if mult:
             return tmpl.findall(expression)
         else:
             return [tmpl.find(expression)]
 
-    def xpath_insert(self, name, expression, mult, elements):
+    def xpath_insert(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -206,13 +210,13 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
+        els = self.xpath(lang, name, expression, mult)
         for el in els:
             nbchildren = len(el.getchildren())
             for i, subel in enumerate(elements):
                 el.insert(i + nbchildren, subel)
 
-    def xpath_insertBefore(self, name, expression, mult, elements):
+    def xpath_insertBefore(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -226,15 +230,15 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j, subel)
 
-    def xpath_insertAfter(self, name, expression, mult, elements):
+    def xpath_insertAfter(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -248,15 +252,15 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j + 1, subel)
 
-    def xpath_remove(self, name, expression, mult):
+    def xpath_remove(self, lang, name, expression, mult):
         """ Apply a xpath remove::
 
             <template id="..." extend="other template">
@@ -267,14 +271,14 @@ class Template:
         :param expresion: xpath regex to find the good node
         :param mult: If true, xpath can apply on all the element found
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for cel in parent.getchildren():
                 if cel in els:
                     parent.remove(cel)
 
-    def xpath_replace(self, name, expression, mult, elements):
+    def xpath_replace(self, lang, name, expression, mult, elements):
         """ Apply a xpath replace::
 
             <template id="..." extend="other template">
@@ -288,8 +292,8 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to replace
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
@@ -297,7 +301,7 @@ class Template:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j, subel)
 
-    def xpath_attributes(self, name, expression, mult, attributes):
+    def xpath_attributes(self, lang, name, expression, mult, attributes):
         """ Apply a xpath attributes::
 
             <template id="..." extend="other template">
@@ -312,7 +316,7 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :attributes: attributes to apply
         """
-        els = self.xpath(name, expression, mult)
+        els = self.xpath(lang, name, expression, mult)
         for el in els:
             for k, v in attributes.items():
                 el.set(k, v)
@@ -330,13 +334,13 @@ class Template:
 
         return res
 
-    def get_elements(self, name):
+    def get_elements(self, lang, name):
         elements = [deepcopy(x) for x in self.known[name]['tmpl']]
         for el in elements:
             for el_call in el.findall('.//call'):
                 parent = el_call.getparent()
                 index = parent.index(el_call)
-                tmpl = self.compile_template(el_call.attrib['template'])
+                tmpl = self.compile_template(lang, el_call.attrib['template'])
                 for child in tmpl.getchildren():
                     parent.insert(index, deepcopy(child))
                     index += 1
@@ -345,58 +349,61 @@ class Template:
 
         return elements
 
-    def apply_xpath(self, val, name):
+    def apply_xpath(self, val, lang, name):
         action = val['action']
         expression = val['expression']
         mult = val['mult']
         els = val['elements']
         if action == 'insert':
-            self.xpath_insert(name, expression, mult, els)
+            self.xpath_insert(lang, name, expression, mult, els)
         elif action == 'insertBefore':
-            self.xpath_insertBefore(name, expression, mult, els)
+            self.xpath_insertBefore(lang, name, expression, mult, els)
         elif action == 'insertAfter':
-            self.xpath_insertAfter(name, expression, mult, els)
+            self.xpath_insertAfter(lang, name, expression, mult, els)
         elif action == 'replace':
-            self.xpath_replace(name, expression, mult, els)
+            self.xpath_replace(lang, name, expression, mult, els)
         elif action == 'remove':
-            self.xpath_remove(name, expression, mult)
+            self.xpath_remove(lang, name, expression, mult)
         elif action == 'attributes':
             for attributes in self.get_xpath_attributes(els):
                 self.xpath_attributes(
-                    name, expression, mult, attributes)
+                    lang, name, expression, mult, attributes)
         else:
             raise TemplateException("Unknown action %r" % action)
 
-    def compile_template(self, name):
+    def compile_template(self, lang, name):
         """ compile a specific template
 
         :param name: id str of the template
         """
-        if name in self.compiled:
-            return self.compiled[name]
+        if lang not in self.compiled:
+            self.compiled[lang] = {}
+
+        if name in self.compiled[lang]:
+            return self.compiled[lang][name]
 
         extend = self.known[name].get('extend')
-        elements = self.get_elements(name)
+        elements = self.get_elements(lang, name)
 
         if extend:
-            tmpl = deepcopy(self.compile_template(extend))
+            tmpl = deepcopy(self.compile_template(lang, extend))
             tmpl.set('id', name)
         else:
             tmpl = elements[0]
             elements = elements[1:]
 
-        self.compiled[name] = tmpl
+        self.compiled[lang][name] = tmpl
 
         for el in elements:
             for val in self.get_xpath(el):
-                self.apply_xpath(val, name)
+                self.apply_xpath(val, lang, name)
 
-        return self.compiled[name]
+        return self.compiled[lang][name]
 
-    def compile(self):
+    def compile(self, lang='en'):
         """ compile all the templates """
         for tmpl in self.known.keys():
-            self.compile_template(tmpl)
+            self.compile_template(lang, tmpl)
 
     def copy(self):
         """ copy all the templates """

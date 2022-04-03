@@ -213,6 +213,7 @@ class Template:
         description['filter_by'] = filter_by
         description['tags'] = field.attrib.get('tags', '')
         description['limit'] = field.attrib.get('limit', 10)
+        description['colors'] = field.attrib.get('color', '')
 
         if 'max-height' in field.attrib:
             description['maxheight'] = field.attrib.get('max-height')
