@@ -7,6 +7,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import polib
+from os import path
+from pathlib import Path
+from datetime import datetime
 from anyblok.declarations import Declarations
 from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
@@ -73,6 +77,29 @@ class FuretUI:
 
         return cls.anyblok.furetui_templates.get_template(
             *args, lang=lang, **kwargs)
+
+    @classmethod
+    def export_i18n(cls, blok_name):
+        b = BlokManager.get(blok_name)
+        bpath = BlokManager.getPath(blok_name)
+        po = polib.POFile()
+        po.metadata = {
+            'Project-Id-Version': b.version,
+            'POT-Creation-Date': datetime.now().isoformat(),
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Transfer-Encoding': '8bit',
+        }
+        if hasattr(b, 'furetui'):
+            templates = Template()
+            for template in b.furetui.get('templates', []):
+                with open(join(bpath, template), 'r') as fp:
+                    templates.load_file(fp, ignore_missing_extend=True)
+
+            templates.export_i18n(po)
+
+        Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
+        po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))
 
     @classmethod
     def get_default_path(cls, authenticated_userid):

@@ -1,4 +1,5 @@
 import re
+import polib
 from lxml import html, etree
 from copy import deepcopy
 from logging import getLogger
@@ -88,7 +89,7 @@ class Template:
         """
         return element
 
-    def load_file(self, openedfile):
+    def load_file(self, openedfile, ignore_missing_extend=False):
         """ Load a file
 
         File format ::
@@ -112,7 +113,8 @@ class Template:
             raise
 
         if element.tag.lower() == 'template':
-            self.load_template(element)
+            self.load_template(
+                element, ignore_missing_extend=ignore_missing_extend)
         elif element.tag.lower() == 'templates':
             for _element in element.getchildren():
                 if _element.tag is etree.Comment:
@@ -120,7 +122,8 @@ class Template:
                 elif _element.tag is html.HtmlComment:
                     continue
                 elif _element.tag.lower() == 'template':
-                    self.load_template(_element)
+                    self.load_template(
+                        _element, ignore_missing_extend=ignore_missing_extend)
                 else:
                     raise TemplateException(
                         "Only 'template' can be loaded not %r in file %r" % (
@@ -131,7 +134,7 @@ class Template:
                 "Only 'template' or 'templates' can be loaded not %r in %r"
                 % (element.tag, openedfile))
 
-    def load_template(self, element):
+    def load_template(self, element, ignore_missing_extend=False):
         """ Load one specific template
 
         :param element: html.Element
@@ -152,9 +155,13 @@ class Template:
                 self.known[name]['extend'] = extend
             else:
                 if extend not in self.known:
-                    raise TemplateException(
-                        "Extend an unexisting template %r" %
-                        html.tostring(element))
+                    if ignore_missing_extend:
+                        self.known[extend] = {'tmpl': []}
+                    else:
+                        raise TemplateException(
+                            "Extend an unexisting template %r" %
+                            html.tostring(element))
+
                 name = extend
 
         if not name:
@@ -404,6 +411,23 @@ class Template:
 
         self.compile_template_i18n(self.compiled[lang][name], callback)
         return self.compiled[lang][name]
+
+    def export_i18n(self, po):
+
+        def callback(name):
+            def _callback(text):
+                entry = polib.POEntry(
+                    msgctxt=f'template:{name}',
+                    msgid=text,
+                    msgstr='',
+                )
+                po.append(entry)
+
+            return _callback
+
+        for name in self.known:
+            for tmpl in self.known[name]['tmpl']:
+                self.compile_template_i18n(tmpl, callback(name))
 
     def compile_template_i18n(self, tmpl, action_callback):
 

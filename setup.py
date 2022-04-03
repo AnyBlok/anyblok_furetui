@@ -21,7 +21,8 @@ requires = [
     'furl',
     'python-magic',
     'simplejson',
-    'SQLAlchemy>=1.3.6'
+    'SQLAlchemy>=1.3.6',
+    'polib',
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -41,6 +42,7 @@ with open(
 
 console_scripts = [
     'furetui_user=anyblok_furetui.scripts:furetui_user',
+    'export-translation=anyblok_furetui.scripts:export_i18n',
 ]
 
 
