@@ -1,3 +1,4 @@
+import re
 from lxml import html, etree
 from copy import deepcopy
 from logging import getLogger
@@ -398,7 +399,39 @@ class Template:
             for val in self.get_xpath(el):
                 self.apply_xpath(val, lang, name)
 
+        self.compile_template_i18n(lang, name)
         return self.compiled[lang][name]
+
+    def compile_template_i18n(self, lang, name):
+        tmpl = self.compiled[lang][name]
+
+        def minimify(text):
+            if not text:
+                return text
+
+            res = text.replace('\n', '').replace('\n', '').strip()
+            if re.findall("\{\{ *(data|field|fields)\.\w* *\}\}", res):
+                return None
+
+            return res
+
+        def compile_template_i18n_rec(el):
+            text = minimify(el.text)
+            tail = minimify(el.tail)
+            if text:
+                el.text = self.get_i18n_for(lang, name, text)
+
+            if tail:
+                el.tail = self.get_i18n_for(lang, name, tail)
+
+            for child in el.getchildren():
+                compile_template_i18n_rec(child)
+
+        compile_template_i18n_rec(tmpl)
+
+    def get_i18n_for(self, lang, name, text):
+        print("ask i18n for %r, 'template', %r, %r" % (lang, name, text))
+        return text  # TODO
 
     def compile(self, lang='en'):
         """ compile all the templates """
