@@ -399,30 +399,33 @@ class Template:
             for val in self.get_xpath(el):
                 self.apply_xpath(val, lang, name)
 
-        self.compile_template_i18n(lang, name)
+        def callback(text):
+            return self.get_i18n_for(lang, name, text)
+
+        self.compile_template_i18n(self.compiled[lang][name], callback)
         return self.compiled[lang][name]
 
-    def compile_template_i18n(self, lang, name):
-        tmpl = self.compiled[lang][name]
+    def compile_template_i18n(self, tmpl, action_callback):
 
         def minimify(text):
             if not text:
                 return text
 
-            res = text.replace('\n', '').replace('\n', '').strip()
-            if re.findall("\{\{ *(data|field|fields)\.\w* *\}\}", res):
+            text = text.replace('\n', '').replace('\n', '').strip()
+            regex = "\{\{ *(data|field|fields)\.\w* *\}\}"  # noqa W605
+            if re.findall(regex, text):
                 return None
 
-            return res
+            return text
 
         def compile_template_i18n_rec(el):
             text = minimify(el.text)
             tail = minimify(el.tail)
             if text:
-                el.text = self.get_i18n_for(lang, name, text)
+                el.text = action_callback(text)
 
             if tail:
-                el.tail = self.get_i18n_for(lang, name, tail)
+                el.tail = action_callback(tail)
 
             for child in el.getchildren():
                 compile_template_i18n_rec(child)

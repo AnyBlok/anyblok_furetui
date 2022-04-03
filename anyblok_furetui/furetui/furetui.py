@@ -68,7 +68,8 @@ class FuretUI:
         lang = cls.context.get('lang', 'en')
         reload_at_change = Configuration.get('pyramid.reload_all', False)
         if reload_at_change:
-            cls.pre_load(lang=lang)
+            if cls.context.get('reload_template', True):
+                cls.pre_load(lang=lang)
 
         return cls.anyblok.furetui_templates.get_template(
             *args, lang=lang, **kwargs)
@@ -218,8 +219,11 @@ class FuretUI:
     @classmethod
     def validate_resources(cls):
         res = []
-        res.extend(cls.validate_form_resources())
-        res.extend(cls.validate_list_resources())
+        with cls.context.set(reload_template=False):
+            res.extend(cls.validate_form_resources())
+            res.extend(cls.validate_list_resources())
+            # TODO thumbnail, kanban
+
         return res
 
     @classmethod
