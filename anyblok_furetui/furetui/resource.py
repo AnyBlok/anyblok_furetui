@@ -1237,7 +1237,7 @@ class Form(
         res.append(definition)
         for form in self.forms:
             forms.append({
-                'label': form.label or form.resource.model,
+                'label': form.get_label(),
                 'waiting_value': form.polymorphic_values,
                 'resource_id': form.resource.id,
             })
@@ -1267,6 +1267,24 @@ class PolymorphicForm:
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
+
+    def get_label(self):
+        if not self.label:
+            return self.resource.model
+
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if not mapping:
+            return self.label
+
+        lang = self.context.get('lang', 'en')
+        return Translation.get(
+            lang, f'resource:polymorphicform:{mapping.key}', self.label)
+
+    def get_i18n_to_export(self, external_id):
+        if not self.label:
+            return []
+
+        return [(f'resource:polymorphicform:{external_id}', self.label)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
