@@ -11,6 +11,7 @@
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json, URL
 from anyblok.relationship import Many2One, One2Many
+from .translate import Translation
 
 
 @Declarations.register(Declarations.Model.FuretUI)
@@ -43,6 +44,17 @@ class Menu:
 
     def check_acl(self):
         return True
+
+    def to_dict(self, *a, **kw):
+        res = super().to_dict(*a, **kw)
+        if 'label' in res:
+            mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+            if mapping:
+                lang = self.context.get('lang', 'en')
+                res['label'] = Translation.get(
+                    lang, f'menu:{mapping.key}', res['label'])
+
+        return res
 
     @classmethod
     def rec_get_children_menus(cls, children, resource=None):
@@ -137,6 +149,9 @@ class FuretUIMenu:
                  foreign_key=Declarations.Model.FuretUI.Menu.use('id'))
     label = String(nullable=False)
 
+    def get_i18n_to_export(self, external_id):
+        return [(f'menu:{external_id}', self.label)]
+
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)
 class Root(
@@ -152,6 +167,9 @@ class Root(
     resource = Many2One(model=Declarations.Model.FuretUI.Resource)
     space = Many2One(model=Declarations.Model.FuretUI.Space)
     # TODO check resource space requirement
+
+    def get_i18n_to_export(self, external_id):
+        return [(f'menu:{external_id}', self.label)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)

@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T11:37:05.425574\n"
+"POT-Creation-Date: 2022-04-04T13:18:46.817363\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -21,10 +21,22 @@ msgctxt "template:PyramidRoleForm"
 msgid "Role :"
 msgstr "Rôle :"
 
-msgctxt "space:setting:label"
+msgctxt "space:space_settings:label"
 msgid "Settings"
 msgstr "Configurations"
 
-msgctxt "space:setting:description"
+msgctxt "space:space_settings:description"
 msgid "Global setting of the application"
 msgstr "Configurations générales de l'application"
+
+msgctxt "menu:menu_settings_auth"
+msgid "Authentication and authorization"
+msgstr "Authentifiations et permissions"
+
+msgctxt "menu:menu_setting_auth_user"
+msgid "Users"
+msgstr "Utilisateurs"
+
+msgctxt "menu:menu_setting_auth_role"
+msgid "Roles"
+msgstr "Rôles"

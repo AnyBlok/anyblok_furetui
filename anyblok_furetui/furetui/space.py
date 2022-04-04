@@ -103,10 +103,10 @@ class Space:
     def get_menus(self):
         return self.anyblok.FuretUI.Menu.get_menus_from(space=self)
 
-    def get_i18n_to_export(self):
+    def get_i18n_to_export(self, external_id):
         return [
             (
-                f'space:{self.code}:{field}',
+                f'space:{external_id}:{field}',
                 getattr(self, field),
             )
             for field in ('label', 'description')

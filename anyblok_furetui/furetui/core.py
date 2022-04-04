@@ -224,7 +224,7 @@ class SqlBase(SqlMixin):
                 })
         return res
 
-    def get_i18n_to_export(self):
+    def get_i18n_to_export(self, external_id):
         logger.warning("No translation defined for %r", self)
         return []
 
