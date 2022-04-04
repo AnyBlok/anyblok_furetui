@@ -595,7 +595,7 @@ class Template:
             template.set('class', kwargs['template_class'])
 
         tmpl = self.anyblok.furetui_templates.decode(
-            html.tostring(template).decode('utf-8'))
+            html.tostring(template, encoding='unicode'))
 
         fields2data = re.findall(  # noqa: W605
             "\{\{\s*fields\.\w*\s*\}\}", tmpl)  # noqa W605

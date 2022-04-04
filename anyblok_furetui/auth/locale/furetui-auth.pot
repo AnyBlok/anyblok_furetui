@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T15:28:57.340675\n"
+"POT-Creation-Date: 2022-04-04T16:44:25.699576\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -13,6 +13,14 @@ msgstr ""
 
 msgctxt "template:PyramidRoleForm"
 msgid "Role :"
+msgstr ""
+
+msgctxt "template:PyramidRoleForm:tab"
+msgid "Users"
+msgstr ""
+
+msgctxt "template:PyramidRoleForm:tab"
+msgid "Inheritances"
 msgstr ""
 
 msgctxt "space:space_settings:label"

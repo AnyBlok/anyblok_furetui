@@ -407,8 +407,8 @@ class Template:
             for val in self.get_xpath(el):
                 self.apply_xpath(val, lang, name)
 
-        def callback(text):
-            return self.get_i18n_for(lang, name, text)
+        def callback(text, suffix=''):
+            return self.get_i18n_for(lang, name, text, suffix)
 
         self.compile_template_i18n(self.compiled[lang][name], callback)
         return self.compiled[lang][name]
@@ -416,9 +416,13 @@ class Template:
     def export_i18n(self, po):
 
         def callback(name):
-            def _callback(text):
+            def _callback(text, suffix=''):
+                context = f'template:{name}'
+                if suffix:
+                    context += ':' + suffix
+
                 entry = polib.POEntry(
-                    msgctxt=f'template:{name}',
+                    msgctxt=context,
                     msgid=text,
                     msgstr='',
                 )
@@ -452,13 +456,19 @@ class Template:
             if tail:
                 el.tail = action_callback(tail)
 
+            if el.tag == 'tab':
+                el.attrib['label'] = action_callback(
+                    el.attrib['label'], suffix='tab')
+
             for child in el.getchildren():
                 compile_template_i18n_rec(child)
 
         compile_template_i18n_rec(tmpl)
 
-    def get_i18n_for(self, lang, name, text):
+    def get_i18n_for(self, lang, name, text, suffix):
         context = f'template:{name}'
+        if suffix:
+            context += ':' + suffix
         return Translation.get(lang, context, text)
 
     def compile(self, lang='en'):
