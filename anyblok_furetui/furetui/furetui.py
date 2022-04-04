@@ -114,6 +114,17 @@ class FuretUI:
 
             templates.export_i18n(po)
 
+        Mapping = cls.anyblok.IO.Mapping
+        for mapping in Mapping.query().filter_by(blokname=blok_name):
+            obj = Mapping.get(mapping.model, mapping.key)
+            for context, text in obj.get_i18n_to_export():
+                entry = polib.POEntry(
+                    msgctxt=context,
+                    msgid=text,
+                    msgstr='',
+                )
+                po.append(entry)
+
         Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
         po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))
 
@@ -125,6 +136,7 @@ class FuretUI:
     @classmethod
     def get_user_informations(cls, authenticated_userid):
         query = cls.anyblok.FuretUI.Space.get_for_user(authenticated_userid)
+        lang = cls.context.get('lang', 'en')
         return [
             {
                 'type': 'LOGIN',
@@ -139,12 +151,18 @@ class FuretUI:
               'menus': [
                   {
                       'code': x.code,
-                      'label': x.label,
+                      'label': Translation.get(
+                          lang,
+                          f'space:{x.code}:label',
+                          x.label),
                       'icon': {
                           'code': x.icon_code,
                           'type': x.icon_type,
                       },
-                      'description': x.description,
+                      'description': Translation.get(
+                          lang,
+                          f'space:{x.code}:description',
+                          x.description),
                       'path': x.get_path(),
                   }
                   for x in query
