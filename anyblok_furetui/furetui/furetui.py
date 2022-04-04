@@ -16,6 +16,7 @@ from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from .template import Template
+from .translate import Translation
 from anyblok.blok import BlokManager
 from anyblok.config import Configuration
 from os.path import join
@@ -46,6 +47,19 @@ def update_translation(i18n, translations, path=""):
 class FuretUI:
 
     @classmethod
+    def import_i18n(cls, lang):
+        if Translation.has_lang(lang):
+            return
+
+        Blok = cls.anyblok.System.Blok
+        for blok in Blok.list_by_state('installed'):
+            bpath = BlokManager.getPath(blok)
+            if path.exists(path.join(bpath, 'locale', f'{lang}.po')):
+                po = polib.pofile(path.join(bpath, 'locale', f'{lang}.po'))
+                for entry in po:
+                    Translation.set(lang, entry)
+
+    @classmethod
     def pre_load(cls, lang='en'):
         logger.info('Preload furet UI component')
         templates = Template()
@@ -63,6 +77,7 @@ class FuretUI:
                     node = i18n.setdefault(local, {})
                     update_translation(node, translations)
 
+        cls.import_i18n(lang)
         templates.compile(lang=lang)
         cls.anyblok.furetui_templates = templates
         cls.anyblok.furetui_i18n = i18n
@@ -159,6 +174,9 @@ class FuretUI:
         else:
             locale = cls.get_authenticated_userid_locale(authenticated_userid)
             res.extend(cls.get_user_informations(authenticated_userid))
+
+        cls.import_i18n(locale)
+        cls.anyblok.furetui_templates.compile(lang=locale)
 
         locales.add(locale)
         res.extend([

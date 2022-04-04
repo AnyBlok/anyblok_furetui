@@ -3,6 +3,7 @@ import polib
 from lxml import html, etree
 from copy import deepcopy
 from logging import getLogger
+from .translate import Translation
 
 logger = getLogger(__name__)
 
@@ -457,8 +458,8 @@ class Template:
         compile_template_i18n_rec(tmpl)
 
     def get_i18n_for(self, lang, name, text):
-        print("ask i18n for %r, 'template', %r, %r" % (lang, name, text))
-        return text  # TODO
+        context = f'template:{name}'
+        return Translation.get(lang, context, text)
 
     def compile(self, lang='en'):
         """ compile all the templates """
