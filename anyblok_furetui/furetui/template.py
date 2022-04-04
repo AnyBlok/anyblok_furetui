@@ -1,5 +1,4 @@
 import re
-import polib
 from lxml import html, etree
 from copy import deepcopy
 from logging import getLogger
@@ -421,11 +420,7 @@ class Template:
                 if suffix:
                     context += ':' + suffix
 
-                entry = polib.POEntry(
-                    msgctxt=context,
-                    msgid=text,
-                    msgstr='',
-                )
+                entry = Translation.define(context, text)
                 po.append(entry)
 
             return _callback

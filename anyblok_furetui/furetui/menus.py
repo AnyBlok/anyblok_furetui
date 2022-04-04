@@ -169,6 +169,9 @@ class Root(
     # TODO check resource space requirement
 
     def get_i18n_to_export(self, external_id):
+        if not self.label:
+            return []
+
         return [(f'menu:{external_id}', self.label)]
 
 

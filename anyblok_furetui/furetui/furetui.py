@@ -108,10 +108,9 @@ class FuretUI:
                 for base in declarations[declaration][namespace]['bases']:
                     for key, value in base.__dict__.items():
                         if isinstance(value, Field):
-                            entry = polib.POEntry(
-                                msgctxt=f'field:{namespace}:{key}',
-                                msgid=value.label or key.capitalize(),
-                                msgstr='',
+                            entry = Translation.define(
+                                f'field:{namespace}:{key}',
+                                value.label or key.capitalize(),
                             )
                             po.append(entry)
                         if isinstance(value, Selection):
@@ -119,12 +118,9 @@ class FuretUI:
                             value.update_description(
                                 cls.anyblok, namespace, res)
                             for label in dict(res['selections']).values():
-                                entry = polib.POEntry(
-                                    msgctxt=(
-                                        f'field:selection:{namespace}:{key}'
-                                    ),
-                                    msgid=label,
-                                    msgstr='',
+                                entry = Translation.define(
+                                    f'field:selection:{namespace}:{key}',
+                                    label,
                                 )
                                 po.append(entry)
 
@@ -152,11 +148,7 @@ class FuretUI:
         for mapping in Mapping.query().filter_by(blokname=blok_name):
             obj = Mapping.get(mapping.model, mapping.key)
             for context, text in obj.get_i18n_to_export(mapping.key):
-                entry = polib.POEntry(
-                    msgctxt=context,
-                    msgid=text,
-                    msgstr='',
-                )
+                entry = Translation.define(context, text)
                 po.append(entry)
 
         cls.export_i18n_field(blok_name, po)

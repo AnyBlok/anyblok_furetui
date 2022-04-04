@@ -6,6 +6,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import polib
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class Translation:
@@ -25,3 +29,12 @@ class Translation:
     @classmethod
     def get(cls, lang, context, text):
         return cls.translation.get((lang, context, text), text)
+
+    @classmethod
+    def define(cls, msgctxt, msgid):
+        logger.debug('msgctxt : %r, msgid: %r', msgctxt, msgid)
+        return polib.POEntry(
+            msgctxt=msgctxt,
+            msgid=msgid,
+            msgstr='',
+        )
