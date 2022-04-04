@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T13:18:46.817363\n"
+"POT-Creation-Date: 2022-04-04T13:35:26.712461\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -28,6 +28,14 @@ msgstr "Configurations"
 msgctxt "space:space_settings:description"
 msgid "Global setting of the application"
 msgstr "Configurations générales de l'application"
+
+msgctxt "resource:list:resource_pyramid_user_list"
+msgid "Users"
+msgstr "Utilisateurs"
+
+msgctxt "resource:list:resource_pyramid_role_list"
+msgid "Roles"
+msgstr "Rôles"
 
 msgctxt "menu:menu_settings_auth"
 msgid "Authentication and authorization"

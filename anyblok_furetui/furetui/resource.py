@@ -15,6 +15,7 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+from .translate import Translation
 import re
 
 
@@ -30,7 +31,7 @@ except ImportError:
 
 def get_fields_from_string(string, prefix='fields'):
     return [x.split('.')[1]  # noqa: W605
-            for x in re.findall("%s\.\w*" % prefix, string)]
+            for x in re.findall("%s\.\w*" % prefix, string)]  # noqa W605
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -585,7 +586,7 @@ class Template:
             html.tostring(template).decode('utf-8'))
 
         fields2data = re.findall(  # noqa: W605
-            "\{\{\s*fields\.\w*\s*\}\}", tmpl)
+            "\{\{\s*fields\.\w*\s*\}\}", tmpl)  # noqa W605
         for field2data in fields2data:
             field = get_fields_from_string(field2data)[0]
             tmpl = tmpl.replace(field2data, '{{ data.%s }}' % field)
@@ -995,10 +996,16 @@ class List(Declarations.Model.FuretUI.Resource):
         fields2read = list(set(fields2read))
         fields2read.sort()
 
+        title = self.title
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if mapping and title:
+            lang = self.context.get('lang', 'en')
+            title = Translation.get(lang, f'resource:list:{mapping.key}', title)
+
         res = [{
             'id': self.id,
             'type': self.type.label.lower(),
-            'title': self.title,
+            'title': title,
             'model': self.model,
             'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
                 list=self),
@@ -1010,6 +1017,12 @@ class List(Declarations.Model.FuretUI.Resource):
             'fields': fields2read,
         }]
         return res
+
+    def get_i18n_to_export(self, external_id):
+        if not self.title:
+            return []
+
+        return [(f'resource:list:{external_id}', self.title)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
