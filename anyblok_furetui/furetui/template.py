@@ -458,6 +458,10 @@ class Template:
                 el.attrib[key] = action_callback(
                     el.attrib[key], suffix=f'{el.tag}:{key}')
 
+            for k, v in el.attrib.get('selections', {}).items():
+                el.attrib['selections'][k] = action_callback(
+                    el.attrib[key], suffix=f'{el.tag}:selections')
+
             for child in el.getchildren():
                 compile_template_i18n_rec(child)
 
