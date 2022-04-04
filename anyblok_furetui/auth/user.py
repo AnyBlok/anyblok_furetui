@@ -57,7 +57,7 @@ class User:
 
     @classmethod
     def get_languages(cls):
-        return {x: f'language.{x}' for x in cls.get_languages_code()}
+        return {x: x for x in cls.get_languages_code()}
 
     @classmethod
     def get_languages_code(cls):

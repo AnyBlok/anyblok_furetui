@@ -97,6 +97,24 @@ class FuretUI:
             *args, lang=lang, **kwargs)
 
     @classmethod
+    def export_i18n_field(cls, blok_name, po):
+        declarations = RegistryManager.loaded_bloks[blok_name]
+        for declaration in ('Mixin', 'Model'):
+            for namespace in declarations[declaration]:
+                if namespace == 'registry_names':
+                    continue
+
+                for base in declarations[declaration][namespace]['bases']:
+                    for key, value in base.__dict__.items():
+                        if isinstance(value, Field):
+                            entry = polib.POEntry(
+                                msgctxt=f'field:{namespace}:{key}:label',
+                                msgid=value.label or key.capitalize(),
+                                msgstr='',
+                            )
+                            po.append(entry)
+
+    @classmethod
     def export_i18n(cls, blok_name):
         b = BlokManager.get(blok_name)
         bpath = BlokManager.getPath(blok_name)
@@ -126,22 +144,6 @@ class FuretUI:
                     msgstr='',
                 )
                 po.append(entry)
-
-        declarations = RegistryManager.loaded_bloks[blok_name]
-        for declaration in ('Mixin', 'Model'):
-            for namespace in declarations[declaration]:
-                if namespace == 'registry_names':
-                    continue
-
-                for base in declarations[declaration][namespace]['bases']:
-                    for key, value in base.__dict__.items():
-                        if isinstance(value, Field):
-                            entry = polib.POEntry(
-                                msgctxt=f'field:{namespace}:{key}:label',
-                                msgid=value.label or key.capitalize(),
-                                msgstr='',
-                            )
-                            po.append(entry)
 
         Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
         po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))
