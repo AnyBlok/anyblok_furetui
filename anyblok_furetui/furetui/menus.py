@@ -47,7 +47,7 @@ class Menu:
 
     def to_dict(self, *a, **kw):
         res = super().to_dict(*a, **kw)
-        if 'label' in res:
+        if 'label' in res and res['label']:
             mapping = self.anyblok.IO.Mapping.get_from_entry(self)
             if mapping:
                 lang = self.context.get('lang', 'en')

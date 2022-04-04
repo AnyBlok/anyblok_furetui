@@ -28,7 +28,11 @@ class Translation:
 
     @classmethod
     def get(cls, lang, context, text):
-        return cls.translation.get((lang, context, text), text)
+        res = cls.translation.get((lang, context, text))
+        if not res:
+            return text
+
+        return res
 
     @classmethod
     def define(cls, msgctxt, msgid):
