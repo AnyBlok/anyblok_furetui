@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T14:49:04.387376\n"
+"POT-Creation-Date: 2022-04-04T15:28:57.340675\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -57,14 +57,26 @@ msgctxt "menu:menu_setting_auth_role"
 msgid "Roles"
 msgstr "Rôles"
 
-msgctxt "field:Model.Pyramid.User:active:label"
+msgctxt "field:Model.Pyramid.User:active"
 msgid "Active"
 msgstr "Actif"
 
-msgctxt "field:Model.Pyramid.User:lang:label"
+msgctxt "field:Model.Pyramid.User:lang"
 msgid "Lang"
 msgstr "Langue"
 
-msgctxt "field:Model.Pyramid.User:login:label"
+msgctxt "field:selection:Model.Pyramid.User:lang"
+msgid "English"
+msgstr "Anglais"
+
+msgctxt "field:selection:Model.Pyramid.User:lang"
+msgid "French"
+msgstr "Français"
+
+msgctxt "field:Model.Pyramid.User:login"
 msgid "Login"
 msgstr "Identifiant"
+
+#~ msgctxt "field:Model.Pyramid.User:login:label"
+#~ msgid "Login"
+#~ msgstr "Identifiant"

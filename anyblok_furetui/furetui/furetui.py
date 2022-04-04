@@ -14,6 +14,7 @@ from datetime import datetime
 from anyblok.declarations import Declarations
 from anyblok.registry import RegistryManager
 from anyblok.field import Field
+from anyblok.column import Selection
 from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
@@ -108,11 +109,24 @@ class FuretUI:
                     for key, value in base.__dict__.items():
                         if isinstance(value, Field):
                             entry = polib.POEntry(
-                                msgctxt=f'field:{namespace}:{key}:label',
+                                msgctxt=f'field:{namespace}:{key}',
                                 msgid=value.label or key.capitalize(),
                                 msgstr='',
                             )
                             po.append(entry)
+                        if isinstance(value, Selection):
+                            res = {}
+                            value.update_description(
+                                cls.anyblok, namespace, res)
+                            for label in dict(res['selections']).values():
+                                entry = polib.POEntry(
+                                    msgctxt=(
+                                        f'field:selection:{namespace}:{key}'
+                                    ),
+                                    msgid=label,
+                                    msgstr='',
+                                )
+                                po.append(entry)
 
     @classmethod
     def export_i18n(cls, blok_name):
@@ -144,6 +158,8 @@ class FuretUI:
                     msgstr='',
                 )
                 po.append(entry)
+
+        cls.export_i18n_field(blok_name, po)
 
         Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
         po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))

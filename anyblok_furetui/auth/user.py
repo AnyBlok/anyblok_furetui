@@ -57,11 +57,10 @@ class User:
 
     @classmethod
     def get_languages(cls):
-        return {x: x for x in cls.get_languages_code()}
-
-    @classmethod
-    def get_languages_code(cls):
-        return ['en', 'fr']
+        return {
+            'en': 'English',
+            'fr': 'French',
+        }
 
     def fget_active(self):
         credential = self.anyblok.Pyramid.CredentialStore.query().filter_by(

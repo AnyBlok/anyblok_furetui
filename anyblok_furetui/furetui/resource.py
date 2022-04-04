@@ -69,10 +69,16 @@ class Template:
         if required == '':
             required = '1'
 
+        lang = self.context.get('lang', 'en')
         config = {
             'name': field.attrib.get('name'),
             'type': _type.lower(),
-            'label': field.attrib.get('label', description['label']),
+            'label': field.attrib.get(
+                'label',
+                Translation.get(
+                    lang, f"field:{self.model}:{description['id']}",
+                    description['label']),
+             ),
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
@@ -294,6 +300,12 @@ class Template:
 
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
+
+        lang = self.context.get('lang', 'en')
+        for k, label in description['selections'].items():
+            description['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{description['id']}",
+                label)
 
         return self.get_field_for_(field, 'Selection', description, fields2read)
 
@@ -692,7 +704,7 @@ class List(Declarations.Model.FuretUI.Resource):
             'label': kwargs.get(
                 'label',
                 Translation.get(
-                    lang, f"field:{self.model}:{field['id']}:label",
+                    lang, f"field:{self.model}:{field['id']}",
                     field['label'])),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
@@ -807,6 +819,12 @@ class List(Declarations.Model.FuretUI.Resource):
 
             if isinstance(f[key], list):
                 f[key] = dict(f[key])
+
+        lang = self.context.get('lang', 'en')
+        for k, label in f['selections'].items():
+            f['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{field['id']}",
+                label)
 
         return self.field_for_(f, fields2read, **kwargs)
 
