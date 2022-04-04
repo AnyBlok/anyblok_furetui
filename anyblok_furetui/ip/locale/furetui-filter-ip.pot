@@ -1,0 +1,8 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.0.1\n"
+"POT-Creation-Date: 2022-04-04T10:38:12.498812\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
