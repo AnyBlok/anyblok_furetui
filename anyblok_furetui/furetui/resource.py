@@ -1139,6 +1139,20 @@ class Filter:
                for x in query]
         return res
 
+    def to_dict(self, *a, **kw):
+        res = super().to_dict(*a, **kw)
+        if 'label' in res:
+            mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+            if mapping:
+                lang = self.context.get('lang', 'en')
+                res['label'] = Translation.get(
+                    lang, f'resource:filter:{mapping.key}', res['label'])
+
+        return res
+
+    def get_i18n_to_export(self, external_id):
+        return [(f'resource:filter:{external_id}', self.label)]
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Tags:
@@ -1154,6 +1168,20 @@ class Tags:
     def get_for_resource(cls, **resource):
         query = cls.query().filter_by(**resource)
         return [x.to_dict('key', 'label') for x in query]
+
+    def to_dict(self, *a, **kw):
+        res = super().to_dict(*a, **kw)
+        if 'label' in res:
+            mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+            if mapping:
+                lang = self.context.get('lang', 'en')
+                res['label'] = Translation.get(
+                    lang, f'resource:tags:{mapping.key}', res['label'])
+
+        return res
+
+    def get_i18n_to_export(self, external_id):
+        return [(f'resource:tags:{external_id}', self.label)]
 
 
 @Declarations.register(Declarations.Mixin)  # noqa

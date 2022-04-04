@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T13:35:26.712461\n"
+"POT-Creation-Date: 2022-04-04T14:10:01.243460\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -36,6 +36,14 @@ msgstr "Utilisateurs"
 msgctxt "resource:list:resource_pyramid_role_list"
 msgid "Roles"
 msgstr "Rôles"
+
+msgctxt "resource:filter:resource_filter_pyramid_login"
+msgid "Login"
+msgstr "Identifiant"
+
+msgctxt "resource:filter:resource_filter_pyramid_name"
+msgid "Role"
+msgstr "Rôle"
 
 msgctxt "menu:menu_settings_auth"
 msgid "Authentication and authorization"

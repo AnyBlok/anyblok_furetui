@@ -9,7 +9,7 @@
       <field name="filters">
         <record external_id="resource_filter_pyramid_login">
           <field name="key">login</field>
-          <field name="label">resource.pyramid.user.login</field>
+          <field name="label">Login</field>
         </record>
       </field>
     </field>
@@ -27,7 +27,7 @@
       <field name="filters">
         <record external_id="resource_filter_pyramid_name">
           <field name="key">name</field>
-          <field name="label">resource.pyramid.role.name</field>
+          <field name="label">Role</field>
         </record>
       </field>
     </field>
