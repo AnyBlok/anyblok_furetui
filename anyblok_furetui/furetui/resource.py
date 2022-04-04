@@ -1063,10 +1063,17 @@ class Thumbnail(
                 field = etree.SubElement(column, "field")
                 field.set('name', field_name)
 
+        title = self.title
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if mapping and title:
+            lang = self.context.get('lang', 'en')
+            title = Translation.get(
+                lang, f'resource:thumbnail:{mapping.key}', title)
+
         res = {
             'id': self.id,
             'type': self.type.label.lower(),
-            'title': self.title,
+            'title': title,
             'model': self.model,
             'pks': pks,
             'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
@@ -1101,6 +1108,12 @@ class Thumbnail(
             'fields': fields2read,
         })
         return [res]
+
+    def get_i18n_to_export(self, external_id):
+        if not self.title:
+            return []
+
+        return [(f'resource:thumbnail:{external_id}', self.title)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -1197,6 +1210,9 @@ class MixinForm:
             'fields': fields2read,
         })
         return [res]
+
+    def get_i18n_to_export(self, external_id):
+        return []
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -1321,3 +1337,6 @@ class Set(Declarations.Model.FuretUI.Resource):
     def check_acl(self):
         multi = getattr(self, self.multi_type)
         return multi.check_acl()
+
+    def get_i18n_to_export(self, external_id):
+        return []
