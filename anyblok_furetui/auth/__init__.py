@@ -11,7 +11,6 @@ from anyblok.blok import Blok
 from anyblok_io.blok import BlokImporter
 from anyblok_furetui.release import version
 from anyblok_pyramid import PERM_WRITE, merge
-from .i18n import fr, en
 
 
 def import_module(reload=None):
@@ -36,10 +35,6 @@ class FuretUIAuthBlok(Blok, BlokImporter):
     ]
 
     furetui = {
-        'i18n': {
-            'en': en,
-            'fr': fr,
-        },
         'templates': [
             'templates/user.tmpl',
             'templates/role.tmpl',

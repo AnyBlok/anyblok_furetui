@@ -15,6 +15,7 @@ from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json
 from anyblok.relationship import Many2One
 from anyblok_pyramid_rest_api.validator import FILTER_OPERATORS
+from .translate import Translation
 import re
 
 
@@ -30,7 +31,7 @@ except ImportError:
 
 def get_fields_from_string(string, prefix='fields'):
     return [x.split('.')[1]  # noqa: W605
-            for x in re.findall("%s\.\w*" % prefix, string)]
+            for x in re.findall("%s\.\w*" % prefix, string)]  # noqa W605
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -68,10 +69,16 @@ class Template:
         if required == '':
             required = '1'
 
+        lang = self.context.get('lang', 'en')
         config = {
             'name': field.attrib.get('name'),
             'type': _type.lower(),
-            'label': field.attrib.get('label', description['label']),
+            'label': field.attrib.get(
+                'label',
+                Translation.get(
+                    lang, f"field:{self.model}:{description['id']}",
+                    description['label']),
+             ),
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
@@ -213,6 +220,7 @@ class Template:
         description['filter_by'] = filter_by
         description['tags'] = field.attrib.get('tags', '')
         description['limit'] = field.attrib.get('limit', 10)
+        description['colors'] = field.attrib.get('color', '')
 
         if 'max-height' in field.attrib:
             description['maxheight'] = field.attrib.get('max-height')
@@ -293,6 +301,12 @@ class Template:
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
 
+        lang = self.context.get('lang', 'en')
+        for k, label in description['selections'].items():
+            description['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{description['id']}",
+                label)
+
         return self.get_field_for_(field, 'Selection', description, fields2read)
 
     def get_field_for_Country(self, field, description, fields2read):
@@ -320,6 +334,12 @@ class Template:
 
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
+
+        lang = self.context.get('lang', 'en')
+        for k, label in description['selections'].items():
+            description['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{description['id']}",
+                label)
 
         for key in ('done-states', 'dangerous-states'):
             description[key] = [
@@ -581,10 +601,10 @@ class Template:
             template.set('class', kwargs['template_class'])
 
         tmpl = self.anyblok.furetui_templates.decode(
-            html.tostring(template).decode('utf-8'))
+            html.tostring(template, encoding='unicode'))
 
         fields2data = re.findall(  # noqa: W605
-            "\{\{\s*fields\.\w*\s*\}\}", tmpl)
+            "\{\{\s*fields\.\w*\s*\}\}", tmpl)  # noqa W605
         for field2data in fields2data:
             field = get_fields_from_string(field2data)[0]
             tmpl = tmpl.replace(field2data, '{{ data.%s }}' % field)
@@ -683,10 +703,15 @@ class List(Declarations.Model.FuretUI.Resource):
 
     def field_for_(self, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
+        lang = self.context.get('lang', 'en')
         res = {
             'hidden': False,
             'name': field['id'],
-            'label': kwargs.get('label', field['label']),
+            'label': kwargs.get(
+                'label',
+                Translation.get(
+                    lang, f"field:{self.model}:{field['id']}",
+                    field['label'])),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
             'sticky': False,
@@ -800,6 +825,12 @@ class List(Declarations.Model.FuretUI.Resource):
 
             if isinstance(f[key], list):
                 f[key] = dict(f[key])
+
+        lang = self.context.get('lang', 'en')
+        for k, label in f['selections'].items():
+            f['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{field['id']}",
+                label)
 
         return self.field_for_(f, fields2read, **kwargs)
 
@@ -994,10 +1025,16 @@ class List(Declarations.Model.FuretUI.Resource):
         fields2read = list(set(fields2read))
         fields2read.sort()
 
+        title = self.title
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if mapping and title:
+            lang = self.context.get('lang', 'en')
+            title = Translation.get(lang, f'resource:list:{mapping.key}', title)
+
         res = [{
             'id': self.id,
             'type': self.type.label.lower(),
-            'title': self.title,
+            'title': title,
             'model': self.model,
             'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
                 list=self),
@@ -1009,6 +1046,12 @@ class List(Declarations.Model.FuretUI.Resource):
             'fields': fields2read,
         }]
         return res
+
+    def get_i18n_to_export(self, external_id):
+        if not self.title:
+            return []
+
+        return [(f'resource:list:{external_id}', self.title)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -1049,10 +1092,17 @@ class Thumbnail(
                 field = etree.SubElement(column, "field")
                 field.set('name', field_name)
 
+        title = self.title
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if mapping and title:
+            lang = self.context.get('lang', 'en')
+            title = Translation.get(
+                lang, f'resource:thumbnail:{mapping.key}', title)
+
         res = {
             'id': self.id,
             'type': self.type.label.lower(),
-            'title': self.title,
+            'title': title,
             'model': self.model,
             'pks': pks,
             'filters': self.anyblok.FuretUI.Resource.Filter.get_for_resource(
@@ -1088,6 +1138,12 @@ class Thumbnail(
         })
         return [res]
 
+    def get_i18n_to_export(self, external_id):
+        if not self.title:
+            return []
+
+        return [(f'resource:thumbnail:{external_id}', self.title)]
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Filter:
@@ -1112,6 +1168,20 @@ class Filter:
                for x in query]
         return res
 
+    def to_dict(self, *a, **kw):
+        res = super().to_dict(*a, **kw)
+        if 'label' in res:
+            mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+            if mapping:
+                lang = self.context.get('lang', 'en')
+                res['label'] = Translation.get(
+                    lang, f'resource:filter:{mapping.key}', res['label'])
+
+        return res
+
+    def get_i18n_to_export(self, external_id):
+        return [(f'resource:filter:{external_id}', self.label)]
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Tags:
@@ -1127,6 +1197,20 @@ class Tags:
     def get_for_resource(cls, **resource):
         query = cls.query().filter_by(**resource)
         return [x.to_dict('key', 'label') for x in query]
+
+    def to_dict(self, *a, **kw):
+        res = super().to_dict(*a, **kw)
+        if 'label' in res:
+            mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+            if mapping:
+                lang = self.context.get('lang', 'en')
+                res['label'] = Translation.get(
+                    lang, f'resource:tags:{mapping.key}', res['label'])
+
+        return res
+
+    def get_i18n_to_export(self, external_id):
+        return [(f'resource:tags:{external_id}', self.label)]
 
 
 @Declarations.register(Declarations.Mixin)  # noqa
@@ -1184,6 +1268,9 @@ class MixinForm:
         })
         return [res]
 
+    def get_i18n_to_export(self, external_id):
+        return []
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Form(
@@ -1207,7 +1294,7 @@ class Form(
         res.append(definition)
         for form in self.forms:
             forms.append({
-                'label': form.label or form.resource.model,
+                'label': form.get_label(),
                 'waiting_value': form.polymorphic_values,
                 'resource_id': form.resource.id,
             })
@@ -1237,6 +1324,24 @@ class PolymorphicForm:
                       one2many="forms")
     polymorphic_values = Json(nullable=False)
     resource = Many2One(model=Declarations.Model.FuretUI.Resource.Form)
+
+    def get_label(self):
+        if not self.label:
+            return self.resource.model
+
+        mapping = self.anyblok.IO.Mapping.get_from_entry(self)
+        if not mapping:
+            return self.label
+
+        lang = self.context.get('lang', 'en')
+        return Translation.get(
+            lang, f'resource:polymorphicform:{mapping.key}', self.label)
+
+    def get_i18n_to_export(self, external_id):
+        if not self.label:
+            return []
+
+        return [(f'resource:polymorphicform:{external_id}', self.label)]
 
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
@@ -1307,3 +1412,6 @@ class Set(Declarations.Model.FuretUI.Resource):
     def check_acl(self):
         multi = getattr(self, self.multi_type)
         return multi.check_acl()
+
+    def get_i18n_to_export(self, external_id):
+        return []

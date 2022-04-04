@@ -7,11 +7,19 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import polib
+from os import path
+from pathlib import Path
+from datetime import datetime
 from anyblok.declarations import Declarations
+from anyblok.registry import RegistryManager
+from anyblok.field import Field
+from anyblok.column import Selection
 from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
 from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from .template import Template
+from .translate import Translation
 from anyblok.blok import BlokManager
 from anyblok.config import Configuration
 from os.path import join
@@ -42,7 +50,21 @@ def update_translation(i18n, translations, path=""):
 class FuretUI:
 
     @classmethod
-    def pre_load(cls):
+    def import_i18n(cls, lang):
+        reload_at_change = Configuration.get('pyramid.reload_all', False)
+        if Translation.has_lang(lang) and not reload_at_change:
+            return
+
+        Blok = cls.anyblok.System.Blok
+        for blok in Blok.list_by_state('installed'):
+            bpath = BlokManager.getPath(blok)
+            if path.exists(path.join(bpath, 'locale', f'{lang}.po')):
+                po = polib.pofile(path.join(bpath, 'locale', f'{lang}.po'))
+                for entry in po:
+                    Translation.set(lang, entry)
+
+    @classmethod
+    def pre_load(cls, lang='en'):
         logger.info('Preload furet UI component')
         templates = Template()
         i18n = {}
@@ -59,17 +81,80 @@ class FuretUI:
                     node = i18n.setdefault(local, {})
                     update_translation(node, translations)
 
-        templates.compile()
+        cls.import_i18n(lang)
+        templates.compile(lang=lang)
         cls.anyblok.furetui_templates = templates
         cls.anyblok.furetui_i18n = i18n
 
     @classmethod
     def get_template(cls, *args, **kwargs):
+        lang = cls.context.get('lang', 'en')
         reload_at_change = Configuration.get('pyramid.reload_all', False)
         if reload_at_change:
-            cls.pre_load()
+            if cls.context.get('reload_template', True):
+                cls.pre_load(lang=lang)
 
-        return cls.anyblok.furetui_templates.get_template(*args, **kwargs)
+        return cls.anyblok.furetui_templates.get_template(
+            *args, lang=lang, **kwargs)
+
+    @classmethod
+    def export_i18n_field(cls, blok_name, po):
+        declarations = RegistryManager.loaded_bloks[blok_name]
+        for declaration in ('Mixin', 'Model'):
+            for namespace in declarations[declaration]:
+                if namespace == 'registry_names':
+                    continue
+
+                for base in declarations[declaration][namespace]['bases']:
+                    for key, value in base.__dict__.items():
+                        if isinstance(value, Field):
+                            entry = Translation.define(
+                                f'field:{namespace}:{key}',
+                                value.label or key.capitalize(),
+                            )
+                            po.append(entry)
+                        if isinstance(value, Selection):
+                            res = {}
+                            value.update_description(
+                                cls.anyblok, namespace, res)
+                            for label in dict(res['selections']).values():
+                                entry = Translation.define(
+                                    f'field:selection:{namespace}:{key}',
+                                    label,
+                                )
+                                po.append(entry)
+
+    @classmethod
+    def export_i18n(cls, blok_name):
+        b = BlokManager.get(blok_name)
+        bpath = BlokManager.getPath(blok_name)
+        po = polib.POFile()
+        po.metadata = {
+            'Project-Id-Version': b.version,
+            'POT-Creation-Date': datetime.now().isoformat(),
+            'MIME-Version': '1.0',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Content-Transfer-Encoding': '8bit',
+        }
+        if hasattr(b, 'furetui'):
+            templates = Template()
+            for template in b.furetui.get('templates', []):
+                with open(join(bpath, template), 'r') as fp:
+                    templates.load_file(fp, ignore_missing_extend=True)
+
+            templates.export_i18n(po)
+
+        Mapping = cls.anyblok.IO.Mapping
+        for mapping in Mapping.query().filter_by(blokname=blok_name):
+            obj = Mapping.get(mapping.model, mapping.key)
+            for context, text in obj.get_i18n_to_export(mapping.key):
+                entry = Translation.define(context, text)
+                po.append(entry)
+
+        cls.export_i18n_field(blok_name, po)
+
+        Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
+        po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))
 
     @classmethod
     def get_default_path(cls, authenticated_userid):
@@ -79,6 +164,16 @@ class FuretUI:
     @classmethod
     def get_user_informations(cls, authenticated_userid):
         query = cls.anyblok.FuretUI.Space.get_for_user(authenticated_userid)
+        lang = cls.context.get('lang', 'en')
+
+        def translate(space, field):
+            text = getattr(space, field)
+            mapping = cls.anyblok.IO.Mapping.get_from_entry(space)
+            if not mapping:
+                return text
+
+            return Translation.get(lang, f'space:{mapping.key}:{field}', text)
+
         return [
             {
                 'type': 'LOGIN',
@@ -93,12 +188,12 @@ class FuretUI:
               'menus': [
                   {
                       'code': x.code,
-                      'label': x.label,
+                      'label': translate(x, 'label'),
                       'icon': {
                           'code': x.icon_code,
                           'type': x.icon_type,
                       },
-                      'description': x.description,
+                      'description': translate(x, 'description'),
                       'path': x.get_path(),
                   }
                   for x in query
@@ -129,6 +224,9 @@ class FuretUI:
         else:
             locale = cls.get_authenticated_userid_locale(authenticated_userid)
             res.extend(cls.get_user_informations(authenticated_userid))
+
+        cls.import_i18n(locale)
+        cls.anyblok.furetui_templates.compile(lang=locale)
 
         locales.add(locale)
         res.extend([
@@ -216,8 +314,11 @@ class FuretUI:
     @classmethod
     def validate_resources(cls):
         res = []
-        res.extend(cls.validate_form_resources())
-        res.extend(cls.validate_list_resources())
+        with cls.context.set(reload_template=False):
+            res.extend(cls.validate_form_resources())
+            res.extend(cls.validate_list_resources())
+            # TODO thumbnail, kanban
+
         return res
 
     @classmethod

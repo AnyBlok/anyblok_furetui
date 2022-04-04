@@ -2,6 +2,10 @@ from anyblok.declarations import Declarations
 from anyblok.declarations import classmethod_cache
 from anyblok_furetui import exposed_method
 from ..context import context
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 class SqlMixin:
@@ -219,6 +223,10 @@ class SqlBase(SqlMixin):
                     "value": value,
                 })
         return res
+
+    def get_i18n_to_export(self, external_id):
+        logger.warning("No translation defined for %r", self)
+        return []
 
 
 @Declarations.register(Declarations.Core)

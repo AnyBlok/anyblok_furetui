@@ -1,6 +1,8 @@
+import re
 from lxml import html, etree
 from copy import deepcopy
 from logging import getLogger
+from .translate import Translation
 
 logger = getLogger(__name__)
 
@@ -38,22 +40,26 @@ class Template:
         self.compiled = {}
         self.known = {}
 
-    def get_all_template(self):
+    def get_all_template(self, lang='en'):
         """ Return all the template in string format """
         res = []
-        for tmpl in self.compiled.keys():
-            res.append(self.get_template(tmpl))
+        for tmpl in self.compiled.get(lang, {}).keys():
+            res.append(self.get_template(tmpl, lang=lang))
 
         res = ''.join(res)
         return res.strip()
 
-    def get_template(self, name, tostring=True, first_children=False):
+    def get_template(self, name, lang='en', tostring=True,
+                     first_children=False):
         """return a specific template
 
         :param name: name of the template
         :rtype: str
         """
-        tmpl = deepcopy(self.compiled[name])
+        if lang not in self.compiled:
+            self.compile(lang=lang)
+
+        tmpl = deepcopy(self.compiled[lang][name])
         if self.forclient:
             tmpl.tag = 'script'
             if tmpl.attrib.get('type') is None:
@@ -83,7 +89,7 @@ class Template:
         """
         return element
 
-    def load_file(self, openedfile):
+    def load_file(self, openedfile, ignore_missing_extend=False):
         """ Load a file
 
         File format ::
@@ -107,7 +113,8 @@ class Template:
             raise
 
         if element.tag.lower() == 'template':
-            self.load_template(element)
+            self.load_template(
+                element, ignore_missing_extend=ignore_missing_extend)
         elif element.tag.lower() == 'templates':
             for _element in element.getchildren():
                 if _element.tag is etree.Comment:
@@ -115,7 +122,8 @@ class Template:
                 elif _element.tag is html.HtmlComment:
                     continue
                 elif _element.tag.lower() == 'template':
-                    self.load_template(_element)
+                    self.load_template(
+                        _element, ignore_missing_extend=ignore_missing_extend)
                 else:
                     raise TemplateException(
                         "Only 'template' can be loaded not %r in file %r" % (
@@ -126,7 +134,7 @@ class Template:
                 "Only 'template' or 'templates' can be loaded not %r in %r"
                 % (element.tag, openedfile))
 
-    def load_template(self, element):
+    def load_template(self, element, ignore_missing_extend=False):
         """ Load one specific template
 
         :param element: html.Element
@@ -147,9 +155,13 @@ class Template:
                 self.known[name]['extend'] = extend
             else:
                 if extend not in self.known:
-                    raise TemplateException(
-                        "Extend an unexisting template %r" %
-                        html.tostring(element))
+                    if ignore_missing_extend:
+                        self.known[extend] = {'tmpl': []}
+                    else:
+                        raise TemplateException(
+                            "Extend an unexisting template %r" %
+                            html.tostring(element))
+
                 name = extend
 
         if not name:
@@ -184,15 +196,15 @@ class Template:
 
         return res
 
-    def xpath(self, name, expression, mult):
+    def xpath(self, lang, name, expression, mult):
         """ Apply the xpath """
-        tmpl = self.compiled[name]
+        tmpl = self.compiled[lang][name]
         if mult:
             return tmpl.findall(expression)
         else:
             return [tmpl.find(expression)]
 
-    def xpath_insert(self, name, expression, mult, elements):
+    def xpath_insert(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -206,13 +218,13 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
+        els = self.xpath(lang, name, expression, mult)
         for el in els:
             nbchildren = len(el.getchildren())
             for i, subel in enumerate(elements):
                 el.insert(i + nbchildren, subel)
 
-    def xpath_insertBefore(self, name, expression, mult, elements):
+    def xpath_insertBefore(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -226,15 +238,15 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j, subel)
 
-    def xpath_insertAfter(self, name, expression, mult, elements):
+    def xpath_insertAfter(self, lang, name, expression, mult, elements):
         """ Apply a xpath insert::
 
             <template id="..." extend="other template">
@@ -248,15 +260,15 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to insert
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j + 1, subel)
 
-    def xpath_remove(self, name, expression, mult):
+    def xpath_remove(self, lang, name, expression, mult):
         """ Apply a xpath remove::
 
             <template id="..." extend="other template">
@@ -267,14 +279,14 @@ class Template:
         :param expresion: xpath regex to find the good node
         :param mult: If true, xpath can apply on all the element found
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for cel in parent.getchildren():
                 if cel in els:
                     parent.remove(cel)
 
-    def xpath_replace(self, name, expression, mult, elements):
+    def xpath_replace(self, lang, name, expression, mult, elements):
         """ Apply a xpath replace::
 
             <template id="..." extend="other template">
@@ -288,8 +300,8 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :elements: children of the xpath to replace
         """
-        els = self.xpath(name, expression, mult)
-        parent_els = self.xpath(name, expression + '/..', mult)
+        els = self.xpath(lang, name, expression, mult)
+        parent_els = self.xpath(lang, name, expression + '/..', mult)
         for parent in parent_els:
             for i, cel in enumerate(parent.getchildren()):
                 if cel in els:
@@ -297,7 +309,7 @@ class Template:
                     for j, subel in enumerate(elements):
                         parent.insert(i + j, subel)
 
-    def xpath_attributes(self, name, expression, mult, attributes):
+    def xpath_attributes(self, lang, name, expression, mult, attributes):
         """ Apply a xpath attributes::
 
             <template id="..." extend="other template">
@@ -312,7 +324,7 @@ class Template:
         :param mult: If true, xpath can apply on all the element found
         :attributes: attributes to apply
         """
-        els = self.xpath(name, expression, mult)
+        els = self.xpath(lang, name, expression, mult)
         for el in els:
             for k, v in attributes.items():
                 el.set(k, v)
@@ -330,13 +342,13 @@ class Template:
 
         return res
 
-    def get_elements(self, name):
+    def get_elements(self, lang, name):
         elements = [deepcopy(x) for x in self.known[name]['tmpl']]
         for el in elements:
             for el_call in el.findall('.//call'):
                 parent = el_call.getparent()
                 index = parent.index(el_call)
-                tmpl = self.compile_template(el_call.attrib['template'])
+                tmpl = self.compile_template(lang, el_call.attrib['template'])
                 for child in tmpl.getchildren():
                     parent.insert(index, deepcopy(child))
                     index += 1
@@ -345,58 +357,126 @@ class Template:
 
         return elements
 
-    def apply_xpath(self, val, name):
+    def apply_xpath(self, val, lang, name):
         action = val['action']
         expression = val['expression']
         mult = val['mult']
         els = val['elements']
         if action == 'insert':
-            self.xpath_insert(name, expression, mult, els)
+            self.xpath_insert(lang, name, expression, mult, els)
         elif action == 'insertBefore':
-            self.xpath_insertBefore(name, expression, mult, els)
+            self.xpath_insertBefore(lang, name, expression, mult, els)
         elif action == 'insertAfter':
-            self.xpath_insertAfter(name, expression, mult, els)
+            self.xpath_insertAfter(lang, name, expression, mult, els)
         elif action == 'replace':
-            self.xpath_replace(name, expression, mult, els)
+            self.xpath_replace(lang, name, expression, mult, els)
         elif action == 'remove':
-            self.xpath_remove(name, expression, mult)
+            self.xpath_remove(lang, name, expression, mult)
         elif action == 'attributes':
             for attributes in self.get_xpath_attributes(els):
                 self.xpath_attributes(
-                    name, expression, mult, attributes)
+                    lang, name, expression, mult, attributes)
         else:
             raise TemplateException("Unknown action %r" % action)
 
-    def compile_template(self, name):
+    def compile_template(self, lang, name):
         """ compile a specific template
 
         :param name: id str of the template
         """
-        if name in self.compiled:
-            return self.compiled[name]
+        if lang not in self.compiled:
+            self.compiled[lang] = {}
+
+        if name in self.compiled[lang]:
+            return self.compiled[lang][name]
 
         extend = self.known[name].get('extend')
-        elements = self.get_elements(name)
+        elements = self.get_elements(lang, name)
 
         if extend:
-            tmpl = deepcopy(self.compile_template(extend))
+            tmpl = deepcopy(self.compile_template(lang, extend))
             tmpl.set('id', name)
         else:
             tmpl = elements[0]
             elements = elements[1:]
 
-        self.compiled[name] = tmpl
+        self.compiled[lang][name] = tmpl
 
         for el in elements:
             for val in self.get_xpath(el):
-                self.apply_xpath(val, name)
+                self.apply_xpath(val, lang, name)
 
-        return self.compiled[name]
+        def callback(text, suffix=''):
+            return self.get_i18n_for(lang, name, text, suffix)
 
-    def compile(self):
+        self.compile_template_i18n(self.compiled[lang][name], callback)
+        return self.compiled[lang][name]
+
+    def export_i18n(self, po):
+
+        def callback(name):
+            def _callback(text, suffix=''):
+                context = f'template:{name}'
+                if suffix:
+                    context += ':' + suffix
+
+                entry = Translation.define(context, text)
+                po.append(entry)
+
+            return _callback
+
+        for name in self.known:
+            for tmpl in self.known[name]['tmpl']:
+                self.compile_template_i18n(tmpl, callback(name))
+
+    def compile_template_i18n(self, tmpl, action_callback):
+
+        def minimify(text):
+            if not text:
+                return text
+
+            text = text.replace('\n', '').replace('\n', '').strip()
+            regex = "\{\{ *(data|field|fields)\.\w* *\}\}"  # noqa W605
+            if re.findall(regex, text):
+                return None
+
+            return text
+
+        def compile_template_i18n_rec(el):
+            text = minimify(el.text)
+            tail = minimify(el.tail)
+            if text:
+                el.text = action_callback(text)
+
+            if tail:
+                el.tail = action_callback(tail)
+
+            # selections
+            for key in (set(el.attrib.keys()).intersection(
+                {"label", "placeholder"})
+            ):
+                el.attrib[key] = action_callback(
+                    el.attrib[key], suffix=f'{el.tag}:{key}')
+
+            for k, v in el.attrib.get('selections', {}).items():
+                el.attrib['selections'][k] = action_callback(
+                    el.attrib[key], suffix=f'{el.tag}:selections')
+
+            for child in el.getchildren():
+                compile_template_i18n_rec(child)
+
+        compile_template_i18n_rec(tmpl)
+
+    def get_i18n_for(self, lang, name, text, suffix):
+        context = f'template:{name}'
+        if suffix:
+            context += ':' + suffix
+        return Translation.get(lang, context, text)
+
+    def compile(self, lang='en'):
         """ compile all the templates """
         for tmpl in self.known.keys():
-            self.compile_template(tmpl)
+            self.compile_template(lang, tmpl)
 
     def copy(self):
         """ copy all the templates """

@@ -23,3 +23,10 @@ def furetui_user():
     password = Configuration.get('furetui_user_password')
     roles = Configuration.get('furetui_user_roles') or []
     registry.FuretUI.user_management(login, password, roles)
+
+
+def export_i18n():
+    registry = anyblok.start(
+        'export-i18n', loadwithoutmigration=True)
+    blok_name = Configuration.get('blok-name')
+    registry.FuretUI.export_i18n(blok_name)

@@ -106,55 +106,60 @@ class TestWebTemplate:
                                 'elements': [b'<d></d>']})
 
     def test_xpath_insertBefore(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insertBefore(
-            'test', './/b1', True, [html.fromstring('<b0/>')])
+            'en', 'test', './/b1', True, [html.fromstring('<b0/>')])
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test">%s</template>' %
             '<a><b0></b0><b1></b1><b2></b2></a>'
         )
 
     def test_xpath_insertAfter(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insertAfter(
-            'test', './/b2', True, [html.fromstring('<b3/>')])
+            'en', 'test', './/b2', True, [html.fromstring('<b3/>')])
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test">%s</template>' %
             '<a><b1></b1><b2></b2><b3></b3></a>'
         )
 
     def test_xpath_insert(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_insert(
-            'test', './/b2', True, [html.fromstring('<c/>')])
+            'en', 'test', './/b2', True, [html.fromstring('<c/>')])
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test">%s</template>' %
             '<a><b1></b1><b2><c></c></b2></a>'
         )
 
     def test_xpath_replace(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_replace(
-            'test', './/b2', True, [html.fromstring('<c/>')])
+            'en', 'test', './/b2', True, [html.fromstring('<c/>')])
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test">%s</template>' %
             '<a><b1></b1><c></c></a>'
         )
 
     def test_xpath_remove(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
-        self.Template.xpath_remove('test', './/b2', True)
+        self.Template.xpath_remove('en', 'test', './/b2', True)
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test"><a><b1></b1></a></template>'
         )
 
@@ -170,29 +175,33 @@ class TestWebTemplate:
         assert attributes[1] == {'a': 'b', 'c': 'd'}
 
     def test_xpath_attributes(self):
-        self.Template.compiled['test'] = html.fromstring(
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(
             '<template name="test"><a><b1/><b2/></a></template>')
         self.Template.xpath_attributes(
-            'test', './/b2', True, {'name': "test"})
+            'en', 'test', './/b2', True, {'name': "test"})
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template name="test">%s</template>' %
             '<a><b1></b1><b2 name="test"></b2></a>'
         )
 
     def test_get_template(self):
         template = '<a><b1></b1><b2></b2></a>'
-        self.Template.compiled['test'] = html.fromstring(template)
+        self.Template.compiled['en'] = {}
+        self.Template.compiled['en']['test'] = html.fromstring(template)
         assert self.Template.get_template('test') == template
 
     def test_get_all_template(self):
         template = '<template name="%s"><a><b1></b1><b2></b2></a></template>'
         self.Template.compiled = {
-            'test': html.fromstring(template % 'test'),
-            'test2': html.fromstring(template % 'test2'),
+            'en': {
+                'test': html.fromstring(template % 'test'),
+                'test2': html.fromstring(template % 'test2'),
+            }
         }
         res = ''.join(self.format_element(v)
-                      for _, v in self.Template.compiled.items())
+                      for _, v in self.Template.compiled['en'].items())
         assert self.Template.get_all_template() == res
 
     def test_compile_the_same_template(self):
@@ -206,7 +215,7 @@ class TestWebTemplate:
         self.Template.load_template(et)
         self.Template.compile()
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template id="test">%s</template>' %
             '<a><b1><c></c></b1><b2></b2></a>'
         )
@@ -222,12 +231,12 @@ class TestWebTemplate:
         self.Template.load_template(et)
         self.Template.compile()
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template id="test">%s</template>' %
             '<a><b1></b1><b2></b2></a>'
         )
         assert (
-            self.format_element(self.Template.compiled['test2']) ==
+            self.format_element(self.Template.compiled['en']['test2']) ==
             '<template id="test2">%s</template>' %
             '<a><b1><c></c></b1><b2></b2></a>'
         )
@@ -248,11 +257,11 @@ class TestWebTemplate:
         self.Template.load_template(et)
         self.Template.compile()
         assert (
-            self.format_element(self.Template.compiled['test']) ==
+            self.format_element(self.Template.compiled['en']['test']) ==
             '<template id="test">%s</template>' %
             '<a><b1></b1><b2><c></c></b2></a>')
         assert (
-            self.format_element(self.Template.compiled['test2']) ==
+            self.format_element(self.Template.compiled['en']['test2']) ==
             '<template id="test2">%s</template>' %
             '<a><b1><c></c></b1><b2><c></c></b2></a>')
 
