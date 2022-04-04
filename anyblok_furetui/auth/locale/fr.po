@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T16:44:25.699576\n"
+"POT-Creation-Date: 2022-04-04T23:44:04.445228\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -21,11 +21,11 @@ msgctxt "template:PyramidRoleForm"
 msgid "Role :"
 msgstr "Rôle :"
 
-msgctxt "template:PyramidRoleForm:tab"
+msgctxt "template:PyramidRoleForm:tab:label"
 msgid "Users"
 msgstr "Utilisateurs"
 
-msgctxt "template:PyramidRoleForm:tab"
+msgctxt "template:PyramidRoleForm:tab:label"
 msgid "Inheritances"
 msgstr "Héritages"
 
