@@ -335,6 +335,12 @@ class Template:
             if isinstance(description[key], list):
                 description[key] = dict(description[key])
 
+        lang = self.context.get('lang', 'en')
+        for k, label in description['selections'].items():
+            description['selections'][k] = Translation.get(
+                lang, f"field:selection:{self.model}:{description['id']}",
+                label)
+
         for key in ('done-states', 'dangerous-states'):
             description[key] = [
                 x.strip() for x in field.attrib.get(key, '').split(',')]
