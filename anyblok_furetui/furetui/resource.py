@@ -685,10 +685,15 @@ class List(Declarations.Model.FuretUI.Resource):
 
     def field_for_(self, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
+        lang = self.context.get('lang', 'en')
         res = {
             'hidden': False,
             'name': field['id'],
-            'label': kwargs.get('label', field['label']),
+            'label': kwargs.get(
+                'label',
+                Translation.get(
+                    lang, f"field:{self.model}:{field['id']}:label",
+                    field['label'])),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
             'sticky': False,
