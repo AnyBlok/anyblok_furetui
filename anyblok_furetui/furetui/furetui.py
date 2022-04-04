@@ -48,7 +48,8 @@ class FuretUI:
 
     @classmethod
     def import_i18n(cls, lang):
-        if Translation.has_lang(lang):
+        reload_at_change = Configuration.get('pyramid.reload_all', False)
+        if Translation.has_lang(lang) and not reload_at_change:
             return
 
         Blok = cls.anyblok.System.Blok
