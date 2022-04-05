@@ -69,15 +69,13 @@ class Template:
         if required == '':
             required = '1'
 
-        lang = self.context.get('lang', 'en')
         config = {
             'name': field.attrib.get('name'),
             'type': _type.lower(),
             'label': field.attrib.get(
                 'label',
-                Translation.get(
-                    lang, f"field:{self.model}:{description['id']}",
-                    description['label']),
+                self.get_translated_label_for(
+                    description['id'], description['label'])
              ),
             'tooltip': field.attrib.get('tooltip'),
             'model': field.attrib.get('model', description.get('model')),
@@ -679,6 +677,18 @@ class Resource:
     def get_menus(self):
         return self.anyblok.FuretUI.Menu.get_menus_from(resource=self)
 
+    def get_translated_label_for(self, field, text):
+        lang = self.context.get('lang', 'en')
+        Model = self.anyblok.get(self.model)
+        models = [self.model] + list(Model.__depends__)
+
+        for model in models:
+            res = Translation.get(lang, f"field:{model}:{field}", text)
+            if res != text:
+                return res
+
+        return text
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Custom(Declarations.Model.FuretUI.Resource):
@@ -703,15 +713,12 @@ class List(Declarations.Model.FuretUI.Resource):
 
     def field_for_(self, field, fields2read, **kwargs):
         widget = kwargs.get('widget', field['type']).lower()
-        lang = self.context.get('lang', 'en')
         res = {
             'hidden': False,
             'name': field['id'],
             'label': kwargs.get(
                 'label',
-                Translation.get(
-                    lang, f"field:{self.model}:{field['id']}",
-                    field['label'])),
+                self.get_translated_label_for(field['id'], field['label'])),
             'component': kwargs.get('component', 'furet-ui-field'),
             'type': widget,
             'sticky': False,
