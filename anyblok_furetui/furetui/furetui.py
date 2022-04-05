@@ -98,7 +98,34 @@ class FuretUI:
             *args, lang=lang, **kwargs)
 
     @classmethod
-    def export_i18n_field(cls, blok_name, po):
+    def export_i18n_fields(cls, declaration, namespace, base, po):
+        for key, value in base.__dict__.items():
+            if isinstance(value, Field):
+                entry = Translation.define(
+                    f'field:{namespace}:{key}',
+                    value.label or key.capitalize(),
+                )
+                po.append(entry)
+            if isinstance(value, Selection):
+                choices = value.selections
+                if isinstance(choices, str):
+                    if declaration == 'Mixin':
+                        continue
+
+                    res = {}
+                    value.update_description(
+                        cls.anyblok, namespace, res)
+                    choices = res['selections']
+
+                for label in dict(choices).values():
+                    entry = Translation.define(
+                        f'field:selection:{namespace}:{key}',
+                        label,
+                    )
+                    po.append(entry)
+
+    @classmethod
+    def export_i18n_bases(cls, blok_name, po):
         declarations = RegistryManager.loaded_bloks[blok_name]
         for declaration in ('Mixin', 'Model'):
             for namespace in declarations[declaration]:
@@ -106,23 +133,7 @@ class FuretUI:
                     continue
 
                 for base in declarations[declaration][namespace]['bases']:
-                    for key, value in base.__dict__.items():
-                        if isinstance(value, Field):
-                            entry = Translation.define(
-                                f'field:{namespace}:{key}',
-                                value.label or key.capitalize(),
-                            )
-                            po.append(entry)
-                        if isinstance(value, Selection):
-                            res = {}
-                            value.update_description(
-                                cls.anyblok, namespace, res)
-                            for label in dict(res['selections']).values():
-                                entry = Translation.define(
-                                    f'field:selection:{namespace}:{key}',
-                                    label,
-                                )
-                                po.append(entry)
+                    cls.export_i18n_fields(declaration, namespace, base, po)
 
     @classmethod
     def export_i18n(cls, blok_name):
@@ -151,7 +162,7 @@ class FuretUI:
                 entry = Translation.define(context, text)
                 po.append(entry)
 
-        cls.export_i18n_field(blok_name, po)
+        cls.export_i18n_bases(blok_name, po)
 
         Path(path.join(bpath, 'locale')).mkdir(exist_ok=True)
         po.save(path.join(bpath, 'locale', f'{blok_name}.pot'))
