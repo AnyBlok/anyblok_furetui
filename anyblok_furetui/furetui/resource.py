@@ -268,11 +268,21 @@ class Template:
     def get_field_for_Many2Many(self, field, description, fields2read):
         return self.get_field_for_x2Many(field, 'Many2Many', description, [])
 
+    def get_field_for_Date(self, field, description, fields2read):
+        description.update({
+            'placeholder': field.attrib.get('placeholder', ''),
+            'editable': eval(field.attrib.get('editable', 'True')),
+            'icon': field.attrib.get('icon', 'calendar'),
+            'showWeekNumber': eval(
+                field.attrib.get('show-week-number', 'True')),
+        })
+        return self.get_field_for_(field, 'Date', description, fields2read)
+
     def get_field_for_DateTime(self, field, description, fields2read):
         description.update({
             'placeholder': field.attrib.get('placeholder', ''),
             'editable': eval(field.attrib.get('editable', 'True')),
-            'icon': field.attrib.get('icon', ''),
+            'icon': field.attrib.get('icon', 'calendar'),
             'datepicker': {
               'showWeekNumber': eval(
                   field.attrib.get('show-week-number', 'True')),
