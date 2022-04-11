@@ -158,6 +158,9 @@ class FuretUI:
         Mapping = cls.anyblok.IO.Mapping
         for mapping in Mapping.query().filter_by(blokname=blok_name):
             obj = Mapping.get(mapping.model, mapping.key)
+            if not obj:
+                continue
+
             for context, text in obj.get_i18n_to_export(mapping.key):
                 entry = Translation.define(context, text)
                 po.append(entry)

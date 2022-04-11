@@ -453,7 +453,7 @@ class Template:
 
             # selections
             for key in (set(el.attrib.keys()).intersection(
-                {"label", "placeholder"})
+                {"label", "placeholder", "tooltip"})
             ):
                 el.attrib[key] = action_callback(
                     el.attrib[key], suffix=f'{el.tag}:{key}')
