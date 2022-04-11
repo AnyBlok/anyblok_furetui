@@ -265,6 +265,10 @@ class Template:
         return self.get_field_for_Many2One(
             field, description, fields2read, relation="Many2ManyTags")
 
+    def get_field_for_One2One(self, field, description, fields2read):
+        return self.get_field_for_Many2One(
+            field, description, fields2read, relation="One2One")
+
     def get_field_for_Many2Many(self, field, description, fields2read):
         return self.get_field_for_x2Many(field, 'Many2Many', description, [])
 
