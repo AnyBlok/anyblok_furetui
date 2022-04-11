@@ -81,6 +81,7 @@ class Template:
             'model': field.attrib.get('model', description.get('model')),
             'required': required,
         }
+        fields2read.extend(get_fields_from_string(required))
 
         if description.get('slot'):
             config['slot'] = description['slot']
@@ -224,7 +225,7 @@ class Template:
             description['maxheight'] = field.attrib.get('max-height')
 
         fields2read.extend(['%s.%s' % (description['id'], x) for x in fields])
-        return self.get_field_for_(field, relation, description, [])
+        return self.get_field_for_(field, relation, description, fields2read)
 
     def get_field_for_x2Many(self, field, relation, description, fields2read):
         description = description.copy()
