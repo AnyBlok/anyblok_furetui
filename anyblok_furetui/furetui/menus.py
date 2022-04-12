@@ -8,6 +8,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+from sqlalchemy import text
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json, URL
 from anyblok.relationship import Many2One, One2Many
@@ -118,6 +119,13 @@ class Menu:
 
         return menus
 
+    def delete(self, *a, **kw):
+        menu_id = self.id
+        super().delete(*a, **kw)
+        if self.__registry_name__ != 'Model.FuretUI.Menu':
+            query = f"delete from furetui_menu where id={menu_id};"
+            self.execute_sql_statement(text(query))
+
 
 @Declarations.register(Declarations.Mixin)
 class FuretUIMenuChildren:
@@ -173,6 +181,17 @@ class Root(
             return []
 
         return [(f'menu:{external_id}', self.label)]
+
+    def delete(self, *a, **kw):
+        print('titi 1')
+        query = f"delete from {self.__tablename__} where id={self.id};"
+        print(query)
+        self.execute_sql_statement(text(query))
+        print('titi 2')
+        query = f"delete from furetui_menu where id={self.id};"
+        print(query)
+        self.execute_sql_statement(text(query))
+        print('titi 3')
 
 
 @Declarations.register(Declarations.Model.FuretUI.Menu)

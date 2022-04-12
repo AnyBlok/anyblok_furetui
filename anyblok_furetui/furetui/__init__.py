@@ -22,6 +22,7 @@ logger = getLogger(__name__)
 
 def import_module(reload=None):
     from . import core
+    from . import io
     from . import system
     from . import furetui
     from . import space
@@ -30,6 +31,7 @@ def import_module(reload=None):
     from . import crud
     if reload is not None:
         reload(core)
+        reload(io)
         reload(system)
         reload(furetui)
         reload(space)

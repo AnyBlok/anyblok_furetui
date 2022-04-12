@@ -8,6 +8,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import json
+from sqlalchemy import text
 from copy import deepcopy
 from lxml import etree, html
 from anyblok_furetui import ResourceTemplateRendererException
@@ -704,11 +705,19 @@ class Resource:
 
         return text
 
+    def delete(self, *a, **kw):
+        resource_id = self.id
+        super().delete(*a, **kw)
+        if self.__registry_name__ != 'Model.FuretUI.Resource':
+            query = f"delete from furetui_resource where id={resource_id};"
+            self.execute_sql_statement(text(query))
+
 
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Custom(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
-                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+                 foreign_key=Declarations.Model.FuretUI.Resource.use(
+                     'id').options(ondelete='cascade'))
     component = String(nullable=False)
 
     def get_definitions(self, **kwargs):
@@ -1082,10 +1091,12 @@ class Thumbnail(
     Declarations.Mixin.Template
 ):
     id = Integer(primary_key=True,
-                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+                 foreign_key=Declarations.Model.FuretUI.Resource.use(
+                     'id').options(ondelete='cascade'))
     title = String()
     model = String(nullable=False, size=256,
-                   foreign_key=Declarations.Model.System.Model.use('name'))
+                   foreign_key=Declarations.Model.System.Model.use(
+                       'name').options(ondelete='cascade'))
     template = String()
 
     def get_definitions(self, **kwargs):
@@ -1380,7 +1391,8 @@ class Singleton(
 @Declarations.register(Declarations.Model.FuretUI.Resource)
 class Set(Declarations.Model.FuretUI.Resource):
     id = Integer(primary_key=True,
-                 foreign_key=Declarations.Model.FuretUI.Resource.use('id'))
+                 foreign_key=Declarations.Model.FuretUI.Resource.use(
+                     'id').options(ondelete='cascade'))
     can_create = Boolean(default=True)
     can_read = Boolean(default=True)
     can_update = Boolean(default=True)
@@ -1391,12 +1403,20 @@ class Set(Declarations.Model.FuretUI.Resource):
     acl_update = String()
     acl_delete = String()
 
-    form = Many2One(model=Declarations.Model.FuretUI.Resource.Form,
-                    nullable=False)
+    form = Many2One(
+        model=Declarations.Model.FuretUI.Resource.Form,
+        nullable=False, foreign_key_options={'ondelete': 'cascade'})
     multi_type = Selection(
         selections={'list': 'List', 'thumbnail': 'Thumbnail'},
         nullable=False, default="list")
+
+    list_id = Integer(
+        foreign_key=Declarations.Model.FuretUI.Resource.List.use(
+            'id').options(ondelete='SET NULL'))
     list = Many2One(model=Declarations.Model.FuretUI.Resource.List)
+    thumbnail_id = Integer(
+        foreign_key=Declarations.Model.FuretUI.Resource.Thumbnail.use(
+            'id').options(ondelete='SET NULL'))
     thumbnail = Many2One(model=Declarations.Model.FuretUI.Resource.Thumbnail)
     # TODO add checkonstraint on multi + select
 
