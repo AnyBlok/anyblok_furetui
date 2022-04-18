@@ -1,7 +1,6 @@
 import json
 from copy import deepcopy
 from anyblok_pyramid import current_blok
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 from anyblok_furetui.security import authorized_user
 
@@ -17,8 +16,8 @@ crud = Service(name='crud',
 
 @crud.post()
 def crud_create(request):
-    with saved_errors_in_request(request):
-        registry = request.anyblok.registry
+    registry = request.anyblok.registry
+    try:
         data = request.json_body
         model = data['model']
         uuid = data['uuid']
@@ -28,18 +27,31 @@ def crud_create(request):
         return {
             'pks': obj.to_primary_keys(),
         }
+    except registry.FuretUI.UserError as e:
+        return {'data': [e.get_furetui_error()]}
+    except Exception as e:
+        return {'data': [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]}
 
 
 @crud.get()
 def crud_read(request):
     registry = request.anyblok.registry
-    return registry.FuretUI.CRUD.read(request)
+    try:
+        return registry.FuretUI.CRUD.read(request)
+    except registry.FuretUI.UserError as e:
+        return {'data': [e.get_furetui_error()]}
+    except Exception as e:
+        return {'data': [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]}
 
 
 @crud.patch()
 def crud_update(request):
-    with saved_errors_in_request(request):
-        registry = request.anyblok.registry
+    registry = request.anyblok.registry
+    try:
         data = request.json_body
         model = data['model']
         pks = data['pks']
@@ -51,12 +63,18 @@ def crud_update(request):
         return {
             'pks': obj.to_primary_keys(),
         }
+    except registry.FuretUI.UserError as e:
+        return {'data': [e.get_furetui_error()]}
+    except Exception as e:
+        return {'data': [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]}
 
 
 @crud.delete()
 def crud_delete(request):
-    with saved_errors_in_request(request):
-        registry = request.anyblok.registry
+    registry = request.anyblok.registry
+    try:
         data = request.params
         model = data['model']
         pks = dict(json.loads(data['pks']))
@@ -65,3 +83,9 @@ def crud_delete(request):
         return {
             'pks': pks,
         }
+    except registry.FuretUI.UserError as e:
+        return {'data': [e.get_furetui_error()]}
+    except Exception as e:
+        return {'data': [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]}

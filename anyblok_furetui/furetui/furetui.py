@@ -17,7 +17,6 @@ from anyblok.field import Field
 from anyblok.column import Selection
 from anyblok_furetui import ResourceTemplateRendererException
 from pyramid.httpexceptions import HTTPForbidden
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from .template import Template
 from .translate import Translation
 from anyblok.blok import BlokManager
@@ -285,6 +284,17 @@ class FuretUI:
         return cls.anyblok.Pyramid.check_acl(userid, resource, permission)
 
     @classmethod
+    def call_exposed_method_permission(cls, request, permission, model, call):
+        userId = request.authenticated_userid
+        if permission is not None:
+            if not cls.check_acl(model, permission):
+                raise HTTPForbidden(
+                    f"User '{userId}' has to be granted '{permission}' "
+                    f"permission in order to call this method '{call}' on "
+                    f"model '{model}'."
+                )
+
+    @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
         if call not in cls.anyblok.exposed_methods.get(model, {}):
@@ -296,14 +306,7 @@ class FuretUI:
         options = {}
         definition = cls.anyblok.exposed_methods[model][call]
         permission = definition['permission']
-        userId = request.authenticated_userid
-        if permission is not None:
-            if not cls.check_acl(model, permission):
-                raise HTTPForbidden(
-                    f"User '{userId}' has to be granted '{permission}' "
-                    f"permission in order to call this method '{call}' on "
-                    f"model '{model}'."
-                )
+        cls.call_exposed_method_permission(request, permission, model, call)
 
         obj = cls.anyblok.get(model)
         if definition['is_classmethod'] is False:
@@ -318,10 +321,16 @@ class FuretUI:
                 options[definition[key]] = apply_value(value)
 
         res = None
-        if not data:
-            data = {}
-        with saved_errors_in_request(request):
+        data = {} if data is None else data
+
+        try:
             res = getattr(obj, call)(**options, **data)
+        except cls.anyblok.FuretUI.UserError as e:
+            return [e.get_furetui_error()]
+        except Exception as e:
+            return [
+                cls.anyblok.FuretUI.UnknownError(str(e)).get_furetui_error()
+            ]
 
         return res
 
@@ -374,3 +383,36 @@ class FuretUI:
     @classmethod
     def get_logo_path(cls):
         return '/furetui/static/images/logo.png'
+
+
+@Declarations.register(Declarations.Model.FuretUI)
+class UserError(Exception):
+
+    def __init__(self, title='Error', message=None):
+        if not title:
+            raise Exception('No title filled')
+
+        if not message:
+            raise Exception('No message filled')
+
+        self.title = title
+        self.message = message
+
+        super().__init__()
+
+    def get_furetui_error(self):
+        return {
+            'type': 'USER_ERROR',
+            'title': self.title,
+            'message': self.message,
+        }
+
+
+@Declarations.register(Declarations.Model.FuretUI)
+class UnknownError(Declarations.Model.FuretUI.UserError):
+
+    def __init__(self, message):
+        message = f'<p>{message}</p>'
+        import ipdb
+        ipdb.set_trace()
+        super().__init__(title='Unknown error', message=message)

@@ -1,5 +1,4 @@
 from anyblok_pyramid import current_blok
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from cornice import Service
 from anyblok_furetui.security import authorized_user
 
@@ -17,7 +16,8 @@ space = Service(name='space',
 def get_space(request):
     # check user is disconnected
     # check user has access right
-    with saved_errors_in_request(request):
+    registry = request.anyblok.registry
+    try:
         registry = request.anyblok.registry
         code = request.matchdict['code']
         space = registry.FuretUI.Space.query().get(code)
@@ -30,3 +30,9 @@ def get_space(request):
                 },
             ]
         return res
+    except registry.FuretUI.UserError as e:
+        return [e.get_furetui_error()]
+    except Exception as e:
+        return [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]

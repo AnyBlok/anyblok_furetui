@@ -1,6 +1,5 @@
 from anyblok_pyramid import current_blok
 from cornice import Service
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from anyblok_furetui.security import authorized_user
 
 
@@ -15,9 +14,9 @@ resource = Service(name='resource',
 
 @resource.get()
 def get_resource(request):
-    with saved_errors_in_request(request):
+    registry = request.anyblok.registry
+    try:
         userId = request.authenticated_userid
-        registry = request.anyblok.registry
         resourceId = request.matchdict['id']
         resource = registry.FuretUI.Resource.query().get(resourceId)
         res = []
@@ -31,6 +30,12 @@ def get_resource(request):
             ]
 
         return res
+    except registry.FuretUI.UserError as e:
+        return [e.get_furetui_error()]
+    except Exception as e:
+        return [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]
 
 
 open_resource = Service(
@@ -56,9 +61,9 @@ def get_resource_from_mapping(registry, name, resource_type):
 
 @open_resource.post()
 def post_open_resource(request):
-    with saved_errors_in_request(request):
+    registry = request.anyblok.registry
+    try:
         userId = request.authenticated_userid
-        registry = request.anyblok.registry
         resourceExternalId = request.matchdict['id']
         body = request.json_body
         resource = get_resource_from_mapping(registry, resourceExternalId,
@@ -81,3 +86,9 @@ def post_open_resource(request):
         ]
 
         return res
+    except registry.FuretUI.UserError as e:
+        return [e.get_furetui_error()]
+    except Exception as e:
+        return [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]
