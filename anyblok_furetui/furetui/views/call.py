@@ -18,7 +18,15 @@ def call_classmethod(request):
     params = request.matchdict
     body = request.json_body
 
-    res = registry.FuretUI.call_exposed_method(request, **params, **body)
+    try:
+        res = registry.FuretUI.call_exposed_method(request, **params, **body)
+    except registry.FuretUI.UserError as e:
+        res = [e.get_furetui_error()]
+    except Exception as e:
+        res = [
+            registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+        ]
+
     if res is None:
         return []
 

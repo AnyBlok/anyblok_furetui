@@ -285,17 +285,6 @@ class FuretUI:
         return cls.anyblok.Pyramid.check_acl(userid, resource, permission)
 
     @classmethod
-    def call_exposed_method_permission(cls, request, permission, model, call):
-        userId = request.authenticated_userid
-        if permission is not None:
-            if not cls.check_acl(model, permission):
-                raise HTTPForbidden(
-                    f"User '{userId}' has to be granted '{permission}' "
-                    f"permission in order to call this method '{call}' on "
-                    f"model '{model}'."
-                )
-
-    @classmethod
     def call_exposed_method(cls, request, resource=None, model=None, call=None,
                             data=None, pks=None):
         if call not in cls.anyblok.exposed_methods.get(model, {}):
@@ -307,7 +296,14 @@ class FuretUI:
         options = {}
         definition = cls.anyblok.exposed_methods[model][call]
         permission = definition['permission']
-        cls.call_exposed_method_permission(request, permission, model, call)
+        userId = request.authenticated_userid
+        if permission is not None:
+            if not cls.check_acl(model, permission):
+                raise HTTPForbidden(
+                    f"User '{userId}' has to be granted '{permission}' "
+                    f"permission in order to call this method '{call}' on "
+                    f"model '{model}'."
+                )
 
         obj = cls.anyblok.get(model)
         if definition['is_classmethod'] is False:
@@ -321,19 +317,8 @@ class FuretUI:
             elif definition[key]:
                 options[definition[key]] = apply_value(value)
 
-        res = None
         data = {} if data is None else data
-
-        try:
-            res = getattr(obj, call)(**options, **data)
-        except cls.anyblok.FuretUI.UserError as e:
-            return [e.get_furetui_error()]
-        except Exception as e:
-            return [
-                cls.anyblok.FuretUI.UnknownError(str(e)).get_furetui_error()
-            ]
-
-        return res
+        return getattr(obj, call)(**options, **data)
 
     @classmethod
     def validate_resources(cls):
