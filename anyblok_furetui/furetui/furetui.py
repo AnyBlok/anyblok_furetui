@@ -8,6 +8,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import polib
+import traceback
 from os import path
 from pathlib import Path
 from datetime import datetime
@@ -412,7 +413,16 @@ class UserError(Exception):
 class UnknownError(Declarations.Model.FuretUI.UserError):
 
     def __init__(self, message):
-        message = f'<p>{message}</p>'
-        import ipdb
-        ipdb.set_trace()
+        reload_all = Configuration.get('pyramid.reload_all', False)
+        if reload_all:
+            stack = traceback.format_exc()
+            lines = len(stack.splitlines())
+            message = f"""
+              <textarea rows="{lines}" cols="52" readonly>
+                {stack}
+              </textarea>
+              <br/><strong>{ message }</strong>"""
+        else:
+            message = f'<p>{message}</p>'
+
         super().__init__(title='Unknown error', message=message)
