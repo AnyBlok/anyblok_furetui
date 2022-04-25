@@ -374,7 +374,7 @@ class FuretUI:
 @Declarations.register(Declarations.Model.FuretUI)
 class UserError(Exception):
 
-    def __init__(self, title='Error', message=None):
+    def __init__(self, title='Error', message=None, datas=None):
         if not title:
             raise Exception('No title filled')
 
@@ -383,6 +383,7 @@ class UserError(Exception):
 
         self.title = title
         self.message = message
+        self.datas = datas or []
 
         super().__init__()
 
@@ -391,6 +392,7 @@ class UserError(Exception):
             'type': 'USER_ERROR',
             'title': self.title,
             'message': self.message,
+            'datas': self.datas,
         }
 
 
@@ -411,3 +413,29 @@ class UnknownError(Declarations.Model.FuretUI.UserError):
             message = f'<p>{message}</p>'
 
         super().__init__(title='Unknown error', message=message)
+
+
+@Declarations.register(Declarations.Model.FuretUI)
+class UserNotFoundError(Declarations.Model.FuretUI.UserError):
+
+    def __init__(self, message):
+        datas = [
+            {'type': 'UPDATE_USER_MENUS', 'menus': []},
+            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
+            {'type': 'UPDATE_CURRENT_LEFT_MENUS', 'menus': []},
+            {'type': 'CLEAR_DATA'},
+            {'type': 'CLEAR_CHANGE'},
+            {'type': 'LOGOUT'},
+            {'type': 'UPDATE_ROUTE', 'path': '/login'},
+        ]
+        super().__init__(title="User's error", message=message, datas=datas)
+
+
+@Declarations.register(Declarations.Model.FuretUI)
+class ExpiredSession(Declarations.Model.FuretUI.UserError):
+
+    def __init__(self):
+        pass
+
+    def get_furetui_error(self):
+        return {'type': 'EXPIRED_SESSION'}

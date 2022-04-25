@@ -6,29 +6,49 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
-from anyblok_pyramid_rest_api.crud_resource import saved_errors_in_request
 from anyblok.common import add_autodocs
 
 
-def authorized_user(request, *a, **kw):
-    registry = request.anyblok.registry
+def authorized_furetui_user(in_data=True):
+    error = []
+    return_error = {'data': error} if in_data else error
+    empty_response = {'data': error} if in_data else error
 
-    with saved_errors_in_request(request):
-        userId = request.authenticated_userid
-        if not userId:
-            request.errors.add('body', 'userid', 'The user id does not exist')
-            request.errors.status = 405
+    def wrap_funct(funct):
 
-        elif not registry.Pyramid.check_user_exists(userId):
-            request.errors.add('body', 'userid', 'The user id does not exist')
-            request.errors.status = 405
+        def wrap_call(request):
+            registry = request.anyblok.registry
+            userId = request.authenticated_userid
+            try:
+                if not userId:
+                    raise registry.FuretUI.ExpiredSession()
 
-        if not registry.FuretUI.check_security(request):
-            request.errors.add('body', 'userid', 'The user is not allow')
-            request.errors.status = 405
+                if not registry.Pyramid.check_user_exists(userId):
+                    # ADD GO TO login
+                    raise registry.FuretUI.UserNotFoundError(
+                        message="The user does not exist")
 
-        if request.errors.status != 405:
-            registry.FuretUI.set_user_context(userId)
+                if not registry.FuretUI.check_security(request):
+                    raise registry.FuretUI.UserError(
+                        message="The user is not allow to get this resource")
+
+                registry.FuretUI.set_user_context(userId)
+                res = funct(request)
+                if res is None:
+                    return empty_response
+
+                return res
+            except registry.FuretUI.UserError as e:
+                error.append(e.get_furetui_error())
+            except Exception as e:
+                error.append(
+                    registry.FuretUI.UnknownError(str(e)).get_furetui_error()
+                )
+            return return_error
+
+        return wrap_call
+
+    return wrap_funct
 
 
 def exposed_method(**kwargs):
