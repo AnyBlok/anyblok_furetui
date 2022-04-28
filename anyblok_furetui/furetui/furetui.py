@@ -8,7 +8,6 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import polib
-import traceback
 from os import path
 from pathlib import Path
 from datetime import datetime
@@ -369,73 +368,3 @@ class FuretUI:
     @classmethod
     def get_logo_path(cls):
         return '/furetui/static/images/logo.png'
-
-
-@Declarations.register(Declarations.Model.FuretUI)
-class UserError(Exception):
-
-    def __init__(self, title='Error', message=None, datas=None):
-        if not title:
-            raise Exception('No title filled')
-
-        if not message:
-            raise Exception('No message filled')
-
-        self.title = title
-        self.message = message
-        self.datas = datas or []
-
-        super().__init__()
-
-    def get_furetui_error(self):
-        return {
-            'type': 'USER_ERROR',
-            'title': self.title,
-            'message': self.message,
-            'datas': self.datas,
-        }
-
-
-@Declarations.register(Declarations.Model.FuretUI)
-class UnknownError(Declarations.Model.FuretUI.UserError):
-
-    def __init__(self, message):
-        reload_all = Configuration.get('pyramid.reload_all', False)
-        if reload_all:
-            stack = traceback.format_exc()
-            lines = len(stack.splitlines())
-            message = f"""
-              <textarea rows="{lines}" cols="52" readonly>
-                {stack}
-              </textarea>
-              <br/><strong>{ message }</strong>"""
-        else:
-            message = f'<p>{message}</p>'
-
-        super().__init__(title='Unknown error', message=message)
-
-
-@Declarations.register(Declarations.Model.FuretUI)
-class UserNotFoundError(Declarations.Model.FuretUI.UserError):
-
-    def __init__(self, message):
-        datas = [
-            {'type': 'UPDATE_USER_MENUS', 'menus': []},
-            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
-            {'type': 'UPDATE_CURRENT_LEFT_MENUS', 'menus': []},
-            {'type': 'CLEAR_DATA'},
-            {'type': 'CLEAR_CHANGE'},
-            {'type': 'LOGOUT'},
-            {'type': 'UPDATE_ROUTE', 'path': '/login'},
-        ]
-        super().__init__(title="User's error", message=message, datas=datas)
-
-
-@Declarations.register(Declarations.Model.FuretUI)
-class ExpiredSession(Declarations.Model.FuretUI.UserError):
-
-    def __init__(self):
-        pass
-
-    def get_furetui_error(self):
-        return {'type': 'EXPIRED_SESSION'}
