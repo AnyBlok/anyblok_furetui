@@ -2,7 +2,531 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
-"POT-Creation-Date: 2022-04-04T10:57:12.197692\n"
+"POT-Creation-Date: 2022-08-09T12:17:50.496510\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "field:Mixin.MixinForm:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Mixin.MixinForm:model"
+msgid "Model"
+msgstr ""
+
+msgctxt "field:Mixin.MixinForm:template"
+msgid "Template"
+msgstr ""
+
+msgctxt "field:Mixin.FuretUIMenuChildren:children"
+msgid "Children"
+msgstr ""
+
+msgctxt "field:Mixin.FuretUIMenuParent:parent"
+msgid "Parent"
+msgstr ""
+
+msgctxt "field:Mixin.FuretUIMenu:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Mixin.FuretUIMenu:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.IO.Mapping:key"
+msgid "Key"
+msgstr ""
+
+msgctxt "field:Model.IO.Mapping:model"
+msgid "Model"
+msgstr ""
+
+msgctxt "field:Model.IO.Mapping:primary_key"
+msgid "Primary key"
+msgstr ""
+
+msgctxt "field:Model.IO.Mapping:blokname"
+msgid "Blok name"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:name"
+msgid "Name"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:state"
+msgid "State"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "Uninstalled"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "Installed"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "To install"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "To update"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "To uninstall"
+msgstr ""
+
+msgctxt "field:selection:Model.System.Blok:state"
+msgid "Undefined"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:author"
+msgid "Author"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:order"
+msgid "Order"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:short_description"
+msgid "Short description"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:long_description"
+msgid "Long description"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:logo"
+msgid "Logo"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:version"
+msgid "Version"
+msgstr ""
+
+msgctxt "field:Model.System.Blok:installed_version"
+msgid "Installed version"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:code"
+msgid "Code"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:role"
+msgid "Role"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:order"
+msgid "Order"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:description"
+msgid "Description"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:icon_code"
+msgid "Icon code"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Space:icon_type"
+msgid "Icon type"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource:code"
+msgid "Code"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource:type"
+msgid "Type"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Custom"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Set"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "List"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Thumbnail"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Form"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Singleton"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource:type"
+msgid "Dashboard"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Custom:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Custom:component"
+msgid "Component"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.List:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.List:title"
+msgid "Title"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.List:model"
+msgid "Model"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.List:template"
+msgid "Template"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Thumbnail:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Thumbnail:title"
+msgid "Title"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Thumbnail:model"
+msgid "Model"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Thumbnail:template"
+msgid "Template"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:key"
+msgid "Key"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:list"
+msgid "List"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:thumbnail"
+msgid "Thumbnail"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:mode"
+msgid "Mode"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:mode"
+msgid "Include"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:mode"
+msgid "Exclude"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:op"
+msgid "Op"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "eq"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "like"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "ilike"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "lt"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "lte"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "gt"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "gte"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "in"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-like"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-ilike"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-lt"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-lte"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-gt"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Filter:op"
+msgid "or-gte"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Filter:values"
+msgid "Values"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Tags:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Tags:key"
+msgid "Key"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Tags:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Tags:list"
+msgid "List"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Tags:thumbnail"
+msgid "Thumbnail"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Form:polymorphic_columns"
+msgid "Polymorphic columns"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.PolymorphicForm:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.PolymorphicForm:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.PolymorphicForm:parent"
+msgid "Parent"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.PolymorphicForm:polymorphic_values"
+msgid "Polymorphic values"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.PolymorphicForm:resource"
+msgid "Resource"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:can_create"
+msgid "Can create"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:can_read"
+msgid "Can read"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:can_update"
+msgid "Can update"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:can_delete"
+msgid "Can delete"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:acl_create"
+msgid "Acl create"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:acl_read"
+msgid "Acl read"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:acl_update"
+msgid "Acl update"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:acl_delete"
+msgid "Acl delete"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:form"
+msgid "Form"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:multi_type"
+msgid "Multi type"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Set:multi_type"
+msgid "List"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Resource.Set:multi_type"
+msgid "Thumbnail"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:list_id"
+msgid "List id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:list"
+msgid "List"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:thumbnail_id"
+msgid "Thumbnail id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Resource.Set:thumbnail"
+msgid "Thumbnail"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:parent_id"
+msgid "Parent id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:order"
+msgid "Order"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:icon_code"
+msgid "Icon code"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:icon_type"
+msgid "Icon type"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu:menu_type"
+msgid "Menu type"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu:menu_type"
+msgid "Root"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu:menu_type"
+msgid "Node"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu:menu_type"
+msgid "Resource"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu:menu_type"
+msgid "Url"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu:menu_type"
+msgid "Call"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Root:id"
+msgid "Id"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Root:label"
+msgid "Label"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Root:type"
+msgid "Type"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu.Root:type"
+msgid "Space"
+msgstr ""
+
+msgctxt "field:selection:Model.FuretUI.Menu.Root:type"
+msgid "Resource"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Root:resource"
+msgid "Resource"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Root:space"
+msgid "Space"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Resource:resource"
+msgid "Resource"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Resource:default"
+msgid "Default"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Resource:tags"
+msgid "Tags"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Resource:order_by"
+msgid "Order by"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Resource:filters"
+msgid "Filters"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Url:url"
+msgid "Url"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Call:model"
+msgid "Model"
+msgstr ""
+
+msgctxt "field:Model.FuretUI.Menu.Call:method"
+msgid "Method"
+msgstr ""
