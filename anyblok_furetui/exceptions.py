@@ -6,7 +6,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
+import re
+from lxml import html
 from anyblok.mixin import MixinType
+from anyblok_furetui.furetui.translate import Translation
 from anyblok import Declarations
 
 
@@ -20,7 +23,7 @@ class FuretUIExceptions:
         self.registry = registry
 
     def __getattribute__(self, key):
-        if key == 'registry':
+        if key in ('registry', 'export_i18n', 'compile'):
             return super().__getattribute__(key)
 
         if key in self.registry.furetui_exceptions:
@@ -28,10 +31,20 @@ class FuretUIExceptions:
 
         raise KeyError(f'{key} is not existing FuretUI Exception')
 
+    def export_i18n(self, namespace, base, po):
+        FuretUIExceptionBase.export_i18n(namespace, base, po)
+
+    def compile(self, lang='en'):
+        for excpt in self.registry.furetui_exceptions.values():
+            excpt.compiled = {}
+            excpt.compile_entry(lang, 'title')
+            excpt.compile_entry(lang, 'content')
+
 
 class FuretUIExceptionBase(Exception):
     title = 'Error'
     content = None
+    compiled = {}
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -40,13 +53,90 @@ class FuretUIExceptionBase(Exception):
         super().__init__(
             f'{self.__class__.__name__} : {kwargs}')
 
+    @classmethod
+    def export_i18n(cls, namespace, base, po):
+        def callback(attr):
+            def _callback(text):
+                context = f'exception:{namespace}:{attr}'
+                entry = Translation.define(context, text)
+                po.append(entry)
+
+            return _callback
+
+        for totranslate in ('title', 'content'):
+            entry = getattr(base, totranslate, None)
+            if entry is None:
+                continue
+
+            entry = f'<div>{entry}</div>'
+            root = html.fromstring(entry)
+            cls.compile_template_i18n(root, callback(totranslate))
+
+    @classmethod
+    def compile_template_i18n(cls, tmpl, action_callback):
+
+        def minimify(text):
+            if not text:
+                return text
+
+            text = text.replace('\n', '').replace('\n', '').strip()
+            regex = "\{ *self.\w* *\}"  # noqa W605
+            if re.findall(regex, text):
+                return None
+
+            return text
+
+        def compile_template_i18n_rec(el):
+            text = minimify(el.text)
+            tail = minimify(el.tail)
+            if text:
+                el.text = action_callback(text)
+
+            if tail:
+                el.tail = action_callback(tail)
+
+            for child in el.getchildren():
+                compile_template_i18n_rec(child)
+
+        compile_template_i18n_rec(tmpl)
+
+    @classmethod
+    def compile_entry(cls, lang, entry):
+        if lang not in cls.compiled:
+            cls.compiled[lang] = {}
+
+        def callback(text):
+            context = f'exception:{cls.__registry_name__}:{entry}'
+            return Translation.get(lang, context, text)
+
+        text = getattr(cls, entry)
+        text = f'<div>{text}</div>'
+        root = html.fromstring(text)
+        cls.compile_template_i18n(root, callback)
+
+        if entry == 'title':
+            res = root.text
+        else:
+            res = html.tostring(root).decode('utf-8')
+
+        cls.compiled[lang][entry] = res
+        return res
+
+    @classmethod
+    def get_formated_entry(cls, entry):
+        lang = cls.anyblok.FuretUI.context.get('lang', 'en')
+        text = cls.compiled.get(lang, {}).get(entry)
+
+        if not text:
+            text = cls.compile_entry(lang, entry)
+
+        return text
+
     def get_formated_title(self):
-        # TODO i18n
-        return self.title.format(self=self)
+        return self.__class__.get_formated_entry('title').format(self=self)
 
     def get_formated_content(self):
-        # TODO i18n
-        return self.content.format(self=self)
+        return self.__class__.get_formated_entry('content').format(self=self)
 
     def get_additional_data(self):
         return []

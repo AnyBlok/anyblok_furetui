@@ -84,6 +84,7 @@ class FuretUI:
 
         cls.import_i18n(lang)
         templates.compile(lang=lang)
+        cls.anyblok.FuretUIExceptions.compile(lang=lang)
         cls.anyblok.furetui_templates = templates
         cls.anyblok.furetui_i18n = i18n
 
@@ -127,13 +128,7 @@ class FuretUI:
 
     @classmethod
     def export_i18n_exception(cls, namespace, base, po):
-        for totranslate in ('title', 'content'):
-            if hasattr(base, totranslate):
-                entry = Translation.define(
-                    f'exception:{namespace}:{totranslate}',
-                    getattr(base, totranslate),
-                )
-                po.append(entry)
+        cls.anyblok.FuretUIExceptions.export_i18n(namespace, base, po)
 
     @classmethod
     def export_i18n_bases(cls, blok_name, po):
@@ -259,6 +254,7 @@ class FuretUI:
 
         cls.import_i18n(locale)
         cls.anyblok.furetui_templates.compile(lang=locale)
+        cls.anyblok.FuretUIExceptions.compile(lang=locale)
 
         locales.add(locale)
         res.extend([
@@ -415,14 +411,20 @@ class UserNotFoundError:
 @Declarations.register(Declarations.FuretUIException)
 class UndefinedError:
     title = 'Undefined error'
-    content = '<p>{self.message}</p>'
+    content = ''
     if reload_all:
         content = '''
+            <strong>Traceback</strong>
             <textarea rows="{self.lines}" cols="52" readonly>
               {self.stack}
             </textarea>
-            <br/><strong>{self.message}</strong>
+            <br/>
         '''
+
+    content += '''
+        <p><strong>{self.message}</strong></p>
+        <p>Please contact the administrator</p>
+    '''
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
