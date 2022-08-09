@@ -8,6 +8,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import polib
+import traceback
 from os import path
 from pathlib import Path
 from datetime import datetime
@@ -26,6 +27,7 @@ from logging import getLogger
 
 
 logger = getLogger(__name__)
+reload_all = Configuration.get('pyramid.reload_all', False)
 
 
 def update_translation(i18n, translations, path=""):
@@ -368,3 +370,53 @@ class FuretUI:
     @classmethod
     def get_logo_path(cls):
         return '/furetui/static/images/logo.png'
+
+
+@Declarations.register(Declarations.FuretUIException)
+class AccessError:
+    content = "The user is not allow to get this resource"
+
+
+@Declarations.register(Declarations.FuretUIException)
+class UserNotFoundError:
+    content = "The user does not exist"
+
+    def get_additional_data(self):
+        res = super().get_additional_data()
+        res.extend([
+            {'type': 'UPDATE_USER_MENUS', 'menus': []},
+            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
+            {'type': 'UPDATE_CURRENT_LEFT_MENUS', 'menus': []},
+            {'type': 'CLEAR_DATA'},
+            {'type': 'CLEAR_CHANGE'},
+            {'type': 'LOGOUT'},
+            {'type': 'UPDATE_ROUTE', 'path': '/login'},
+        ])
+        return res
+
+
+@Declarations.register(Declarations.FuretUIException)
+class UndefinedError:
+    title = 'Undefined error'
+    content = '<p>{self.message}</p>'
+    if reload_all:
+        content = '''
+            <textarea rows="{self.lines}" cols="52" readonly>
+              {self.stack}
+            </textarea>
+            <br/><strong>{self.message}</strong>
+        '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if reload_all:
+            self.stack = traceback.format_exc()
+            self.lines = len(self.stack.splitlines())
+
+
+@Declarations.register(Declarations.FuretUIException)
+class ExpiredSession:
+    content = "Expired Session"
+
+    def to_furetui(self):
+        return {'type': 'EXPIRED_SESSION'}

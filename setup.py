@@ -48,6 +48,7 @@ console_scripts = [
 
 anyblok_init = [
     'anyblok_furetui_config=anyblok_furetui:anyblok_init_config',
+    'anyblok_furetui_declaration=anyblok_furetui:anyblok_init_declaration',
 ]
 
 

@@ -6,33 +6,29 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License,
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
-import traceback
-from anyblok.config import Configuration
 from anyblok.common import add_autodocs
+from anyblok_furetui.exceptions import FuretUIExceptionBase
 
 
 def authorized_furetui_user(in_data=True):
-    error = []
-    return_error = {'data': error} if in_data else error
-    empty_response = {'data': error} if in_data else error
 
     def wrap_funct(funct):
 
         def wrap_call(request):
+            error = []
+            return_error = {'data': error} if in_data else error
+            empty_response = {'data': error} if in_data else error
             registry = request.anyblok.registry
             userId = request.authenticated_userid
             try:
                 if not userId:
-                    raise ExpiredSession()
+                    raise registry.FuretUIExceptions.ExpiredSession()
 
                 if not registry.Pyramid.check_user_exists(userId):
-                    # ADD GO TO login
-                    raise UserNotFoundError(
-                        message="The user does not exist")
+                    raise registry.FuretUIExceptions.UserNotFoundError()
 
                 if not registry.FuretUI.check_security(request):
-                    raise UserError(
-                        message="The user is not allow to get this resource")
+                    raise registry.FuretUIExceptions.AccessError()
 
                 registry.FuretUI.set_user_context(userId)
                 res = funct(request)
@@ -40,11 +36,12 @@ def authorized_furetui_user(in_data=True):
                     return empty_response
 
                 return res
-            except UserError as e:
-                error.append(e.get_furetui_error(registry))
+            except FuretUIExceptionBase as e:
+                error.append(e.to_furetui())
             except Exception as e:
-                error.append(
-                    UndefinedError(str(e)).get_furetui_error(registry))
+                UndefinedError = registry.FuretUIExceptions.UndefinedError
+                error.append(UndefinedError(message=str(e)).to_furetui())
+
             return return_error
 
         return wrap_call
@@ -102,69 +99,3 @@ def exposed_method(**kwargs):
         return method
 
     return wrapper
-
-
-class UserError(Exception):
-
-    def __init__(self, title='Error', message=None, datas=None):
-        if not title:
-            raise Exception('No title filled')
-
-        if not message:
-            raise Exception('No message filled')
-
-        self.title = title
-        self.message = message
-        self.datas = datas or []
-
-        super().__init__()
-
-    def get_furetui_error(self, registry):
-        return {
-            'type': 'USER_ERROR',
-            'title': self.title,
-            'message': self.message,
-            'datas': self.datas,
-        }
-
-
-class UndefinedError(UserError):
-
-    def __init__(self, message):
-        reload_all = Configuration.get('pyramid.reload_all', False)
-        if reload_all:
-            stack = traceback.format_exc()
-            lines = len(stack.splitlines())
-            message = f"""
-              <textarea rows="{lines}" cols="52" readonly>
-                {stack}
-              </textarea>
-              <br/><strong>{ message }</strong>"""
-        else:
-            message = f'<p>{message}</p>'
-
-        super().__init__(title='Undefined error', message=message)
-
-
-class UserNotFoundError(UserError):
-
-    def __init__(self, message):
-        datas = [
-            {'type': 'UPDATE_USER_MENUS', 'menus': []},
-            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
-            {'type': 'UPDATE_CURRENT_LEFT_MENUS', 'menus': []},
-            {'type': 'CLEAR_DATA'},
-            {'type': 'CLEAR_CHANGE'},
-            {'type': 'LOGOUT'},
-            {'type': 'UPDATE_ROUTE', 'path': '/login'},
-        ]
-        super().__init__(title="User's error", message=message, datas=datas)
-
-
-class ExpiredSession(UserError):
-
-    def __init__(self):
-        pass
-
-    def get_furetui_error(self, registry):
-        return {'type': 'EXPIRED_SESSION'}
