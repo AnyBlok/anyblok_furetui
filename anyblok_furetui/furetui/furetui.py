@@ -126,6 +126,16 @@ class FuretUI:
                     po.append(entry)
 
     @classmethod
+    def export_i18n_exception(cls, namespace, base, po):
+        for totranslate in ('title', 'content'):
+            if hasattr(base, totranslate):
+                entry = Translation.define(
+                    f'exception:{namespace}:{totranslate}',
+                    getattr(base, totranslate),
+                )
+                po.append(entry)
+
+    @classmethod
     def export_i18n_bases(cls, blok_name, po):
         declarations = RegistryManager.loaded_bloks[blok_name]
         for declaration in ('Mixin', 'Model'):
@@ -135,6 +145,13 @@ class FuretUI:
 
                 for base in declarations[declaration][namespace]['bases']:
                     cls.export_i18n_fields(declaration, namespace, base, po)
+
+        for excpt in declarations['FuretUIException']:
+            if excpt == 'registry_names':
+                continue
+
+            for base in declarations['FuretUIException'][excpt]['bases']:
+                cls.export_i18n_exception(excpt, base, po)
 
     @classmethod
     def export_i18n(cls, blok_name):
