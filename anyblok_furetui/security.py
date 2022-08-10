@@ -31,6 +31,11 @@ def authorized_furetui_user(in_data=True):
                     raise registry.FuretUIExceptions.AccessError()
 
                 registry.FuretUI.set_user_context(userId)
+
+                # load the lang if the lang are not loaded
+                lang = registry.FuretUI.context.get('lang', 'en')
+                registry.FuretUI.import_i18n(lang)
+
                 res = funct(request)
                 if res is None:
                     return empty_response
