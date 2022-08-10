@@ -268,7 +268,14 @@ class TestCallMethod:
     def test_default_values_without_permission(
         self, webserver, registry_call_method
     ):
-        self.call(webserver, 'default_values', status=403)
+        res = self.call(webserver, 'default_values')
+        assert res.json_body[0]["type"] == 'USER_ERROR'
+        assert res.json_body[0]["title"] == 'Undefined error'
+        assert res.json_body[0]["message"] == (
+            "<div>\n        <p><strong>User 'test' has to be granted 'create' "
+            "permission in order to call this method 'default_values' on "
+            "model 'Model.Test'.</strong></p>\n        <p>Please contact the "
+            "administrator</p>\n    </div>")
 
     def test_default_values(self, webserver, registry_call_method):
         registry_call_method.Pyramid.Authorization.insert(
@@ -285,7 +292,13 @@ class TestCallMethod:
         ]
 
     def test_undecorated_method(self, webserver, registry_call_method):
-        self.call(webserver, 'not_decorated', status=403)
+        res = self.call(webserver, 'not_decorated')
+        assert res.json_body[0]["type"] == 'USER_ERROR'
+        assert res.json_body[0]["title"] == 'Undefined error'
+        assert res.json_body[0]["message"] == (
+            "<div>\n        <p><strong>the method 'not_decorated' is not "
+            "exposed</strong></p>\n        <p>Please contact the "
+            "administrator</p>\n    </div>")
 
     def test_decorated_classmethod(self, webserver, registry_call_method):
         response = self.call(webserver, 'on_classmethod')
@@ -336,7 +349,14 @@ class TestCallMethod:
 
     def test_decorated_without_permission(self, webserver,
                                           registry_call_method):
-        self.call(webserver, 'with_permission', status=403)
+        res = self.call(webserver, 'with_permission')
+        assert res.json_body[0]["type"] == 'USER_ERROR'
+        assert res.json_body[0]["title"] == 'Undefined error'
+        assert res.json_body[0]["message"] == (
+            "<div>\n        <p><strong>User \'test\' has to be granted "
+            "\'do_something\' permission in order to call this method "
+            "\'with_permission\' on model \'Model.Test\'.</strong></p>"
+            "\n        <p>Please contact the administrator</p>\n    </div>")
 
     def test_decorated_with_permission(self, webserver, registry_call_method):
         registry_call_method.Pyramid.Authorization.insert(
