@@ -291,7 +291,9 @@ class TestResourceThumbnailDefault:
                     'v-bind:config=\'{"name": "col", "type": '
                     f'"{type_}", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
-                    '"writable": "0", "hidden": "0"}\' '
+                    '"writable": "0", "hidden": "0", "editable": true, '
+                    '"icon": "calendar", "placeholder": "", '
+                    '"showWeekNumber": true}\' '
                     'v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
                     '                </div>\n'
@@ -1133,7 +1135,7 @@ class TestResourceThumbnailDateTime:
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
                     '"hidden": "0", "datepicker": {"showWeekNumber": true}, '
-                    '"editable": true, "icon": "", "placeholder": "", '
+                    '"editable": true, "icon": "calendar", "placeholder": "", '
                     '"timepicker": {"enableSeconds": true, "hourFormat": '
                     '"24"}}\' v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
@@ -1181,9 +1183,9 @@ class TestResourceThumbnailMany2One:
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
-                    '"0", "writable": "0", "hidden": "0", "display": '
-                    '"fields.id", "fields": ["id"], "filter_by": ["id"], '
-                    '"limit": 10, '
+                    '"0", "writable": "0", "hidden": "0", "colors": "", '
+                    '"display": "fields.id", "fields": ["id"], "filter_by": '
+                    '["id"], "limit": 10, '
                     f'"local_columns": ["{", ".join(local_columns)}"], '
                     '"menu": null, '
                     f'"remote_columns": ["id"], "remote_name": "{remote_name}"'
@@ -1193,7 +1195,7 @@ class TestResourceThumbnailMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id', 'name'],
+                'fields': ['address', 'address.id', 'name'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'buttons': [],
@@ -1225,6 +1227,7 @@ class TestResourceThumbnailMany2One:
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
+                    '"colors": "", '
                     '"display": "fields.city", "fields": ["city"], '
                     '"filter_by": ["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": null, '
@@ -1235,7 +1238,7 @@ class TestResourceThumbnailMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.city', 'name'],
+                'fields': ['address', 'address.city', 'name'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'buttons': [],
@@ -1266,9 +1269,9 @@ class TestResourceThumbnailMany2One:
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
-                    '"0", "writable": "0", "hidden": "0", "display": '
-                    '"fields.id", "fields": ["id"], "filter_by": ["id"], '
-                    '"limit": 10, "local_columns": '
+                    '"0", "writable": "0", "hidden": "0", "colors": "", '
+                    '"display": "fields.id", "fields": ["id"], "filter_by": '
+                    '["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": null, '
                     '"remote_columns": ["id"], "remote_name": '
                     f'"{remote_name}", "resource": '
@@ -1277,7 +1280,7 @@ class TestResourceThumbnailMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id', 'name'],
+                'fields': ['address', 'address.id', 'name'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'buttons': [],
@@ -1312,6 +1315,7 @@ class TestResourceThumbnailMany2One:
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
+                    '"colors": "", '
                     '"display": "fields.id", "fields": ["id"], "filter_by": '
                     '["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": 1, '
@@ -1322,7 +1326,7 @@ class TestResourceThumbnailMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id', 'name'],
+                'fields': ['address', 'address.id', 'name'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'buttons': [],
@@ -1357,7 +1361,8 @@ class TestResourceThumbnailMany2One:
                     '"address", "type": "many2one", "label": "Address", '
                     '"tooltip": null, "model": "Model.Address", "required": '
                     f'"{required}", "readonly": "0", "writable": "0", '
-                    '"hidden": "0", "display": "fields.id", "fields": ["id"], '
+                    '"hidden": "0", "colors": "", "display": "fields.id", '
+                    '"fields": ["id"], '
                     '"filter_by": ["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": null, '
                     '"remote_columns": ["id"], "remote_name": '
@@ -1368,7 +1373,7 @@ class TestResourceThumbnailMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id', 'name'],
+                'fields': ['address', 'address.id', 'name'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'buttons': [],
