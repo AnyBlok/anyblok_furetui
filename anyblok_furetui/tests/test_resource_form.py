@@ -37,7 +37,6 @@ PARAMS = [
     (Enum, 'enum', {'enum_cls': MyTestEnum}),
     (Json, 'json', {}),
     (Text, 'text', {}),
-    (Date, 'date', {}),
     (Time, 'time', {}),
     (Email, 'email', {}),
     (Interval, 'interval', {}),
@@ -115,6 +114,15 @@ def registry_DateTime(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
         ["furetui"], simple_column, ColumnType=request.param)
+    request.addfinalizer(registry.close)
+    return registry
+
+
+@pytest.fixture(scope="class")
+def registry_Date(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(
+        ["furetui"], simple_column, ColumnType=Date)
     request.addfinalizer(registry.close)
     return registry
 
@@ -291,9 +299,7 @@ class TestResourceFormDefault:
                     'v-bind:config=\'{"name": "col", "type": '
                     f'"{type_}", "label": "Col", "tooltip": null, '
                     '"model": null, "required": "0", "readonly": "0", '
-                    '"writable": "0", "hidden": "0", "editable": true, '
-                    '"icon": "calendar", "placeholder": "", '
-                    '"showWeekNumber": true}\' '
+                    '"writable": "0", "hidden": "0"}\' '
                     'v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
                     '                </div>\n'
@@ -990,6 +996,49 @@ class TestResourceFormInteger:
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
                     '"hidden": "0", "max": null, "min": null}\' '
+                    'v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['col'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+
+class TestResourceFormDate:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_Date):
+        transaction = registry_Date.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_Date):
+        registry = registry_Date
+        resource = registry.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="col" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", "type": '
+                    '"date", "label": "Col", "tooltip": null, '
+                    '"model": null, "required": "0", "readonly": "0", '
+                    '"writable": "0", "hidden": "0", "editable": true, '
+                    '"icon": "calendar", "placeholder": "", '
+                    '"showWeekNumber": true}\' '
                     'v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
                     '                </div>\n'
