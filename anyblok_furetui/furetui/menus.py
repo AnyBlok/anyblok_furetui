@@ -11,7 +11,7 @@
 from sqlalchemy import text
 from anyblok.declarations import Declarations
 from anyblok.column import Integer, String, Boolean, Selection, Json, URL
-from anyblok.relationship import Many2One, One2Many
+from anyblok.relationship import Many2One, One2Many, ordering_list
 from .translate import Translation
 
 
@@ -134,7 +134,9 @@ class FuretUIMenuChildren:
         primaryjoin=(
             "ModelFuretUIMenu.id == ModelFuretUIMenu.parent_id"
             " and ModelFuretUIMenu.menu_type != 'Model.FuretUI.Menu.Root'"
-        )
+        ),
+        order_by="ModelFuretUIMenu.order,ModelFuretUIMenu.id",
+        collection_class=ordering_list('order', 'id'),
     )
 
 
