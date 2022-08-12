@@ -14,3 +14,7 @@ from .exceptions import ResourceTemplateRendererException  # noqa
 
 def anyblok_init_config(unittest=False):
     from . import config  # noqa import config definition
+
+
+def anyblok_init_declaration(unittest=False):
+    from . import exceptions  # noqa import config definition

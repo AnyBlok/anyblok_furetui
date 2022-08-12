@@ -11,7 +11,7 @@ class TestWebClient:
         path = Configuration.get('furetui_client_path', '/furet-ui')
         response = webserver.get(path)
         blok_path = BlokManager.getPath('furetui')
-        path = join(blok_path, 'static', 'index.html')
+        path = join(blok_path, 'static', 'furet-ui', 'index.html')
         assert response.status_code == 200
         assert response.content_type == 'text/html'
         with open(path, 'rb') as fp:

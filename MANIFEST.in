@@ -6,3 +6,4 @@ recursive-include anyblok_furetui */static/css/*
 recursive-include anyblok_furetui */static/js/*
 recursive-include anyblok_furetui */static/*/css/*
 recursive-include anyblok_furetui */static/*/js/*
+recursive-include anyblok_furetui */templates/*.tmpl

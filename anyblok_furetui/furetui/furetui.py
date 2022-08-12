@@ -8,6 +8,7 @@
 # v. 2.0. If a copy of the MPL was not distributed with this file,You can
 # obtain one at http://mozilla.org/MPL/2.0/.
 import polib
+import traceback
 from os import path
 from pathlib import Path
 from datetime import datetime
@@ -26,6 +27,7 @@ from logging import getLogger
 
 
 logger = getLogger(__name__)
+reload_all = Configuration.get('pyramid.reload_all', False)
 
 
 def update_translation(i18n, translations, path=""):
@@ -82,6 +84,7 @@ class FuretUI:
 
         cls.import_i18n(lang)
         templates.compile(lang=lang)
+        cls.anyblok.FuretUIExceptions.compile(lang=lang)
         cls.anyblok.furetui_templates = templates
         cls.anyblok.furetui_i18n = i18n
 
@@ -124,6 +127,10 @@ class FuretUI:
                     po.append(entry)
 
     @classmethod
+    def export_i18n_exception(cls, namespace, base, po):
+        cls.anyblok.FuretUIExceptions.export_i18n(namespace, base, po)
+
+    @classmethod
     def export_i18n_bases(cls, blok_name, po):
         declarations = RegistryManager.loaded_bloks[blok_name]
         for declaration in ('Mixin', 'Model'):
@@ -133,6 +140,13 @@ class FuretUI:
 
                 for base in declarations[declaration][namespace]['bases']:
                     cls.export_i18n_fields(declaration, namespace, base, po)
+
+        for excpt in declarations['FuretUIException']:
+            if excpt == 'registry_names':
+                continue
+
+            for base in declarations['FuretUIException'][excpt]['bases']:
+                cls.export_i18n_exception(excpt, base, po)
 
     @classmethod
     def export_i18n(cls, blok_name):
@@ -240,6 +254,7 @@ class FuretUI:
 
         cls.import_i18n(locale)
         cls.anyblok.furetui_templates.compile(lang=locale)
+        cls.anyblok.FuretUIExceptions.compile(lang=locale)
 
         locales.add(locale)
         res.extend([
@@ -368,3 +383,59 @@ class FuretUI:
     @classmethod
     def get_logo_path(cls):
         return '/furetui/static/images/logo.png'
+
+
+@Declarations.register(Declarations.FuretUIException)
+class AccessError:
+    content = "The user is not allow to get this resource"
+
+
+@Declarations.register(Declarations.FuretUIException)
+class UserNotFoundError:
+    content = "The user does not exist"
+
+    def get_additional_data(self):
+        res = super().get_additional_data()
+        res.extend([
+            {'type': 'UPDATE_USER_MENUS', 'menus': []},
+            {'type': 'UPDATE_ROOT_MENUS', 'menus': []},
+            {'type': 'UPDATE_CURRENT_LEFT_MENUS', 'menus': []},
+            {'type': 'CLEAR_DATA'},
+            {'type': 'CLEAR_CHANGE'},
+            {'type': 'LOGOUT'},
+            {'type': 'UPDATE_ROUTE', 'path': '/login'},
+        ])
+        return res
+
+
+@Declarations.register(Declarations.FuretUIException)
+class UndefinedError:
+    title = 'Undefined error'
+    content = ''
+    if reload_all:
+        content = '''
+            <strong>Traceback</strong>
+            <textarea rows="{self.lines}" cols="52" readonly>
+              {self.stack}
+            </textarea>
+            <br/>
+        '''
+
+    content += '''
+        <p><strong>{self.message}</strong></p>
+        <p>Please contact the administrator</p>
+    '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if reload_all:
+            self.stack = traceback.format_exc()
+            self.lines = len(self.stack.splitlines())
+
+
+@Declarations.register(Declarations.FuretUIException)
+class ExpiredSession:
+    content = "Expired Session"
+
+    def to_furetui(self):
+        return {'type': 'EXPIRED_SESSION'}

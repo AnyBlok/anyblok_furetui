@@ -156,7 +156,8 @@ class TestCreate:
                 "uuid": "fake_uuid",
             }
         )
-        webserver.post(path, payload, headers=headers, status=405)
+        res = webserver.post(path, payload, headers=headers)
+        assert res.json_body['data'][0]["type"] == 'EXPIRED_SESSION'
 
     def test_create_o2m(
         self, rollback_registry, resource_tag_to_link
@@ -247,7 +248,8 @@ class TestRead:
                 "filter[name][eq]": "anyblok-core",
             }
         )
-        webserver.get(path, params, status=405)
+        res = webserver.get(path, params)
+        assert res.json_body['data'][0]["type"] == 'EXPIRED_SESSION'
 
     def test_model_field(self, webserver, rollback_registry):
         path = "/furet-ui/resource/0/crud"
@@ -442,7 +444,8 @@ class TestUpdate:
                 "pks": {"id": resource_list.id},
             }
         )
-        webserver.patch(path, params, headers, status=405)
+        res = webserver.patch(path, params, headers)
+        assert res.json_body['data'][0]["type"] == 'EXPIRED_SESSION'
 
     def test_update_o2m(
         self,
@@ -562,8 +565,8 @@ class TestDelete:
             == 0
         )
 
-    def test_unauhenticated_delete(self, webserver, rollback_registry,
-                                   resource_list):
+    def test_unauthenticated_delete(self, webserver, rollback_registry,
+                                    resource_list):
         path = "/furet-ui/resource/0/crud"
         webserver.post_json('/furet-ui/logout', status=200)
         params = urllib.parse.urlencode(
@@ -572,4 +575,5 @@ class TestDelete:
                 "pks": json.dumps({"id": resource_list.id}),
             }
         )
-        webserver.delete(path, params, status=405)
+        res = webserver.delete(path, params)
+        assert res.json_body['data'][0]["type"] == 'EXPIRED_SESSION'

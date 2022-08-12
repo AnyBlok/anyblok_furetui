@@ -37,7 +37,6 @@ PARAMS = [
     (Enum, 'enum', {'enum_cls': MyTestEnum}),
     (Json, 'json', {}),
     (Text, 'text', {}),
-    (Date, 'date', {}),
     (Time, 'time', {}),
     (Email, 'email', {}),
     (Interval, 'interval', {}),
@@ -115,6 +114,15 @@ def registry_DateTime(request, bloks_loaded):  # noqa F811
     reset_db()
     registry = init_registry_with_bloks(
         ["furetui"], simple_column, ColumnType=request.param)
+    request.addfinalizer(registry.close)
+    return registry
+
+
+@pytest.fixture(scope="class")
+def registry_Date(request, bloks_loaded):  # noqa F811
+    reset_db()
+    registry = init_registry_with_bloks(
+        ["furetui"], simple_column, ColumnType=Date)
     request.addfinalizer(registry.close)
     return registry
 
@@ -1000,6 +1008,49 @@ class TestResourceFormInteger:
             }]
 
 
+class TestResourceFormDate:
+
+    @pytest.fixture(autouse=True)
+    def transact(self, request, registry_Date):
+        transaction = registry_Date.begin_nested()
+        request.addfinalizer(transaction.rollback)
+        return
+
+    def test_get_definition(self, registry_Date):
+        registry = registry_Date
+        resource = registry.FuretUI.Resource.Form.insert(
+            code='test-list-resource',
+            model='Model.Test', template='tmpl_test')
+
+        with TmpTemplate(registry) as tmpl:
+            tmpl.load_template_from_str("""
+                <template id="tmpl_test">
+                    <field name="col" />
+                </template>
+            """)
+            tmpl.compile()
+            assert resource.get_definitions() == [{
+                'body_template': (
+                    '<div xmlns:v-bind="https://vuejs.org/" '
+                    'id="tmpl_test"><furet-ui-field '
+                    'v-bind:config=\'{"name": "col", "type": '
+                    '"date", "label": "Col", "tooltip": null, '
+                    '"model": null, "required": "0", "readonly": "0", '
+                    '"writable": "0", "hidden": "0", "editable": true, '
+                    '"icon": "calendar", "placeholder": "", '
+                    '"showWeekNumber": true}\' '
+                    'v-bind:resource="resource" '
+                    'v-bind:data="data"></furet-ui-field>\n'
+                    '                </div>\n'
+                    '            '
+                ),
+                'fields': ['col'],
+                'id': resource.id,
+                'model': 'Model.Test',
+                'type': 'form'
+            }]
+
+
 class TestResourceFormDateTime:
 
     @pytest.fixture(autouse=True)
@@ -1028,7 +1079,7 @@ class TestResourceFormDateTime:
                     '"label": "Col", "tooltip": null, "model": null, '
                     '"required": "0", "readonly": "0", "writable": "0", '
                     '"hidden": "0", "datepicker": {"showWeekNumber": true}, '
-                    '"editable": true, "icon": "", "placeholder": "", '
+                    '"editable": true, "icon": "calendar", "placeholder": "", '
                     '"timepicker": {"enableSeconds": true, "hourFormat": '
                     '"24"}}\' v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
@@ -1071,9 +1122,9 @@ class TestResourceFormMany2One:
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
-                    '"0", "writable": "0", "hidden": "0", "display": '
-                    '"fields.id", "fields": ["id"], "filter_by": ["id"], '
-                    '"limit": 10, '
+                    '"0", "writable": "0", "hidden": "0", "colors": "", '
+                    '"display": "fields.id", "fields": ["id"], "filter_by": '
+                    '["id"], "limit": 10, '
                     f'"local_columns": ["{", ".join(local_columns)}"], '
                     '"menu": null, '
                     f'"remote_columns": ["id"], "remote_name": "{remote_name}"'
@@ -1083,7 +1134,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id'],
+                'fields': ['address', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1110,17 +1161,17 @@ class TestResourceFormMany2One:
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
-                    '"display": "fields.city", "fields": ["city"], '
-                    '"filter_by": ["id"], "limit": 10, "local_columns": '
-                    f'["{", ".join(local_columns)}"], "menu": null, '
-                    f'"remote_columns": ["id"], "remote_name": "{remote_name}"'
-                    ', "resource": null, "tags": ""}\' '
-                    'v-bind:resource="resource" '
+                    '"colors": "", "display": "fields.city", "fields": '
+                    '["city"], "filter_by": ["id"], "limit": 10, '
+                    f'"local_columns": ["{", ".join(local_columns)}"], "menu": '
+                    'null, "remote_columns": ["id"], "remote_name": '
+                    f'"{remote_name}", "resource": null, "tags": '
+                    '""}\' v-bind:resource="resource" '
                     'v-bind:data="data"></furet-ui-field>\n'
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.city'],
+                'fields': ['address', 'address.city'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1146,9 +1197,9 @@ class TestResourceFormMany2One:
                     'v-bind:config=\'{"name": "address", "type": "many2one", '
                     '"label": "Address", "tooltip": null, "model": '
                     f'"Model.Address", "required": "{required}", "readonly": '
-                    '"0", "writable": "0", "hidden": "0", "display": '
-                    '"fields.id", "fields": ["id"], "filter_by": ["id"], '
-                    '"limit": 10, "local_columns": '
+                    '"0", "writable": "0", "hidden": "0", "colors": "", '
+                    '"display": "fields.id", "fields": ["id"], "filter_by": '
+                    '["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": null, '
                     '"remote_columns": ["id"], "remote_name": '
                     f'"{remote_name}", "resource": '
@@ -1157,7 +1208,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id'],
+                'fields': ['address', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1187,8 +1238,8 @@ class TestResourceFormMany2One:
                     '"type": "many2one", "label": "Address", "tooltip": null, '
                     f'"model": "Model.Address", "required": "{required}", '
                     '"readonly": "0", "writable": "0", "hidden": "0", '
-                    '"display": "fields.id", "fields": ["id"], "filter_by": '
-                    '["id"], "limit": 10, "local_columns": '
+                    '"colors": "", "display": "fields.id", "fields": ["id"], '
+                    '"filter_by": ["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": 1, '
                     '"remote_columns": ["id"], "remote_name": '
                     f'"{remote_name}", '
@@ -1197,7 +1248,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id'],
+                'fields': ['address', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1227,8 +1278,9 @@ class TestResourceFormMany2One:
                     '"address", "type": "many2one", "label": "Address", '
                     '"tooltip": null, "model": "Model.Address", "required": '
                     f'"{required}", "readonly": "0", "writable": "0", '
-                    '"hidden": "0", "display": "fields.id", "fields": ["id"], '
-                    '"filter_by": ["id"], "limit": 10, "local_columns": '
+                    '"hidden": "0", "colors": "", "display": "fields.id", '
+                    '"fields": ["id"], "filter_by": ["id"], "limit": 10, '
+                    '"local_columns": '
                     f'["{", ".join(local_columns)}"], "menu": null, '
                     '"remote_columns": ["id"], "remote_name": '
                     f'"{remote_name}", '
@@ -1238,7 +1290,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id'],
+                'fields': ['address', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1265,7 +1317,8 @@ class TestResourceFormMany2One:
                     '"address", "type": "many2one", "label": "Address", '
                     '"tooltip": null, "model": "Model.Address", "required": '
                     f'"{required}", "readonly": "0", "writable": "0", '
-                    '"hidden": "0", "display": "fields.id", "fields": ["id"], '
+                    '"hidden": "0", "colors": "", "display": "fields.id", '
+                    '"fields": ["id"], '
                     '"filter_by": ["id"], "limit": 10, "local_columns": '
                     f'["{", ".join(local_columns)}"], "maxheight": "400px", '
                     '"menu": null, "remote_columns": ["id"], "remote_name": '
@@ -1276,7 +1329,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.id'],
+                'fields': ['address', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'
@@ -1313,6 +1366,7 @@ class TestResourceFormMany2One:
                     '&quot;readonly&quot;: &quot;0&quot;, '
                     '&quot;writable&quot;: '
                     '&quot;0&quot;, &quot;hidden&quot;: &quot;0&quot;, '
+                    "&quot;colors&quot;: &quot;&quot;, "
                     "&quot;display&quot;: &quot;fields.city + ', ' + "
                     'fields.id&quot;, &quot;fields&quot;: [&quot;city&quot;, '
                     '&quot;id&quot;], &quot;filter_by&quot;: '
@@ -1328,7 +1382,7 @@ class TestResourceFormMany2One:
                     '                </div>\n'
                     '            '
                 ),
-                'fields': ['address.city', 'address.id'],
+                'fields': ['address', 'address.city', 'address.id'],
                 'id': resource.id,
                 'model': 'Model.Person',
                 'type': 'form'

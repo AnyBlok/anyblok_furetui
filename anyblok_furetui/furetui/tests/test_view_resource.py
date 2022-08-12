@@ -68,8 +68,14 @@ class TestViewResource:
         ]
 
     def test_open_resource_without_mapping(self, webserver, rollback_registry):
-        webserver.post_json(
+        res = webserver.post_json(
             '/furet-ui/open/resource/tmp_resource',
             {'params': {}, 'route': 'route_name'},
-            status=500
         )
+        assert res.json_body[0]["type"] == 'USER_ERROR'
+        assert res.json_body[0]["title"] == 'Undefined error'
+        assert res.json_body[0]["message"] == (
+            "<div>\n        <p><strong>No resource found "
+            "'tmp_resource' in (List, Custom, Form)"
+            "</strong></p>\n        <p>Please contact the "
+            "administrator</p>\n    </div>")
